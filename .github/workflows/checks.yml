@@ -16,6 +16,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Test
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          DB_PORT: ${{ secrets.DB_PORT }}
         run: docker-compose run --rm app sh -c "python manage.py wait_for_db && python manage.py test"
       - name: Lint
         run: docker-compose run --rm app sh -c "flake8"
