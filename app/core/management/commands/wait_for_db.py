@@ -26,7 +26,7 @@ class Command(BaseCommand):
                 # Print to the screen that we wait for the database because the database is not ready yet.
                 self.stdout.write("Database unavailable, waiting 1 second...")
                 # Wait for one second and run the while loop again to check if database is ready.
-                time.sleep(1)
+                time.sleep(2)
 
         # After the while loop is done, log the message that the database is available.
         self.stdout.write(self.style.SUCCESS("Database available!"))
