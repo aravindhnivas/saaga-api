@@ -1,5 +1,5 @@
 # Docker image, alpine is a lightweight version of linux which is ideal for running Docker containers because it's extremely lightweight and efficient.
-FROM python:3.9-alpine
+FROM python:3.9-bullseye
 
 # Maintainer of the software for now.
 LABEL maintainer="jsycheung"
@@ -21,10 +21,8 @@ ARG DEV=false
 # Create new virtual environment where we install dependencies to avoid conflicting dependencies between the image and the project.
 RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
-    apk add --update --no-cache git && \
-    apk add --update --no-cache postgresql-client && \
-    apk add --update --no-cache --virtual .tmp-build-deps \
-        build-base postgresql-dev musl-dev && \
+    apt-get update && \
+    apt-get install -y build-essential gcc postgresql postgresql-client postgresql-server-dev-all libpq-dev python3.9-dev && \
     # Install requirements inside docker image.
     /py/bin/pip install -r /tmp/requirements.txt && \
     if [ $DEV = "true" ]; \
@@ -32,7 +30,6 @@ RUN python -m venv /py && \
     fi && \
     # Remove the temporary directory after we install dependencies to keep docker image as lightweight as possible.
     rm -rf /tmp && \
-    apk del .tmp-build-deps && \
     # Add new user inside the image, it's best practice not to use the root user which has full access to do everything on the server.
     adduser \
         --disabled-password \

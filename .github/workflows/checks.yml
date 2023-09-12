@@ -9,7 +9,7 @@ jobs:
   # Define new job called test-lint.
   test-lint:
     name: Test and Lint
-    # OS that the project is going to run on. Docker-compose is pre0installed in the ubuntu-20.04 runner.
+    # OS that the project is going to run on. Docker-compose is pre-installed in the ubuntu-20.04 runner.
     runs-on: ubuntu-20.04
     # Steps that run for the job.
     steps:
