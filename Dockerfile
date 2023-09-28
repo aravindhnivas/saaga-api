@@ -11,6 +11,7 @@ ENV PYTHONUNBUFFERED 1
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 COPY ./app /app
+
 # Default directory that our commands run from.
 WORKDIR /app
 # Expose port 8000 from the container to our machine when we run the container and connect to django server.
