@@ -46,13 +46,17 @@ class ModelTests(TestCase):
         """Test that creating a user without email, name,
         or organization raises an error."""
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('', 'pw123', 'name123', 'org123')
+            get_user_model().objects.create_user(
+                '', 'pw123', 'name123', 'org123')
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('test@example.com', '', 'name123', 'org123')
+            get_user_model().objects.create_user(
+                'test@example.com', '', 'name123', 'org123')
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('test@example.com', 'pw123', '', 'org123')
+            get_user_model().objects.create_user(
+                'test@example.com', 'pw123', '', 'org123')
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('test@example.com', 'pw123', 'name123', '')
+            get_user_model().objects.create_user(
+                'test@example.com', 'pw123', 'name123', '')
 
     def test_create_superuser(self):
         """Test creating a superuser."""
