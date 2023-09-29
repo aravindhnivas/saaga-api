@@ -112,7 +112,7 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_self_user_error(self):
-        """Test error returned if authenticated user tries to create themselves."""
+        """Test error returned if user tries to create themselves."""
         res = self.client.post(CREATE_USER_URL, user_details)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
