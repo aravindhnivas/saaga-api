@@ -1,8 +1,6 @@
 """
 Database models.
 """
-import uuid
-import os
 from django.conf import settings
 from django_rdkit import models
 from django.contrib.auth.models import (
@@ -10,14 +8,10 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin
 )
-from django.contrib.postgres.fields import DateTimeRangeField
-
-
-def cat_file_path(instance, filename):
-    """Generate file path for cat file."""
-    ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
-    return os.path.join('uploads', 'cat', filename)
+from django.utils.functional import cached_property
+from django.utils.html import format_html
+from rdkit.Chem import Draw
+import base64
 
 
 class UserManager(BaseUserManager):
@@ -60,41 +54,36 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
 
 
-class RdkitMol(models.Model):
-    mol_obj = models.MolField(blank=True, null=True)
-
-
-class Linelists(models.Model):
+class Linelist(models.Model):
     linelist_name = models.CharField(max_length=255)
 
 
-class Catalogs(models.Model):
+class Catalog(models.Model):
     """Catalogs object."""
-    cat_url = models.FileField(upload_to=cat_file_path)
-    entry_date = models.DateTimeField()
+    entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
-    sys_period = DateTimeRangeField()
 
 
-class References(models.Model):
+class Reference(models.Model):
     """References object."""
     doi = models.CharField(max_length=255, blank=True)
     ref_url = models.CharField(max_length=255)
     bibtex = models.TextField()
-    entry_date = models.DateTimeField()
+    entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
-    sys_period = DateTimeRangeField()
 
 
 class Species(models.Model):
+    class Meta:
+        verbose_name_plural = 'Species'
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255)
     name_formula = models.CharField(max_length=255)
@@ -102,19 +91,32 @@ class Species(models.Model):
     canonical_smiles = models.CharField(max_length=255)
     standard_inchi = models.CharField(max_length=255)
     standard_inchi_key = models.CharField(max_length=255)
-    rdkit_mol = models.OneToOneField(
-        'RdkitMol',
-        on_delete=models.PROTECT)
-    entry_date = models.DateTimeField()
+    mol_obj = models.MolField(blank=True, null=True)
+    entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
-    sys_period = DateTimeRangeField()
+
+    @cached_property
+    def display_mol(self):
+        if self.mol_obj:
+            dm = Draw.PrepareMolForDrawing(self.mol_obj)
+            d2d = Draw.MolDraw2DCairo(400, 400)
+            d2d.DrawMolecule(dm)
+            d2d.FinishDrawing()
+            text = d2d.GetDrawingText()
+            imtext = base64.b64encode(text).decode('utf8')
+            html = '<img src="data:image/png;base64, {img}" alt="rdkit image">'
+            return format_html(html, img=imtext)
+        return format_html('<strong>There is no image for this entry.<strong>')
+    display_mol.short_description = 'Display rdkit image'
 
 
 class SpeciesMetadata(models.Model):
+    class Meta:
+        verbose_name_plural = 'Species metadata'
     species = models.ForeignKey(
         'Species',
         on_delete=models.PROTECT
@@ -137,41 +139,39 @@ class SpeciesMetadata(models.Model):
     c_const = models.DecimalField(
         max_digits=15, decimal_places=4, blank=True, null=True)
     cat = models.ForeignKey(
-        'Catalogs',
+        'Catalog',
         on_delete=models.PROTECT
     )
     linelist = models.ForeignKey(
-        'Linelists',
+        'Linelist',
         on_delete=models.PROTECT
     )
     data_date = models.DateField()
     data_contributor = models.CharField(max_length=255)
-    entry_date = models.DateTimeField()
+    entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
-    sys_period = DateTimeRangeField()
 
 
-class MetaReferences(models.Model):
+class MetaReference(models.Model):
     """Metadata references object."""
     meta = models.ForeignKey(
         'SpeciesMetadata',
         on_delete=models.PROTECT
     )
     ref = models.ForeignKey(
-        'References',
+        'Reference',
         on_delete=models.PROTECT
     )
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
     notes = models.TextField(blank=True)
-    sys_period = DateTimeRangeField()
 
 
-class Lines(models.Model):
+class Line(models.Model):
     """Lines object."""
     meta = models.ForeignKey(
         'SpeciesMetadata',
@@ -193,10 +193,9 @@ class Lines(models.Model):
     pickett_qn_code = models.IntegerField()
     pickett_lower_state_qn = models.JSONField()
     pickett_upper_state_qn = models.JSONField()
-    entry_date = models.DateTimeField()
+    entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
-    sys_period = DateTimeRangeField()

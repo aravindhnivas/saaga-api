@@ -45,12 +45,49 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
+class SpeciesAdmin(admin.ModelAdmin):
+    """Define the admin pages for users."""
+    ordering = ['id']
+    list_display = ['iupac_name', 'name_formula', 'canonical_smiles']
+    fieldsets = (
+        (_('Names'), {
+         'fields': ('name', 'iupac_name', 'name_formula', 'name_html')}),
+        (
+            _('Identifiers'),
+            {
+                'fields': (
+                    'canonical_smiles',
+                    'standard_inchi',
+                    'standard_inchi_key',
+                    'display_mol',
+                )
+            }
+        ),
+        (_('Records'), {'fields': ('entry_date', 'entry_staff', 'notes')})
+    )
+    readonly_fields = ['display_mol', 'entry_date', 'entry_staff']
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'name',
+                'iupac_name',
+                'name_formula',
+                'name_html',
+                'canonical_smiles',
+                'standard_inchi',
+                'standard_inchi_key',
+                'notes'
+            )
+        }),
+    )
+
+
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.Lines)
+admin.site.register(models.Line)
 admin.site.register(models.SpeciesMetadata)
-admin.site.register(models.MetaReferences)
-admin.site.register(models.References)
-admin.site.register(models.Catalogs)
-admin.site.register(models.Linelists)
-admin.site.register(models.Species)
-admin.site.register(models.RdkitMol)
+admin.site.register(models.MetaReference)
+admin.site.register(models.Reference)
+admin.site.register(models.Catalog)
+admin.site.register(models.Linelist)
+admin.site.register(models.Species, SpeciesAdmin)
