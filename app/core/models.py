@@ -1,6 +1,8 @@
 """
 Database models.
 """
+import os
+import uuid
 from django.conf import settings
 from django_rdkit import models
 from django.contrib.auth.models import (
@@ -12,6 +14,14 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from rdkit.Chem import Draw
 import base64
+from django.core.validators import FileExtensionValidator
+
+
+def sp_file_path(instance, filename):
+    """Generate file path for SPFIT/SPCAT (.int, .var, .lin, .fit) files."""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+    return os.path.join('uploads', 'data', filename)
 
 
 class UserManager(BaseUserManager):
@@ -55,17 +65,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Linelist(models.Model):
-    linelist_name = models.CharField(max_length=255)
+    linelist_name = models.CharField(max_length=255, unique=True)
 
-
-class Catalog(models.Model):
-    """Catalogs object."""
-    entry_date = models.DateTimeField(auto_now_add=True)
-    entry_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
-    )
-    notes = models.TextField(blank=True)
+    def save(self, *args, **kwargs):
+        self.linelist_name = self.linelist_name.lower()
+        return super(Linelist, self).save(*args, **kwargs)
 
 
 class Reference(models.Model):
@@ -85,12 +89,12 @@ class Species(models.Model):
     class Meta:
         verbose_name_plural = 'Species'
     name = models.JSONField()
-    iupac_name = models.CharField(max_length=255)
+    iupac_name = models.CharField(max_length=255, unique=True)
     name_formula = models.CharField(max_length=255)
     name_html = models.CharField(max_length=255)
-    canonical_smiles = models.CharField(max_length=255)
-    standard_inchi = models.CharField(max_length=255)
-    standard_inchi_key = models.CharField(max_length=255)
+    smiles = models.CharField(max_length=255, unique=True)
+    standard_inchi = models.CharField(max_length=255, unique=True)
+    standard_inchi_key = models.CharField(max_length=255, unique=True)
     mol_obj = models.MolField(blank=True, null=True)
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
@@ -121,7 +125,7 @@ class SpeciesMetadata(models.Model):
         'Species',
         on_delete=models.PROTECT
     )
-    molecule_tag = models.IntegerField()
+    molecule_tag = models.IntegerField(blank=True)
     hyperfine = models.BooleanField()
     degree_of_freedom = models.IntegerField()
     category = models.CharField(max_length=255)
@@ -138,16 +142,24 @@ class SpeciesMetadata(models.Model):
         max_digits=15, decimal_places=4, blank=True, null=True)
     c_const = models.DecimalField(
         max_digits=15, decimal_places=4, blank=True, null=True)
-    cat = models.ForeignKey(
-        'Catalog',
-        on_delete=models.PROTECT
-    )
     linelist = models.ForeignKey(
         'Linelist',
         on_delete=models.PROTECT
     )
     data_date = models.DateField()
     data_contributor = models.CharField(max_length=255)
+    int_file = models.FileField(null=True, upload_to=sp_file_path,
+                                validators=[FileExtensionValidator(
+                                    allowed_extensions=["int"])])
+    var_file = models.FileField(null=True, upload_to=sp_file_path,
+                                validators=[FileExtensionValidator(
+                                    allowed_extensions=["var"])])
+    fit_file = models.FileField(null=True, upload_to=sp_file_path,
+                                validators=[FileExtensionValidator(
+                                    allowed_extensions=["fit"])])
+    lin_file = models.FileField(null=True, upload_to=sp_file_path,
+                                validators=[FileExtensionValidator(
+                                    allowed_extensions=["lin"])])
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,

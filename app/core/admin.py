@@ -48,7 +48,7 @@ class UserAdmin(BaseUserAdmin):
 class SpeciesAdmin(admin.ModelAdmin):
     """Define the admin pages for users."""
     ordering = ['id']
-    list_display = ['iupac_name', 'name_formula', 'canonical_smiles']
+    list_display = ['iupac_name', 'name_formula', 'smiles']
     fieldsets = (
         (_('Names'), {
          'fields': ('name', 'iupac_name', 'name_formula', 'name_html')}),
@@ -56,7 +56,7 @@ class SpeciesAdmin(admin.ModelAdmin):
             _('Identifiers'),
             {
                 'fields': (
-                    'canonical_smiles',
+                    'smiles',
                     'standard_inchi',
                     'standard_inchi_key',
                     'display_mol',
@@ -88,6 +88,5 @@ admin.site.register(models.Line)
 admin.site.register(models.SpeciesMetadata)
 admin.site.register(models.MetaReference)
 admin.site.register(models.Reference)
-admin.site.register(models.Catalog)
 admin.site.register(models.Linelist)
 admin.site.register(models.Species, SpeciesAdmin)

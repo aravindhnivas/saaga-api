@@ -12,6 +12,8 @@ from data import views
 
 router = DefaultRouter()
 router.register('species', views.SpeciesViewSet)
+router.register('linelist', views.LinelistViewSet)
+router.register('species-metadata', views.SpeciesMetadataViewSet)
 
 app_name = 'data'
 
