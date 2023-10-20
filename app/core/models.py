@@ -17,11 +17,40 @@ import base64
 from django.core.validators import FileExtensionValidator
 
 
+class ArbitraryDecimalField(models.DecimalField):
+    """
+    Custom DecimalField that allows for arbitrary precision
+    (max_digits) and scale (decimal_places).
+    """
+
+    def _check_decimal_places(self):
+        return []
+
+    def _check_max_digits(self):
+        return []
+
+    def _check_decimal_places_and_max_digits(self, **kwargs):
+        return []
+
+    def db_type(self, connection):
+        # pg or bust
+        assert connection.settings_dict["ENGINE"] == \
+            "django.db.backends.postgresql"
+        return "numeric"
+
+
 def sp_file_path(instance, filename):
     """Generate file path for SPFIT/SPCAT (.int, .var, .lin, .fit) files."""
     ext = os.path.splitext(filename)[1]
     filename = f'{uuid.uuid4()}{ext}'
-    return os.path.join('uploads', 'data', filename)
+    return os.path.join('uploads', 'sp', filename)
+
+
+def bib_file_path(instance, filename):
+    """Generage file path for .bib files"""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+    return os.path.join('uploads', 'bib', filename)
 
 
 class UserManager(BaseUserManager):
@@ -71,12 +100,17 @@ class Linelist(models.Model):
         self.linelist_name = self.linelist_name.lower()
         return super(Linelist, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return self.linelist_name
+
 
 class Reference(models.Model):
     """References object."""
     doi = models.CharField(max_length=255, blank=True)
     ref_url = models.CharField(max_length=255)
-    bibtex = models.TextField()
+    bibtex = models.FileField(upload_to=bib_file_path,
+                              validators=[FileExtensionValidator(
+                                  allowed_extensions=["bib"])])
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -84,8 +118,12 @@ class Reference(models.Model):
     )
     notes = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.ref_url
+
 
 class Species(models.Model):
+    """Species object."""
     class Meta:
         verbose_name_plural = 'Species'
     name = models.JSONField()
@@ -95,6 +133,7 @@ class Species(models.Model):
     smiles = models.CharField(max_length=255, unique=True)
     standard_inchi = models.CharField(max_length=255, unique=True)
     standard_inchi_key = models.CharField(max_length=255, unique=True)
+    selfies = models.CharField(max_length=255, unique=True)
     mol_obj = models.MolField(blank=True, null=True)
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
@@ -103,8 +142,13 @@ class Species(models.Model):
     )
     notes = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.iupac_name
+
     @cached_property
     def display_mol(self):
+        """function for displaying the rdkit mol object in the
+        form of image in django admin."""
         if self.mol_obj:
             dm = Draw.PrepareMolForDrawing(self.mol_obj)
             d2d = Draw.MolDraw2DCairo(400, 400)
@@ -119,29 +163,24 @@ class Species(models.Model):
 
 
 class SpeciesMetadata(models.Model):
+    """Species metadata object."""
     class Meta:
         verbose_name_plural = 'Species metadata'
     species = models.ForeignKey(
         'Species',
         on_delete=models.PROTECT
     )
-    molecule_tag = models.IntegerField(blank=True)
+    molecule_tag = models.IntegerField(blank=True, null=True)
     hyperfine = models.BooleanField()
     degree_of_freedom = models.IntegerField()
     category = models.CharField(max_length=255)
     partition_function = models.JSONField()
-    mu_a = models.DecimalField(
-        max_digits=10, decimal_places=5, blank=True, null=True)
-    mu_b = models.DecimalField(
-        max_digits=10, decimal_places=5, blank=True, null=True)
-    mu_c = models.DecimalField(
-        max_digits=10, decimal_places=5, blank=True, null=True)
-    a_const = models.DecimalField(
-        max_digits=15, decimal_places=4, blank=True, null=True)
-    b_const = models.DecimalField(
-        max_digits=15, decimal_places=4, blank=True, null=True)
-    c_const = models.DecimalField(
-        max_digits=15, decimal_places=4, blank=True, null=True)
+    mu_a = ArbitraryDecimalField(null=True)
+    mu_b = ArbitraryDecimalField(null=True)
+    mu_c = ArbitraryDecimalField(null=True)
+    a_const = ArbitraryDecimalField(null=True)
+    b_const = ArbitraryDecimalField(null=True)
+    c_const = ArbitraryDecimalField(null=True)
     linelist = models.ForeignKey(
         'Linelist',
         on_delete=models.PROTECT
@@ -167,6 +206,9 @@ class SpeciesMetadata(models.Model):
     )
     notes = models.TextField(blank=True)
 
+    def __str__(self):
+        return "species metadata of "+self.species.iupac_name
+
 
 class MetaReference(models.Model):
     """Metadata references object."""
@@ -180,7 +222,25 @@ class MetaReference(models.Model):
     )
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
+    entry_date = models.DateTimeField(auto_now_add=True)
+    entry_staff = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT
+    )
     notes = models.TextField(blank=True)
+
+    def __str__(self):
+        if self.dipole_moment and self.spectrum:
+            return "metadata reference for dipole moment \
+        and spectrum of "+self.meta.species.iupac_name
+        elif self.dipole_moment:
+            return "metadata reference for dipole moment of "\
+                + self.meta.species.iupac_name
+        elif self.spectrum:
+            return "metadata reference for spectrum of "\
+                + self.meta.species.iupac_name
+        else:
+            return "metadata reference for "+self.meta.species.iupac_name
 
 
 class Line(models.Model):
@@ -190,14 +250,14 @@ class Line(models.Model):
         on_delete=models.PROTECT
     )
     measured = models.BooleanField()
-    frequency = models.DecimalField(max_digits=11, decimal_places=4)
-    uncertainty = models.DecimalField(max_digits=11, decimal_places=4)
-    intensity = models.DecimalField(max_digits=11, decimal_places=4)
-    s_ij = models.DecimalField(max_digits=11, decimal_places=3)
-    s_ij_mu2 = models.DecimalField(max_digits=25, decimal_places=17)
-    a_ij = models.DecimalField(max_digits=25, decimal_places=17)
-    lower_state_energy = models.DecimalField(max_digits=20, decimal_places=5)
-    upper_state_energy = models.DecimalField(max_digits=25, decimal_places=15)
+    frequency = ArbitraryDecimalField(null=True)
+    uncertainty = ArbitraryDecimalField(null=True)
+    intensity = ArbitraryDecimalField(null=True)
+    s_ij = ArbitraryDecimalField(null=True)
+    s_ij_mu2 = ArbitraryDecimalField(null=True)
+    a_ij = ArbitraryDecimalField(null=True)
+    lower_state_energy = ArbitraryDecimalField(null=True)
+    upper_state_energy = ArbitraryDecimalField(null=True)
     upper_state_degeneracy = models.IntegerField()
     lower_state_qn = models.JSONField()
     upper_state_qn = models.JSONField()
@@ -211,3 +271,6 @@ class Line(models.Model):
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
+
+    def __str__(self):
+        return "line of "+self.meta.species.iupac_name

@@ -14,6 +14,9 @@ router = DefaultRouter()
 router.register('species', views.SpeciesViewSet)
 router.register('linelist', views.LinelistViewSet)
 router.register('species-metadata', views.SpeciesMetadataViewSet)
+router.register('reference', views.ReferenceViewSet)
+router.register('meta-reference', views.MetaReferenceViewSet)
+router.register('line', views.LineViewSet)
 
 app_name = 'data'
 

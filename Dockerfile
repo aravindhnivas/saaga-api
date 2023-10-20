@@ -1,4 +1,4 @@
-# Docker image, alpine is a lightweight version of linux which is ideal for running Docker containers because it's extremely lightweight and efficient.
+# Docker image, bullseye is debian linux distribution
 FROM python:3.9-bullseye
 
 # Maintainer of the software for now.
