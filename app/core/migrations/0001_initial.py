@@ -7,6 +7,7 @@ from django.db import migrations, models
 import django.db.models.deletion
 import django_rdkit.models.fields
 from django.contrib.postgres.operations import CreateExtension
+from django.db.migrations.operations.base import Operation
 
 
 class Migration(migrations.Migration):
@@ -175,4 +176,5 @@ class Migration(migrations.Migration):
                     on_delete=django.db.models.deletion.PROTECT, to='core.speciesmetadata')),
             ],
         ),
+
     ]

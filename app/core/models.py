@@ -257,7 +257,7 @@ class Line(models.Model):
     s_ij_mu2 = ArbitraryDecimalField(null=True)
     a_ij = ArbitraryDecimalField(null=True)
     lower_state_energy = ArbitraryDecimalField(null=True)
-    upper_state_energy = ArbitraryDecimalField(null=True)
+    upper_state_energy = ArbitraryDecimalField()
     upper_state_degeneracy = models.IntegerField()
     lower_state_qn = models.JSONField()
     upper_state_qn = models.JSONField()

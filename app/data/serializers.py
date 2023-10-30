@@ -48,12 +48,18 @@ class SpeciesSerializer(serializers.ModelSerializer):
 
 class SpeciesMetadataSerializer(serializers.ModelSerializer):
     """Serializer for species metadata."""
-    mu_a = serializers.DecimalField(max_digits=None, decimal_places=None)
-    mu_b = serializers.DecimalField(max_digits=None, decimal_places=None)
-    mu_c = serializers.DecimalField(max_digits=None, decimal_places=None)
-    a_const = serializers.DecimalField(max_digits=None, decimal_places=None)
-    b_const = serializers.DecimalField(max_digits=None, decimal_places=None)
-    c_const = serializers.DecimalField(max_digits=None, decimal_places=None)
+    mu_a = serializers.DecimalField(
+        max_digits=None, decimal_places=None, required=False, allow_null=True)
+    mu_b = serializers.DecimalField(
+        max_digits=None, decimal_places=None, required=False, allow_null=True)
+    mu_c = serializers.DecimalField(
+        max_digits=None, decimal_places=None, required=False, allow_null=True)
+    a_const = serializers.DecimalField(
+        max_digits=None, decimal_places=None, required=False, allow_null=True)
+    b_const = serializers.DecimalField(
+        max_digits=None, decimal_places=None, required=False, allow_null=True)
+    c_const = serializers.DecimalField(
+        max_digits=None, decimal_places=None, required=False, allow_null=True)
 
     class Meta:
         model = SpeciesMetadata
@@ -103,6 +109,39 @@ class LineSerializer(serializers.ModelSerializer):
         fields = ['id', 'meta', 'measured', 'frequency', 'uncertainty', 'intensity',
                   's_ij', 's_ij_mu2', 'a_ij', 'lower_state_energy', 'upper_state_energy',
                   'upper_state_degeneracy', 'lower_state_qn', 'upper_state_qn', 'rovibrational',
-                  'pickett_qn_code', 'pickett_lower_state_qn', 'pickett_upper_state_qn',
+                  'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
                   'entry_date', 'entry_staff', 'notes']
         read_only_fields = ['id', 'entry_date', 'entry_staff']
+
+
+class QuerySerializer(serializers.ModelSerializer):
+    """Serilizer for querying lines falling within specified range."""
+    frequency = serializers.DecimalField(max_digits=None, decimal_places=None)
+    uncertainty = serializers.DecimalField(
+        max_digits=None, decimal_places=None)
+    intensity = serializers.DecimalField(max_digits=None, decimal_places=None)
+    s_ij = serializers.DecimalField(max_digits=None, decimal_places=None)
+    s_ij_mu2 = serializers.DecimalField(max_digits=None, decimal_places=None)
+    a_ij = serializers.DecimalField(max_digits=None, decimal_places=None)
+    lower_state_energy = serializers.DecimalField(
+        max_digits=None, decimal_places=None)
+    upper_state_energy = serializers.DecimalField(
+        max_digits=None, decimal_places=None)
+
+    class Meta:
+        model = Line
+        fields = ['frequency', 'measured', 'uncertainty', 'intensity', 'lower_state_qn', 'upper_state_qn',
+                  'lower_state_energy', 'upper_state_energy', 's_ij', 's_ij_mu2', 'a_ij',
+                  'rovibrational']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['name_formula'] = instance.meta.species.name_formula
+        representation['iupac_name'] = instance.meta.species.iupac_name
+        representation['name'] = instance.meta.species.name
+        representation['hyperfine'] = instance.meta.hyperfine
+        representation['linelist'] = instance.meta.linelist.linelist_name
+        representation['meta_id'] = instance.meta.id
+        representation['smiles'] = instance.meta.species.smiles
+        representation['selfies'] = instance.meta.species.selfies
+        return representation

@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from django_rdkit.models import *
 from core.models import Species, Linelist, SpeciesMetadata, Reference, MetaReference, Line
 from data import serializers
 from rdkit import Chem
@@ -14,7 +15,7 @@ import selfies as sf
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy as _
 import requests
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, extend_schema_view
 from django.http import FileResponse
 import io
 
@@ -35,6 +36,22 @@ class LinelistViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Retrieve linelists."""
         return self.queryset.order_by('-id')
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if protected, cannot be deleted, show error message
+        except ProtectedError as exception:
+            message = f"Cannot delete as linelist({str(instance)}) is being referenced through protected foreign key"
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": str(type(exception)), "message": message},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ReferenceViewSet(viewsets.ModelViewSet):
@@ -107,7 +124,24 @@ class ReferenceViewSet(viewsets.ModelViewSet):
         else:
             return Response({'error': _('No bibtex_ids provided')}, status=status.HTTP_400_BAD_REQUEST)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
+        # if protected, cannot be deleted, show error message
+        except ProtectedError as exception:
+            message = f"Cannot delete as {str(instance)} is being referenced through protected foreign key"
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": str(type(exception)), "message": message},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema_view(list=extend_schema(parameters=[OpenApiParameter("substruct", OpenApiTypes.STR, description="Filter species by substructure")]))
 class SpeciesViewSet(viewsets.ModelViewSet):
     """View for species APIs."""
     serializer_class = serializers.SpeciesSerializer
@@ -122,7 +156,10 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        """Retrieve species """
+        """Retrieve species"""
+        substruct = self.request.query_params.get('substruct')
+        if substruct:
+            return self.queryset.filter(mol_obj__hassubstruct=substruct).order_by('-id')
         return self.queryset.order_by('-id')
 
     def perform_create(self, serializer):
@@ -135,6 +172,22 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         rdkit_mol_obj = Chem.MolFromSmiles(canonical_smiles)
         serializer.save(entry_staff=self.request.user, mol_obj=rdkit_mol_obj,
                         smiles=canonical_smiles, selfies=selfies_string)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if protected, cannot be deleted, show error message
+        except ProtectedError as exception:
+            message = f"Cannot delete as {str(instance)} is being referenced through protected foreign key"
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": str(type(exception)), "message": message},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SpeciesMetadataViewSet(viewsets.ModelViewSet):
@@ -176,6 +229,22 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        # if protected, cannot be deleted, show error message
+        except ProtectedError as exception:
+            message = f"Cannot delete as {str(instance)} is being referenced through protected foreign key"
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": str(type(exception)), "message": message},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+
 
 class MetaReferenceViewSet(viewsets.ModelViewSet):
     """View for meta reference APIs."""
@@ -216,6 +285,33 @@ class LineViewSet(viewsets.ModelViewSet):
         """Retrieve line."""
         return self.queryset.order_by('-id')
 
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'query':
+            return serializers.QuerySerializer
+        return self.serializer_class
+
     def perform_create(self, serializer):
         """Create a line."""
         serializer.save(entry_staff=self.request.user)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("min_freq", OpenApiTypes.STR,
+                             description="Filter lines with frequency greater than or equal to this value"),
+            OpenApiParameter("max_freq", OpenApiTypes.STR,
+                             description="Filter lines with frequency less than or equal to this value")
+        ]
+    )
+    @action(methods=['GET'], detail=False, url_path='query')
+    def query(self, request):
+        min_freq = request.query_params.get('min_freq')
+        max_freq = request.query_params.get('max_freq')
+        queryset = self.get_queryset()
+        if min_freq and max_freq:
+            queryset = queryset.filter(
+                frequency__gte=min_freq, frequency__lte=max_freq)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': _('No min_freq or max_freq provided')}, status=status.HTTP_400_BAD_REQUEST)
