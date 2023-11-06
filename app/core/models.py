@@ -40,7 +40,7 @@ class ArbitraryDecimalField(models.DecimalField):
 
 
 def sp_file_path(instance, filename):
-    """Generate file path for SPFIT/SPCAT (.int, .var, .lin, .fit) files."""
+    """Generate file path for SPFIT/SPCAT (.int, .var, .lin, .fit, .qpart) files."""
     ext = os.path.splitext(filename)[1]
     filename = f'{uuid.uuid4()}{ext}'
     return os.path.join('uploads', 'sp', filename)
@@ -130,6 +130,7 @@ class Species(models.Model):
     iupac_name = models.CharField(max_length=255, unique=True)
     name_formula = models.CharField(max_length=255)
     name_html = models.CharField(max_length=255)
+    molecular_mass = ArbitraryDecimalField(null=True)
     smiles = models.CharField(max_length=255, unique=True)
     standard_inchi = models.CharField(max_length=255, unique=True)
     standard_inchi_key = models.CharField(max_length=255, unique=True)
@@ -199,6 +200,8 @@ class SpeciesMetadata(models.Model):
     lin_file = models.FileField(null=True, upload_to=sp_file_path,
                                 validators=[FileExtensionValidator(
                                     allowed_extensions=["lin"])])
+    qpart_file = models.FileField(upload_to=sp_file_path, validators=[
+                                  FileExtensionValidator(allowed_extensions=["qpart"])])
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -257,14 +260,16 @@ class Line(models.Model):
     s_ij_mu2 = ArbitraryDecimalField(null=True)
     a_ij = ArbitraryDecimalField(null=True)
     lower_state_energy = ArbitraryDecimalField(null=True)
-    upper_state_energy = ArbitraryDecimalField()
-    upper_state_degeneracy = models.IntegerField()
+    upper_state_energy = ArbitraryDecimalField(null=True)
+    lower_state_degeneracy = models.IntegerField(null=True)
+    upper_state_degeneracy = models.IntegerField(null=True)
     lower_state_qn = models.JSONField()
     upper_state_qn = models.JSONField()
     rovibrational = models.BooleanField()
-    pickett_qn_code = models.IntegerField()
-    pickett_lower_state_qn = models.JSONField()
-    pickett_upper_state_qn = models.JSONField()
+    vib_qn = models.CharField(max_length=255, blank=True)
+    pickett_qn_code = models.IntegerField(null=True)
+    pickett_lower_state_qn = models.JSONField(null=True)
+    pickett_upper_state_qn = models.JSONField(null=True)
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
