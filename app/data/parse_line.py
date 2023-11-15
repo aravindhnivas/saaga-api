@@ -82,47 +82,81 @@ def _read_spcat(filein):
 
     # now we use a sub-function to fix the letters and +/- that show up in gup, and the qns, and returns floats
     def _fix_spcat(x):
-        '''Fixes letters and +/- in something that's read in and returns floats'''
+        '''Fixes letters in something that's read in and returns floats'''
 
         # fix blanks - we just want them to be nice nones rather than empty strings
 
         if x == '':
             return None
 
-        sub_dict = {'a': 100,
-                    'b': 110,
-                    'c': 120,
-                    'd': 130,
-                    'e': 140,
-                    'f': 150,
-                    'g': 160,
-                    'h': 170,
-                    'i': 180,
-                    'j': 190,
-                    'k': 200,
-                    'l': 210,
-                    'm': 220,
-                    'n': 230,
-                    'o': 240,
-                    'p': 250,
-                    'q': 260,
-                    'r': 270,
-                    's': 280,
-                    't': 290,
-                    'u': 300,
-                    'v': 310,
-                    'w': 320,
-                    'x': 330,
-                    'y': 340,
-                    'z': 350,
+        sub_dict = {'A': 100,
+                    'B': 110,
+                    'C': 120,
+                    'D': 130,
+                    'E': 140,
+                    'F': 150,
+                    'G': 160,
+                    'H': 170,
+                    'I': 180,
+                    'J': 190,
+                    'K': 200,
+                    'L': 210,
+                    'M': 220,
+                    'N': 230,
+                    'O': 240,
+                    'P': 250,
+                    'Q': 260,
+                    'R': 270,
+                    'S': 280,
+                    'T': 290,
+                    'U': 300,
+                    'V': 310,
+                    'W': 320,
+                    'X': 330,
+                    'Y': 340,
+                    'Z': 350,
+                    'a': -10,
+                    'b': -20,
+                    'c': -30,
+                    'd': -40,
+                    'e': -50,
+                    'f': -60,
+                    'g': -70,
+                    'h': -80,
+                    'i': -90,
+                    'j': -100,
+                    'k': -110,
+                    'l': -120,
+                    'm': -130,
+                    'n': -140,
+                    'o': -150,
+                    'p': -160,
+                    'q': -170,
+                    'r': -180,
+                    's': -190,
+                    't': -200,
+                    'u': -210,
+                    'v': -220,
+                    'w': -230,
+                    'x': -240,
+                    'y': -250,
+                    'z': -260,
                     }
+        # spinv said the minimum quantum number is -259, but I think it's a mistake, it should be able to store down to -269.
 
+        # replace any characters that are NOT alphabets with an empty string
         alpha = re.sub('[^a-zA-Z]+', '', x)
 
         if alpha == '':
             return int(x)
         else:
-            return sub_dict.get(alpha.lower(), 0) + int(x[1])
+            alphabet = sub_dict.get(alpha, 0)
+            if alphabet < 0:
+                # if it's negative, we need to subtract
+                return alphabet - int(x[1])
+            else:
+                # if it's positive, we need to add
+                return alphabet + int(x[1])
 
     # run the other arrays through the fixer, then convert them to what they need to be
 
@@ -230,9 +264,6 @@ def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low, qn6low, qn7low, qn8
                      qn3up, qn4up, qn5up, qn6up, qn7up, qn8up, frequency, elow, gup,
                      qn_list_low, qn_list_up, level_qns, level_dict, qnstrfmt=None):
 
-    # a list to hold levels
-    levels = []
-
     # we need to sort out unique levels from our catalog.  Those will have unique quantum
     # numbers. When we find a match to a lower level, add the info in.
     for x in range(len(frequency)):
@@ -290,7 +321,7 @@ def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low, qn6low, qn7low, qn8
     return level_dict
 
 
-def parse_cat(filein, qnstrfmt=None, partition_dict=None,
+def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
               qpart_file=None):
     '''
     Loads a molecule in from a catalog file.  Default catalog type is molsim.  Override
@@ -415,5 +446,21 @@ def parse_cat(filein, qnstrfmt=None, partition_dict=None,
 
     # set sijmu and aij
     cat._set_sijmu_aij(qpart)
+    if len(qn_label_list) != len(cat.qnlow_str[0])/2 or len(qn_label_list) != len(cat.qnup_str[0])/2:
+        raise ValueError(
+            'Quantum number labels do not match the number of quantum numbers in .cat file')
+    lower_state_qn_dict_list = []
+    upper_state_qn_dict_list = []
 
-    return cat.frequency, cat.freq_err, cat.logint, cat.sijmu, cat.aij, cat.elow, cat.eup, cat.glow, cat.gup, cat.qnformat, cat.qnlow_str, cat.qnup_str
+    for i in range(len(cat.frequency)):
+        lower_state_qn_dict = {}
+        upper_state_qn_dict = {}
+        j = 0
+        for qn_label in qn_label_list:
+            lower_state_qn_dict[qn_label] = int(cat.qnlow_str[i][j:j+2])
+            upper_state_qn_dict[qn_label] = int(cat.qnup_str[i][j:j+2])
+            j += 2
+        lower_state_qn_dict_list.append(lower_state_qn_dict)
+        upper_state_qn_dict_list.append(upper_state_qn_dict)
+
+    return cat.frequency, cat.freq_err, cat.logint, cat.sijmu, cat.aij, cat.elow, cat.eup, cat.glow, cat.gup, cat.qnformat, cat.qnlow_str, cat.qnup_str, lower_state_qn_dict_list, upper_state_qn_dict_list

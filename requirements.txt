@@ -8,3 +8,4 @@ selfies==2.1.1
 requests==2.31.0
 numpy==1.26.1
 scipy==1.11.3
+django-simple-history==3.4.0

@@ -156,9 +156,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new species."""
-        received_json = json.dumps(self.request.data)
-        json_dict = json.loads(received_json)
-        smiles = json_dict['smiles']
+        smiles = self.request.data.get('smiles')
         canonical_smiles = Chem.CanonSmiles(smiles)
         selfies_string = sf.encoder(canonical_smiles)
         rdkit_mol_obj = Chem.MolFromSmiles(canonical_smiles)
@@ -290,6 +288,8 @@ class LineViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve line."""
+        if self.action == 'query':
+            return self.queryset.order_by('frequency').select_related("meta", "meta__species", "meta__linelist")
         return self.queryset.order_by('-id')
 
     def get_serializer_class(self):
@@ -298,34 +298,97 @@ class LineViewSet(viewsets.ModelViewSet):
             return serializers.QuerySerializer
         return self.serializer_class
 
+    def _get_qn_str_list(self, qn_str):
+        """Convert a list of strings to integers."""
+        return qn_str.split(',')
+
     def create(self, request, *args, **kwargs):
         """Create a line."""
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         meta_id = request.data['meta']
-        measured = request.data['measured']
-        lower_state_qn = request.data['lower_state_qn']
-        upper_state_qn = request.data['upper_state_qn']
-        rovibrational = request.data['rovibrational']
+        measured = False  # default measured to false right now
+        qn_label_list = self._get_qn_str_list(
+            request.data['qn_label_str'])
+        contains_rovibrational = request.data['contains_rovibrational']
         vib_qn = request.data['vib_qn']
+        if eval(contains_rovibrational.capitalize()):
+            if not vib_qn:
+                response_msg = {
+                    "code": "server_error",
+                    "message": _("Internal server error."),
+                    "error": {"type": "ValidationError", "message": "Vibrational quantum number label must be provided if rovibrational is true"}
+                }
+                return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+            if vib_qn not in qn_label_list:
+                response_msg = {
+                    "code": "server_error",
+                    "message": _("Internal server error."),
+                    "error": {"type": "ValidationError", "message": "Vibrational quantum number label must be in quantum number label string."}
+                }
+                return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if vib_qn:
+                response_msg = {
+                    "code": "server_error",
+                    "message": _("Internal server error."),
+                    "error": {"type": "ValidationError", "message": "Vibrational quantum number label must be empty if there is no rovibrational transition"}
+                }
+                return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         notes = request.data['notes']
         cat_file = request.FILES.get('cat_file')
+        if cat_file.name.split('.')[-1] != 'cat':
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": "ValidationError", "message": "The file you uploaded is not a .cat file. Please upload a .cat file."},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         meta_obj = SpeciesMetadata.objects.get(id=meta_id)
-        qpart_file = meta_obj.qpart_file.open('r')
-        frequency, uncertainty, intensity, s_ij_mu2, a_ij, lower_state_energy, upper_state_energy, \
-            lower_state_degeneracy, upper_state_degeneracy, pickett_qn_code, \
-            pickett_lower_state_qn, pickett_upper_state_qn = parse_cat(
-                cat_file, qpart_file=qpart_file)
+        qpart_file = None
+        try:
+            qpart_file = meta_obj.qpart_file.open('r')
+        except FileNotFoundError:
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": "FileNotFoundError", "message": "The species metadata you selected does not have a qpart file. Please upload the qpart file."},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            frequency, uncertainty, intensity, s_ij_mu2, a_ij, lower_state_energy, upper_state_energy, \
+                lower_state_degeneracy, upper_state_degeneracy, pickett_qn_code, \
+                pickett_lower_state_qn, pickett_upper_state_qn, lower_state_qn_dict_list, upper_state_qn_dict_list = parse_cat(
+                    cat_file, qn_label_list=qn_label_list, qpart_file=qpart_file)
+        except ValueError:
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": "ValueError", "message": "Quantum number labels do not match the number of quantum numbers in .cat file. Please check the labels and try again."},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         input_dict_list = []
-        for i in range(len(frequency)):
-            input_dict_list.append({'meta': meta_id, 'measured': measured, 'frequency': frequency[i], 'uncertainty': uncertainty[i],
-                                    'intensity': intensity[i], 's_ij': None, 's_ij_mu2': s_ij_mu2[i], 'a_ij': a_ij[i],
-                                    'lower_state_energy': lower_state_energy[i], 'upper_state_energy': upper_state_energy[i],
-                                    'lower_state_degeneracy': lower_state_degeneracy[i], 'upper_state_degeneracy': upper_state_degeneracy[i],
-                                    'lower_state_qn': lower_state_qn, 'upper_state_qn': upper_state_qn,
-                                    'rovibrational': rovibrational, 'vib_qn': vib_qn, 'pickett_qn_code': pickett_qn_code[i],
-                                    'pickett_lower_state_qn': pickett_lower_state_qn[i], 'pickett_upper_state_qn': pickett_upper_state_qn[i],
-                                    'entry_staff': request.user.id, 'notes': notes, 'cat_file': cat_file})
-        # print(input_dict_list)
-        # if serializer.is_valid():
+        if eval(contains_rovibrational.capitalize()):
+            for i in range(len(frequency)):
+                input_dict_list.append({'meta': meta_id, 'measured': measured, 'frequency': format(frequency[i], '.4f'), 'uncertainty': format(uncertainty[i], '.4f'),
+                                        'intensity': format(intensity[i], '.4f'), 's_ij': None, 's_ij_mu2': s_ij_mu2[i], 'a_ij': a_ij[i],
+                                        'lower_state_energy': lower_state_energy[i], 'upper_state_energy': upper_state_energy[i],
+                                        'lower_state_degeneracy': lower_state_degeneracy[i], 'upper_state_degeneracy': upper_state_degeneracy[i],
+                                        'lower_state_qn': lower_state_qn_dict_list[i], 'upper_state_qn': upper_state_qn_dict_list[i],
+                                        'rovibrational': not lower_state_qn_dict_list[i][vib_qn] == upper_state_qn_dict_list[i][vib_qn], 'vib_qn': vib_qn, 'pickett_qn_code': pickett_qn_code[i],
+                                        'pickett_lower_state_qn': pickett_lower_state_qn[i], 'pickett_upper_state_qn': pickett_upper_state_qn[i],
+                                        'entry_staff': request.user.id, 'notes': notes})
+        else:
+            for i in range(len(frequency)):
+                input_dict_list.append({'meta': meta_id, 'measured': measured, 'frequency': format(frequency[i], '.4f'), 'uncertainty': format(uncertainty[i], '.4f'),
+                                        'intensity': format(intensity[i], '.4f'), 's_ij': None, 's_ij_mu2': s_ij_mu2[i], 'a_ij': a_ij[i],
+                                        'lower_state_energy': lower_state_energy[i], 'upper_state_energy': upper_state_energy[i],
+                                        'lower_state_degeneracy': lower_state_degeneracy[i], 'upper_state_degeneracy': upper_state_degeneracy[i],
+                                        'lower_state_qn': lower_state_qn_dict_list[i], 'upper_state_qn': upper_state_qn_dict_list[i],
+                                        'rovibrational': False, 'vib_qn': vib_qn, 'pickett_qn_code': pickett_qn_code[i],
+                                        'pickett_lower_state_qn': pickett_lower_state_qn[i], 'pickett_upper_state_qn': pickett_upper_state_qn[i],
+                                        'entry_staff': request.user.id, 'notes': notes})
         serializer = serializers.LineSerializerList(
             data=input_dict_list)
         if serializer.is_valid():
@@ -352,4 +415,4 @@ class LineViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'error': _('No min_freq or max_freq provided')}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('No min_freq and/or max_freq provided')}, status=status.HTTP_400_BAD_REQUEST)

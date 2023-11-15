@@ -130,7 +130,8 @@ class Catalog(object):
 
     def _unpack_catdict(self):
         '''
-        If a dictionary of data was provided, go ahead and use that to unpack things.
+        If a dictionary of data was provided,
+        go ahead and use that to unpack things.
         '''
 
         if self.catdict is not None:
@@ -212,15 +213,20 @@ class Catalog(object):
                 self.version = self.catdict['version']
             if all(['source' in self.catdict, self.source is None]):
                 self.source = self.catdict['source']
-            if all(['last_update' in self.catdict, self.last_update is None]):
+            if all(['last_update' in self.catdict,
+                    self.last_update is None]):
                 self.last_update = self.catdict['last_update']
-            if all(['contributor_name' in self.catdict, self.contributor_name is None]):
+            if all(['contributor_name' in self.catdict,
+                    self.contributor_name is None]):
                 self.contributor_name = self.catdict['contributor_name']
-            if all(['contributor_email' in self.catdict, self.contributor_email is None]):
+            if all(['contributor_email' in self.catdict,
+                    self.contributor_email is None]):
                 self.contributor_email = self.catdict['contributor_email']
-            if all(['notes' in self.catdict, self.notes is None]):
+            if all(['notes' in self.catdict,
+                    self.notes is None]):
                 self.notes = self.catdict['notes']
-            if all(['refs' in self.catdict, self.refs is None]):
+            if all(['refs' in self.catdict,
+                    self.refs is None]):
                 self.refs = self.catdict['refs']
 
         return
@@ -255,8 +261,10 @@ class Level(object):
         nqns=None,  # number of quantum numbers
         id=None,  # unique ID for this level
         trans=None,  # IDs of all transitions that link to this level
-        ltrans=None,  # IDs of all transitions for which this is the lower state
-        utrans=None,  # IDs of all transitions for which this is the upper state
+        ltrans=None,
+        # IDs of all transitions for which this is the lower state
+        utrans=None,
+        # IDs of all transitions for which this is the upper state
         qnstrfmt=None,  # quantum number string format
         qnstr=None,  # complete quantum number string
         qnstr_tex=None,  # complete quantum number string with LaTeX code
@@ -290,23 +298,30 @@ class Level(object):
 class PartitionFunction(object):
 
     '''
-    The partitionfunction class holds all of the info necessary to calculate a partion
-    function for a molecule.  The calculation method is flexible.  
+    The partitionfunction class holds all of the
+      info necessary to calculate a partion
+    function for a molecule.  The calculation
+      method is flexible.
 
     Notes
     -----
-    If more than one method of calculation is specified, the program will default to 
-    using a specified functional form first, then a list of values for interpolation,
-    then explicit state counting.  
+    If more than one method of calculation is specified,
+    the program will default to
+    using a specified functional form first,
+    then a list of values for interpolation,
+    then explicit state counting.
 
-    If no methods are specified, the partition function is set to 1. for all values.
+    If no methods are specified, the partition function
+    is set to 1. for all values.
 
     To specify a functional form, provide values for 'form' and 'params'.
 
-    To specify a set of values for interpolation, provide arrays for 'temps' and 'vals'.
+    To specify a set of values for interpolation, provide
+    arrays for 'temps' and 'vals'.
 
-    To specify explicit state counting, either provide arrays of degeneracies ('gs') and
-    'energies' to be used, or a catalog object for 'cat' to pull these values from. 
+    To specify explicit state counting, either provide arrays of
+    degeneracies ('gs') and 'energies' to be used, or a catalog
+    object for 'cat' to pull these values from.
     Optionally, a sigma value can be specified with 'sigma'.
 
     Vibrational states can be optionally specified (see below).
@@ -316,19 +331,23 @@ class PartitionFunction(object):
     Attributes
     ----------
     form : str
-            The type of functional form you wish to use to calculate.  Currently supported
-            options are:
-                    'poly' or 'polynomial' for a polynomial of arbitrary order, including linear
-                    'pow' or 'power' for a power law (Q = A*T^pow + B)
-                    'rotcons' to estimate from the rotational constants via Gordy & Cook
+            The type of functional form you wish to use to calculate.
+            Currently supported options are:
+                - 'poly' or 'polynomial' for a polynomial
+                of arbitrary order, including linear
+                - 'pow' or 'power' for a power law (Q = A*T^pow + B)
+                - 'rotcons' to estimate from the rotational constants
+                via Gordy & Cook
 
     params : list
-            The parameters for your functional form calculation.  Should be a list of floats.
+            The parameters for your functional form calculation.
+            Should be a list of floats.
             Formatting is specified as follows:
 
                     polynomial
                     ----------
-                            A list in increasing order of T.  For example:
+                            A list in increasing order of T.
+                            For example:
                                     [1.4, -3.2, 6.5]
                             produces the functional form:
                                     Qr = 1.4 - 3.2*T + 6.5*T^2
@@ -342,50 +361,61 @@ class PartitionFunction(object):
                     -------
                             All constants must be expressed in units of MHz
                             [B] for a linear molecule
-                            [A, B, [sigma]] for a symmetric top.  sigma is optional and defaults to 1
-                            [A, B, C, [sigma]] for a non-linear molecule, sigma is optional and defaults to 1
+                            [A, B, [sigma]] for a symmetric top.
+                            sigma is optional and defaults to 1
+                            [A, B, C, [sigma]] for a non-linear molecule,
+                            sigma is optional and defaults to 1
 
-                            WARNING: This produces at best an OK approximation.  Often use of this 
-                            formulation results in partition functions that are incorrect by factors 
-                            of a few to an order of magnitude for all but the simplest of cases.
+                            WARNING: This produces at best an OK approximation.
+                            Often use of this formulation results in partition
+                            functions that are incorrect by factors of a few
+                            to an order of magnitude for all but the simplest
+                            of cases.
 
                             Examples:
 
-                                    [42000] invokes:
-                                            Qr = kT/hB (Eq. 3.64 in Gordy & Cook)
-                                                    and produces:
-                                            Qr = kT/h(4200)
+                                [42000] invokes:
+                                Qr = kT/hB (Eq. 3.64 in Gordy & Cook)
+                                    and produces:
+                                Qr = kT/h(4200)
 
-                                    [2500, 1500] invokes:
-                                            Qr = (5.34E6/sigma)*sqrt((T^3/(B^2*A))) (Eq. 3.68 in Gordy & Cook)
-                                                    and produces:
-                                            Qr = (5.34E6/1)*sqrt((T^3/((1500)^2*(2500))))
+                                [2500, 1500] invokes:
+                                Qr = (5.34E6/sigma)*sqrt((T^3/(B^2*A)))
+                                (Eq. 3.68 in Gordy & Cook)
+                                    and produces:
+                                Qr = (5.34E6/1)*sqrt((T^3/((1500)^2*(2500))))
 
-                                    [2500, 1500, [2]] invokes:	
-                                            Qr = (5.34E6/sigma)*sqrt((T^3/(B^2*A))) (Eq. 3.68 in Gordy & Cook)
-                                                    and produces:
-                                            Qr = (5.34E6/2)*sqrt((T^3/((1500)^2*(2500))))	
+                                [2500, 1500, [2]] invokes:
+                                Qr = (5.34E6/sigma)*sqrt((T^3/(B^2*A)))
+                                (Eq. 3.68 in Gordy & Cook)
+                                    and produces:
+                                Qr = (5.34E6/2)*sqrt((T^3/((1500)^2*(2500))))
 
-                                    [2500, 1500, 750] invokes:
-                                            Qr = (5.34E6/sigma)*sqrt((T^3/(ABC))) (Eq. 3.69 in Gordy & Cook)
-                                                    and produces:
-                                            Qr = (5.34E6/1)*sqrt((T^3/(750 * 1500 * 2500)))	
+                                [2500, 1500, 750] invokes:
+                                Qr = (5.34E6/sigma)*sqrt((T^3/(ABC)))
+                                (Eq. 3.69 in Gordy & Cook)
+                                    and produces:
+                                Qr = (5.34E6/1)*sqrt((T^3/(750 * 1500 * 2500)))
 
-                                    [2500, 1500, 750, [2]] invokes:
-                                            Qr = (5.34E6/sigma)*sqrt((T^3/(ABC))) (Eq. 3.69 in Gordy & Cook)
-                                                    and produces:
-                                            Qr = (5.34E6/2)*sqrt((T^3/(750 * 1500 * 2500)))	
+                                [2500, 1500, 750, [2]] invokes:
+                                Qr = (5.34E6/sigma)*sqrt((T^3/(ABC)))
+                                (Eq. 3.69 in Gordy & Cook)
+                                    and produces:
+                                Qr = (5.34E6/2)*sqrt((T^3/(750 * 1500 * 2500)))
 
     temps : array
-            A numpy array of the temperatures to use in interpolating partition function 
-            values. Units are Kelvin.  Interpolation is linear between points.
+            A numpy array of the temperatures to use in interpolating
+            partition function values. Units are Kelvin.
+            Interpolation is linear between points.
 
     vals : array
-            A numpy array of the partition function values at the temperatures specified
-            in 'temps'.  Interpolation is linear between points.
+            A numpy array of the partition function values at
+            the temperatures specified in 'temps'.
+            Interpolation is linear between points.
 
     mol : Molecule object
-            A Molecule object that contains degeneracies and energies used for state counting
+            A Molecule object that contains degeneracies
+            and energies used for state counting
 
     gs : array
             A numpy array of the degeracies of each state for state counting
@@ -394,7 +424,8 @@ class PartitionFunction(object):
             A numpy array of the energies of each state for state counting
 
     sigma : int
-            A symmetry parameter optionally used to alter state counting.  Defaults to 1.		
+            A symmetry parameter optionally used to alter state counting.
+            Defaults to 1.
 
     vib_states : array
             A numpy array of vibrational states.  Units of wavenumbers (cm-1).
@@ -403,7 +434,7 @@ class PartitionFunction(object):
             Set to True if vibstates are given in Kelvin
 
     notes :	str
-            Any notes for this partition function.																
+            Any notes for this partition function.														
 
     '''
 
@@ -453,7 +484,8 @@ class PartitionFunction(object):
                 linesplit = qpart_raw[i].split(':')
                 if 'form' in linesplit[0]:
                     self.form = linesplit[1].strip()
-                    if self.form in ['poly', 'polynomial', 'power', 'pow', 'rotcons']:
+                    if self.form in ['poly', 'polynomial',
+                                     'power', 'pow', 'rotcons']:
                         self.flag = 'functional'
                     else:
                         self.flag = linesplit[1].strip()
@@ -471,8 +503,9 @@ class PartitionFunction(object):
             self.temps = np.array(t_arr)
             self.vals = np.array(q_arr)
         if self.form in ['pow', 'power']:
-            self.params = [float(qpart_raw[form_line].split(',')[0].strip()), float(
-                qpart_raw[form_line].split(',')[1].strip()), float(qpart_raw[form_line].split(',')[2].strip())]
+            self.params = [float(qpart_raw[form_line].split(',')[0].strip()),
+                           float(qpart_raw[form_line].split(',')[1].strip()),
+                           float(qpart_raw[form_line].split(',')[2].strip())]
         if self.form in ['poly', 'polynomial']:
             self.params = []
             for x in qpart_raw[form_line].split(','):
@@ -485,8 +518,8 @@ class PartitionFunction(object):
 
     def _check_functional(self):
         '''
-        Checks to make sure the user specified the type of functional form and that
-        it is on the list of ones the program can handle.
+        Checks to make sure the user specified the type of functional
+        form and that it is on the list of ones the program can handle.
         '''
 
         if self.flag != 'functional':

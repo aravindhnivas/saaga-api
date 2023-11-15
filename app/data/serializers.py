@@ -92,17 +92,19 @@ class LineSerializer(serializers.ModelSerializer):
     upper_state_energy = serializers.DecimalField(
         max_digits=None, decimal_places=None, read_only=True)
     cat_file = serializers.FileField(write_only=True)
+    qn_label_str = serializers.CharField(write_only=True)
+    contains_rovibrational = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = Line
-        fields = ['id', 'meta', 'measured', 'cat_file', 'frequency', 'uncertainty', 'intensity',
-                  's_ij', 's_ij_mu2', 'a_ij', 'lower_state_energy', 'upper_state_energy', 'lower_state_degeneracy',
-                  'upper_state_degeneracy', 'lower_state_qn', 'upper_state_qn', 'rovibrational', 'vib_qn',
+        fields = ['id', 'meta', 'measured', 'cat_file', 'qn_label_str', 'frequency', 'uncertainty', 'intensity',
+                  's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy', 'lower_state_energy',
+                  'upper_state_degeneracy', 'lower_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'contains_rovibrational', 'rovibrational', 'vib_qn',
                   'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
                   'entry_date', 'entry_staff', 'notes']
-        read_only_fields = ['id', 'frequency', 'uncertainty', 'intensity',
+        read_only_fields = ['id', 'measured', 'frequency', 'uncertainty', 'intensity',
                             's_ij', 's_ij_mu2', 'a_ij', 'lower_state_energy', 'upper_state_energy', 'lower_state_degeneracy',
-                            'upper_state_degeneracy', 'pickett_qn_code', 'pickett_upper_state_qn',
+                            'upper_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'rovibrational', 'pickett_qn_code', 'pickett_upper_state_qn',
                             'pickett_lower_state_qn', 'entry_date', 'entry_staff']
 
 
@@ -127,8 +129,8 @@ class LineSerializerListChild(serializers.ModelSerializer):
     class Meta:
         model = Line
         fields = ['id', 'meta', 'measured', 'frequency', 'uncertainty', 'intensity',
-                  's_ij', 's_ij_mu2', 'a_ij', 'lower_state_energy', 'upper_state_energy', 'lower_state_degeneracy',
-                  'upper_state_degeneracy', 'lower_state_qn', 'upper_state_qn', 'rovibrational', 'vib_qn',
+                  's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy', 'lower_state_energy',
+                  'upper_state_degeneracy', 'lower_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'rovibrational', 'vib_qn',
                   'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
                   'entry_date', 'entry_staff', 'notes']
         read_only_fields = ['id', 'entry_date']
@@ -168,6 +170,7 @@ class QuerySerializer(serializers.ModelSerializer):
         representation['name_formula'] = instance.meta.species.name_formula
         representation['iupac_name'] = instance.meta.species.iupac_name
         representation['name'] = instance.meta.species.name
+        representation['molecule_tag'] = instance.meta.molecule_tag
         representation['hyperfine'] = instance.meta.hyperfine
         representation['linelist'] = instance.meta.linelist.linelist_name
         representation['meta_id'] = instance.meta.id

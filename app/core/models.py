@@ -15,6 +15,8 @@ from django.utils.html import format_html
 from rdkit.Chem import Draw
 import base64
 from django.core.validators import FileExtensionValidator
+from simple_history.models import HistoricalRecords
+from simple_history import register
 
 
 class ArbitraryDecimalField(models.DecimalField):
@@ -40,7 +42,8 @@ class ArbitraryDecimalField(models.DecimalField):
 
 
 def sp_file_path(instance, filename):
-    """Generate file path for SPFIT/SPCAT (.int, .var, .lin, .fit, .qpart) files."""
+    """Generate file path for SPFIT/SPCAT
+    (.int, .var, .lin, .fit, .qpart) files."""
     ext = os.path.splitext(filename)[1]
     filename = f'{uuid.uuid4()}{ext}'
     return os.path.join('uploads', 'sp', filename)
@@ -93,8 +96,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
 
 
+register(User)
+
+
 class Linelist(models.Model):
     linelist_name = models.CharField(max_length=255, unique=True)
+    history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
         self.linelist_name = self.linelist_name.lower()
@@ -117,6 +124,7 @@ class Reference(models.Model):
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.ref_url
@@ -142,6 +150,7 @@ class Species(models.Model):
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.iupac_name
@@ -201,13 +210,15 @@ class SpeciesMetadata(models.Model):
                                 validators=[FileExtensionValidator(
                                     allowed_extensions=["lin"])])
     qpart_file = models.FileField(upload_to=sp_file_path, validators=[
-                                  FileExtensionValidator(allowed_extensions=["qpart"])])
+                                  FileExtensionValidator(
+                                      allowed_extensions=["qpart"])])
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         return "species metadata of "+self.species.iupac_name
@@ -231,6 +242,7 @@ class MetaReference(models.Model):
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         if self.dipole_moment and self.spectrum:
@@ -268,14 +280,20 @@ class Line(models.Model):
     rovibrational = models.BooleanField()
     vib_qn = models.CharField(max_length=255, blank=True)
     pickett_qn_code = models.IntegerField(null=True)
-    pickett_lower_state_qn = models.JSONField(null=True)
-    pickett_upper_state_qn = models.JSONField(null=True)
+    pickett_lower_state_qn = models.CharField(max_length=255)
+    pickett_upper_state_qn = models.CharField(max_length=255)
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
     )
     notes = models.TextField(blank=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['frequency'])
+        ]
 
     def __str__(self):
         return "line of "+self.meta.species.iupac_name
