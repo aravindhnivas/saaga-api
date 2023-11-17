@@ -23,7 +23,7 @@ services:
     depends_on:
       - db
   db:
-    image: postgres:15-bullseye
+    image: mcs07/postgres-rdkit
     volumes:
       - dev-db-data:/var/lib/postgresql/data
     environment:
