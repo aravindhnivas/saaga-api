@@ -114,7 +114,7 @@ class Linelist(models.Model):
 class Reference(models.Model):
     """References object."""
     doi = models.CharField(max_length=255, blank=True)
-    ref_url = models.CharField(max_length=255)
+    ref_url = models.CharField(max_length=255, unique=True)
     bibtex = models.FileField(upload_to=bib_file_path,
                               validators=[FileExtensionValidator(
                                   allowed_extensions=["bib"])])
@@ -135,15 +135,15 @@ class Species(models.Model):
     class Meta:
         verbose_name_plural = 'Species'
     name = models.JSONField()
-    iupac_name = models.CharField(max_length=255, unique=True)
+    iupac_name = models.CharField(max_length=255)
     name_formula = models.CharField(max_length=255)
     name_html = models.CharField(max_length=255)
-    molecular_mass = ArbitraryDecimalField(null=True)
-    smiles = models.CharField(max_length=255, unique=True)
+    molecular_mass = ArbitraryDecimalField()
+    smiles = models.CharField(max_length=255)
     standard_inchi = models.CharField(max_length=255, unique=True)
-    standard_inchi_key = models.CharField(max_length=255, unique=True)
-    selfies = models.CharField(max_length=255, unique=True)
-    mol_obj = models.MolField(blank=True, null=True)
+    standard_inchi_key = models.CharField(max_length=255)
+    selfies = models.CharField(max_length=255)
+    mol_obj = models.MolField()
     entry_date = models.DateTimeField(auto_now_add=True)
     entry_staff = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -265,21 +265,21 @@ class Line(models.Model):
         on_delete=models.PROTECT
     )
     measured = models.BooleanField()
-    frequency = ArbitraryDecimalField(null=True)
-    uncertainty = ArbitraryDecimalField(null=True)
-    intensity = ArbitraryDecimalField(null=True)
+    frequency = ArbitraryDecimalField()
+    uncertainty = ArbitraryDecimalField()
+    intensity = ArbitraryDecimalField()
     s_ij = ArbitraryDecimalField(null=True)
-    s_ij_mu2 = ArbitraryDecimalField(null=True)
-    a_ij = ArbitraryDecimalField(null=True)
-    lower_state_energy = ArbitraryDecimalField(null=True)
-    upper_state_energy = ArbitraryDecimalField(null=True)
-    lower_state_degeneracy = models.IntegerField(null=True)
-    upper_state_degeneracy = models.IntegerField(null=True)
+    s_ij_mu2 = ArbitraryDecimalField()
+    a_ij = ArbitraryDecimalField()
+    lower_state_energy = ArbitraryDecimalField()
+    upper_state_energy = ArbitraryDecimalField()
+    lower_state_degeneracy = models.IntegerField()
+    upper_state_degeneracy = models.IntegerField()
     lower_state_qn = models.JSONField()
     upper_state_qn = models.JSONField()
     rovibrational = models.BooleanField()
     vib_qn = models.CharField(max_length=255, blank=True)
-    pickett_qn_code = models.IntegerField(null=True)
+    pickett_qn_code = models.IntegerField()
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
     entry_date = models.DateTimeField(auto_now_add=True)
