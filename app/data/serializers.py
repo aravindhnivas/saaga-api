@@ -4,8 +4,6 @@ Serializers for data APIs.
 from rest_framework import serializers
 
 from core.models import Species, Linelist, SpeciesMetadata, Reference, MetaReference, Line
-# from core.models import Reference, Species,
-# SpeciesMetadata, MetaReference, Line
 
 
 class LinelistSerializer(serializers.ModelSerializer):
