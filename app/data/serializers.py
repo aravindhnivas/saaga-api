@@ -4,6 +4,7 @@ Serializers for data APIs.
 from rest_framework import serializers
 
 from core.models import Species, Linelist, SpeciesMetadata, Reference, MetaReference, Line
+from simple_history.utils import bulk_create_with_history
 # from core.models import Reference, Species,
 # SpeciesMetadata, MetaReference, Line
 
@@ -108,7 +109,7 @@ class LineSerializer(serializers.ModelSerializer):
                             'pickett_lower_state_qn', 'entry_date', 'entry_staff']
 
 
-class LineSerializerListChild(serializers.ModelSerializer):
+class LineSerializerList(serializers.ModelSerializer):
     frequency = serializers.DecimalField(
         max_digits=None, decimal_places=None)
     uncertainty = serializers.DecimalField(
@@ -134,15 +135,6 @@ class LineSerializerListChild(serializers.ModelSerializer):
                   'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
                   'entry_date', 'entry_staff', 'notes']
         read_only_fields = ['id', 'entry_date']
-
-
-class LineSerializerList(serializers.ListSerializer):
-    """Serializer for lines."""
-    child = LineSerializerListChild()
-
-    def create(self, validated_data):
-        lines = [Line(**item) for item in validated_data]
-        return Line.objects.bulk_create(lines)
 
 
 class QuerySerializer(serializers.ModelSerializer):

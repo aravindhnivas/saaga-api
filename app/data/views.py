@@ -390,7 +390,7 @@ class LineViewSet(viewsets.ModelViewSet):
                                         'pickett_lower_state_qn': pickett_lower_state_qn[i], 'pickett_upper_state_qn': pickett_upper_state_qn[i],
                                         'entry_staff': request.user.id, 'notes': notes})
         serializer = serializers.LineSerializerList(
-            data=input_dict_list)
+            data=input_dict_list, many=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
