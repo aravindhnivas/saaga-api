@@ -4,7 +4,6 @@ Serializers for data APIs.
 from rest_framework import serializers
 
 from core.models import Species, Linelist, SpeciesMetadata, Reference, MetaReference, Line
-from simple_history.utils import bulk_create_with_history
 # from core.models import Reference, Species,
 # SpeciesMetadata, MetaReference, Line
 
