@@ -386,7 +386,7 @@ class LineViewSet(viewsets.ModelViewSet):
                                         'lower_state_energy': lower_state_energy[i], 'upper_state_energy': upper_state_energy[i],
                                         'lower_state_degeneracy': lower_state_degeneracy[i], 'upper_state_degeneracy': upper_state_degeneracy[i],
                                         'lower_state_qn': lower_state_qn_dict_list[i], 'upper_state_qn': upper_state_qn_dict_list[i],
-                                        'rovibrational': False, 'vib_qn': vib_qn, 'pickett_qn_code': pickett_qn_code[i],
+                                        'rovibrational': False, 'vib_qn': vib_qn, 'pgickett_qn_code': pickett_qn_code[i],
                                         'pickett_lower_state_qn': pickett_lower_state_qn[i], 'pickett_upper_state_qn': pickett_upper_state_qn[i],
                                         'entry_staff': request.user.id, 'notes': notes})
         serializer = serializers.LineSerializerList(
