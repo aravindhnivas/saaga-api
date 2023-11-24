@@ -118,11 +118,6 @@ class Reference(models.Model):
     bibtex = models.FileField(upload_to=bib_file_path,
                               validators=[FileExtensionValidator(
                                   allowed_extensions=["bib"])])
-    entry_date = models.DateTimeField(auto_now_add=True)
-    entry_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
-    )
     notes = models.TextField(blank=True)
     history = HistoricalRecords()
 
@@ -144,11 +139,6 @@ class Species(models.Model):
     standard_inchi_key = models.CharField(max_length=255)
     selfies = models.CharField(max_length=255)
     mol_obj = models.MolField()
-    entry_date = models.DateTimeField(auto_now_add=True)
-    entry_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
-    )
     notes = models.TextField(blank=True)
     history = HistoricalRecords()
 
@@ -212,11 +202,6 @@ class SpeciesMetadata(models.Model):
     qpart_file = models.FileField(upload_to=sp_file_path, validators=[
                                   FileExtensionValidator(
                                       allowed_extensions=["qpart"])])
-    entry_date = models.DateTimeField(auto_now_add=True)
-    entry_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
-    )
     notes = models.TextField(blank=True)
     history = HistoricalRecords()
 
@@ -236,24 +221,19 @@ class MetaReference(models.Model):
     )
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
-    entry_date = models.DateTimeField(auto_now_add=True)
-    entry_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
-    )
     notes = models.TextField(blank=True)
     history = HistoricalRecords()
 
     def __str__(self):
         if self.dipole_moment and self.spectrum:
             return "metadata reference for dipole moment \
-        and spectrum of "+self.meta.species.iupac_name
+and spectrum of "+self.meta.species.iupac_name
         elif self.dipole_moment:
-            return "metadata reference for dipole moment of "\
-                + self.meta.species.iupac_name
+            return "metadata reference for dipole moment of " + \
+                self.meta.species.iupac_name
         elif self.spectrum:
-            return "metadata reference for spectrum of "\
-                + self.meta.species.iupac_name
+            return "metadata reference for spectrum of " + \
+                self.meta.species.iupac_name
         else:
             return "metadata reference for "+self.meta.species.iupac_name
 
@@ -282,11 +262,6 @@ class Line(models.Model):
     pickett_qn_code = models.IntegerField()
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
-    entry_date = models.DateTimeField(auto_now_add=True)
-    entry_staff = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT
-    )
     notes = models.TextField(blank=True)
     history = HistoricalRecords()
 

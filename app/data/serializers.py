@@ -14,13 +14,31 @@ class LinelistSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class LinelistChangeSerializer(LinelistSerializer):
+    """Serializer for put and patch linelists."""
+    _change_reason = serializers.CharField(
+        max_length=255, write_only=True, required=True)
+
+    class Meta(LinelistSerializer.Meta):
+        fields = LinelistSerializer.Meta.fields + ['_change_reason']
+
+
 class ReferenceSerializer(serializers.ModelSerializer):
     """Serializer for references."""
     class Meta:
         model = Reference
         fields = ['id', 'doi', 'ref_url', 'bibtex',
-                  'entry_date', 'entry_staff', 'notes']
-        read_only_fields = ['id', 'entry_date', 'entry_staff']
+                  'notes']
+        read_only_fields = ['id']
+
+
+class ReferenceChangeSerializer(ReferenceSerializer):
+    """Serializer for put and patch references."""
+    _change_reason = serializers.CharField(
+        max_length=255, write_only=True, required=True)
+
+    class Meta(ReferenceSerializer.Meta):
+        fields = ReferenceSerializer.Meta.fields + ['_change_reason']
 
 
 class SpeciesSerializer(serializers.ModelSerializer):
@@ -31,10 +49,17 @@ class SpeciesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Species
         fields = ['id', 'name', 'iupac_name', 'name_formula', 'name_html', 'molecular_mass',
-                  'smiles', 'standard_inchi', 'standard_inchi_key', 'selfies',
-                  'entry_date', 'entry_staff', 'notes']
-        read_only_fields = ['id', 'molecular_mass', 'selfies', 'entry_date',
-                            'entry_staff']
+                  'smiles', 'standard_inchi', 'standard_inchi_key', 'selfies', 'notes']
+        read_only_fields = ['id', 'molecular_mass', 'selfies']
+
+
+class SpeciesChangeSerializer(SpeciesSerializer):
+    """Serializer for put and patch species."""
+    _change_reason = serializers.CharField(
+        max_length=255, write_only=True, required=True)
+
+    class Meta(SpeciesSerializer.Meta):
+        fields = SpeciesSerializer.Meta.fields + ['_change_reason']
 
 
 class SpeciesMetadataSerializer(serializers.ModelSerializer):
@@ -57,9 +82,17 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
         fields = ['id', 'species', 'molecule_tag', 'hyperfine', 'degree_of_freedom',
                   'category', 'partition_function', 'mu_a', 'mu_b', 'mu_c', 'a_const',
                   'b_const', 'c_const', 'linelist', 'data_date', 'data_contributor', 'qpart_file',
-                  'int_file', 'var_file', 'fit_file', 'lin_file', 'entry_date', 'entry_staff', 'notes']
-        read_only_fields = ['id', 'partition_function',
-                            'entry_date', 'entry_staff']
+                  'int_file', 'var_file', 'fit_file', 'lin_file', 'notes']
+        read_only_fields = ['id', 'partition_function']
+
+
+class SpeciesMetadataChangeSerializer(SpeciesMetadataSerializer):
+    """Serializer for put and patch species metadata."""
+    _change_reason = serializers.CharField(
+        max_length=255, write_only=True, required=True)
+
+    class Meta(SpeciesMetadataSerializer.Meta):
+        fields = SpeciesMetadataSerializer.Meta.fields + ['_change_reason']
 
 
 class MetaReferenceSerializer(serializers.ModelSerializer):
@@ -67,8 +100,17 @@ class MetaReferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetaReference
         fields = ['id', 'meta', 'ref', 'dipole_moment',
-                  'spectrum', 'notes', 'entry_date', 'entry_staff']
-        read_only_fields = ['id', 'entry_date', 'entry_staff']
+                  'spectrum', 'notes']
+        read_only_fields = ['id']
+
+
+class MetaReferenceChangeSerializer(MetaReferenceSerializer):
+    """Serializer for put and patch metadata references."""
+    _change_reason = serializers.CharField(
+        max_length=255, write_only=True, required=True)
+
+    class Meta(MetaReferenceSerializer.Meta):
+        fields = MetaReferenceSerializer.Meta.fields + ['_change_reason']
 
 
 class LineSerializer(serializers.ModelSerializer):
@@ -99,11 +141,11 @@ class LineSerializer(serializers.ModelSerializer):
                   's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy', 'lower_state_energy',
                   'upper_state_degeneracy', 'lower_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'contains_rovibrational', 'rovibrational', 'vib_qn',
                   'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
-                  'entry_date', 'entry_staff', 'notes']
+                  'notes']
         read_only_fields = ['id', 'measured', 'frequency', 'uncertainty', 'intensity',
                             's_ij', 's_ij_mu2', 'a_ij', 'lower_state_energy', 'upper_state_energy', 'lower_state_degeneracy',
                             'upper_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'rovibrational', 'pickett_qn_code', 'pickett_upper_state_qn',
-                            'pickett_lower_state_qn', 'entry_date', 'entry_staff']
+                            'pickett_lower_state_qn']
 
 
 class LineSerializerList(serializers.ModelSerializer):
@@ -130,8 +172,17 @@ class LineSerializerList(serializers.ModelSerializer):
                   's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy', 'lower_state_energy',
                   'upper_state_degeneracy', 'lower_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'rovibrational', 'vib_qn',
                   'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
-                  'entry_date', 'entry_staff', 'notes']
-        read_only_fields = ['id', 'entry_date']
+                  'notes']
+        read_only_fields = ['id']
+
+
+class LineChangeSerializerList(LineSerializerList):
+    """Serializer for put and patch lines."""
+    _change_reason = serializers.CharField(
+        max_length=255, write_only=True, required=True)
+
+    class Meta(LineSerializerList.Meta):
+        fields = LineSerializerList.Meta.fields + ['_change_reason']
 
 
 class QuerySerializer(serializers.ModelSerializer):

@@ -8,6 +8,10 @@ import django.utils.timezone as timezone
 import datetime
 from django.core.files.uploadedfile import SimpleUploadedFile
 from decimal import Decimal
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+import selfies as sf
+from django.db.utils import IntegrityError
 
 
 def create_user(email="test@example.com", password="testpw123",
@@ -21,15 +25,13 @@ def create_user(email="test@example.com", password="testpw123",
     )
 
 
-def create_species(entry_staff, name="test species",
+def create_species(standard_inchi="test standard inchi",
+                   name=["test species 1", "test species 2"],
                    iupac_name="test iupac name",
                    name_formula="test name formula",
                    name_html="test name html",
-                   smiles="test smiles",
-                   standard_inchi="test standard inchi",
-                   standard_inchi_key="test standard inchi key",
-                   selfies="test selfies",
-                   entry_date=timezone.now(),
+                   smiles="C",
+                   standard_inchi_key="test standard inchi key 1",
                    notes="test"):
     """Create and return a new species."""
     return models.Species.objects.create(
@@ -37,24 +39,24 @@ def create_species(entry_staff, name="test species",
         iupac_name=iupac_name,
         name_formula=name_formula,
         name_html=name_html,
+        molecular_mass=Descriptors.ExactMolWt(Chem.MolFromSmiles(smiles)),
         smiles=smiles,
         standard_inchi=standard_inchi,
         standard_inchi_key=standard_inchi_key,
-        selfies=selfies,
-        entry_date=entry_date,
-        entry_staff=entry_staff,
+        selfies=sf.encoder(smiles),
+        mol_obj=Chem.MolFromSmiles(smiles),
         notes=notes
     )
 
 
-def create_linelist(linelist_name="TEST LINELIST5"):
+def create_linelist(linelist_name="test linelist"):
     """Create and return a new linelist."""
     return models.Linelist.objects.create(
         linelist_name=linelist_name
     )
 
 
-def create_metadata(entry_staff, linelist,
+def create_metadata(species, linelist,
                     molecule_tag=1,
                     hyperfine=True,
                     degree_of_freedom=3,
@@ -67,9 +69,14 @@ def create_metadata(entry_staff, linelist,
                     c_const=Decimal("1.2"),
                     data_date=datetime.date.today(),
                     data_contributor="test data contributor",
+                    int_file="test_int_file",
+                    var_file="test_var_file",
+                    fit_file="test_fit_file",
+                    lin_file="test_lin_file",
+                    qpart_file="test_qpart_file",
                     notes="test"):
     return models.SpeciesMetadata.objects.create(
-        species=create_species(entry_staff=entry_staff),
+        species=species,
         molecule_tag=molecule_tag,
         hyperfine=hyperfine,
         degree_of_freedom=degree_of_freedom,
@@ -84,25 +91,23 @@ def create_metadata(entry_staff, linelist,
         linelist=linelist,
         data_date=data_date,
         data_contributor=data_contributor,
-        entry_date=timezone.now(),
-        entry_staff=entry_staff,
+        int_file=int_file,
+        var_file=var_file,
+        fit_file=fit_file,
+        lin_file=lin_file,
+        qpart_file=qpart_file,
         notes=notes
     )
 
 
-def create_reference(entry_staff,
-                     doi="10.3847/1538-4357/acc584",
-                     ref_url="https://iopscience.iop.org/ \
-                     article/10.3847/1538-4357/acc584/pdf",
-                     bibtex="bibtex_url",
-                     entry_date=datetime.date.today(),
+def create_reference(doi="test doi",
+                     ref_url="test url",
+                     bibtex="bibtex url",
                      notes=""):
     return models.Reference.objects.create(
         doi=doi,
         ref_url=ref_url,
         bibtex=bibtex,
-        entry_date=entry_date,
-        entry_staff=entry_staff,
         notes=notes
     )
 
@@ -175,6 +180,12 @@ class ModelTests(TestCase):
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_superuser)
 
+    def test_create_user_duplicate(self):
+        """Test creating a user with duplicate email raises an error."""
+        create_user(email="testuser@example.com")
+        with self.assertRaises(IntegrityError):
+            create_user(email="testuser@example.com")
+
     def test_create_linelist_lower_case(self):
         """Test creating a linelist with lower case name is successful."""
         linelist = models.Linelist.objects.create(
@@ -191,9 +202,14 @@ class ModelTests(TestCase):
         self.assertEqual(str(linelist), linelist.linelist_name)
         self.assertEqual(linelist.linelist_name, "test linelist")
 
+    def test_create_linelist_duplicate(self):
+        """Test creating a linelist with duplicate name raises an error."""
+        create_linelist(linelist_name="test linelist duplicate")
+        with self.assertRaises(IntegrityError):
+            create_linelist(linelist_name="test linelist duplicate")
+
     def test_create_reference(self):
         """Test creating a reference is successful."""
-        user = create_user()
         reference = models.Reference.objects.create(
             doi="10.3847/1538-4357/acc584",
             ref_url="https://iopscience.iop.org/article/ \
@@ -202,34 +218,44 @@ class ModelTests(TestCase):
                 "test.bib",
                 b"@ARTICLE{2023ApJ...948..133C,}"
             ),
-            entry_staff=user,
             notes=""
         )
         self.assertEqual(str(reference), reference.ref_url)
 
+    def test_create_reference_duplicate(self):
+        """Test creating a reference with duplicate ref_url raises an error."""
+        create_reference(ref_url='123')
+        with self.assertRaises(IntegrityError):
+            create_reference(ref_url='123')
+
     def test_create_species(self):
         """Test creating a species is successful."""
-        user = create_user()
         species = models.Species.objects.create(
             name="test species",
             iupac_name="test iupac name",
             name_formula="test name formula",
             name_html="test name html",
-            smiles="test smiles",
+            smiles="CC",
+            molecular_mass=Descriptors.ExactMolWt(Chem.MolFromSmiles("CC")),
             standard_inchi="test standard inchi",
             standard_inchi_key="test standard inchi key",
-            selfies="test selfies",
-            entry_date=timezone.now(),
-            entry_staff=user,
+            selfies=sf.encoder("CC"),
+            mol_obj=Chem.MolFromSmiles("CC"),
             notes="test"
         )
         self.assertEqual(str(species), species.iupac_name)
 
+    def test_create_species_duplicate(self):
+        """Test creating a species with duplicate standard_inchi raises error."""
+        create_species(standard_inchi="test standard inchi duplicate")
+        with self.assertRaises(IntegrityError):
+            create_species(standard_inchi="test standard inchi duplicate")
+
     def test_create_speciesmetadata(self):
         """Test creating a species metadata is successful."""
-        user = create_user()
-        species = create_species(entry_staff=user)
-        linelist = create_linelist(linelist_name="TEST LINELIST2")
+        species = create_species(
+            standard_inchi="test standard inchi metadata",)
+        linelist = create_linelist(linelist_name="test linelist metadata")
         speciesmetadata = models.SpeciesMetadata.objects.create(
             species=species,
             molecule_tag=1,
@@ -246,8 +272,11 @@ class ModelTests(TestCase):
             linelist=linelist,
             data_date=datetime.date.today(),
             data_contributor="test data contributor",
-            entry_date=timezone.now(),
-            entry_staff=user,
+            int_file="test_int_file",
+            var_file="test_var_file",
+            fit_file="test_fit_file",
+            lin_file="test_lin_file",
+            qpart_file="test_qpart_file",
             notes="test"
         )
         self.assertEqual(str(speciesmetadata),
@@ -257,10 +286,11 @@ class ModelTests(TestCase):
     def test_create_metareference_dipole(self):
         """Test creating a metadata reference
         for dipole moment is successful."""
-        user = create_user()
-        linelist = create_linelist(linelist_name="TEST LINELIST3")
-        metadata = create_metadata(entry_staff=user, linelist=linelist)
-        ref = create_reference(entry_staff=user)
+        linelist = create_linelist(linelist_name="test linelist dipole moment")
+        species = create_species(
+            standard_inchi="test standard inchi dipole moment")
+        metadata = create_metadata(linelist=linelist, species=species)
+        ref = create_reference()
         metaref = models.MetaReference.objects.create(
             meta=metadata,
             ref=ref,
@@ -274,10 +304,10 @@ class ModelTests(TestCase):
 
     def test_create_metareference_spectrum(self):
         """Test creating a metadata reference for spectrum is successful."""
-        user = create_user()
-        linelist = create_linelist(linelist_name="TEST LINELIST3")
-        metadata = create_metadata(entry_staff=user, linelist=linelist)
-        ref = create_reference(entry_staff=user)
+        linelist = create_linelist(linelist_name="test linelist spectrum")
+        species = create_species(standard_inchi="test standard inchi spectrum")
+        metadata = create_metadata(linelist=linelist, species=species)
+        ref = create_reference()
         metaref = models.MetaReference.objects.create(
             meta=metadata,
             ref=ref,
@@ -292,10 +322,12 @@ class ModelTests(TestCase):
     def test_create_metareference_dipole_spectrum(self):
         """Test creating a metadata reference for
         dipole moment and spectrum is successful."""
-        user = create_user()
-        linelist = create_linelist(linelist_name="TEST LINELIST3")
-        metadata = create_metadata(entry_staff=user, linelist=linelist)
-        ref = create_reference(entry_staff=user)
+        linelist = create_linelist(
+            linelist_name="test linelist dipole spectrum")
+        species = create_species(
+            standard_inchi="test standard inchi dipole spectrum")
+        metadata = create_metadata(linelist=linelist, species=species)
+        ref = create_reference()
         metaref = models.MetaReference.objects.create(
             meta=metadata,
             ref=ref,
@@ -309,9 +341,10 @@ class ModelTests(TestCase):
 
     def test_create_line(self):
         """Test creating a line is successful."""
-        user = create_user()
-        linelist = create_linelist(linelist_name="TEST LINELIST LINE")
-        metadata = create_metadata(entry_staff=user, linelist=linelist)
+        linelist = create_linelist(linelist_name="test linelist line")
+        species = create_species(
+            standard_inchi="test standard inchi line")
+        metadata = create_metadata(linelist=linelist, species=species)
         line = models.Line.objects.create(
             meta=metadata,
             measured=True,
@@ -323,15 +356,15 @@ class ModelTests(TestCase):
             a_ij=67867.1267,
             lower_state_energy=123456778.145,
             upper_state_energy=1267890.1345,
+            lower_state_degeneracy=2,
             upper_state_degeneracy=3,
             lower_state_qn={"test": "qn"},
             upper_state_qn={"test": "qn"},
             rovibrational=True,
+            vib_qn="test vib qn",
             pickett_qn_code=123,
-            pickett_lower_state_qn={"test": "qn"},
-            pickett_upper_state_qn={"test": "qn"},
-            entry_date=datetime.date.today(),
-            entry_staff=user,
+            pickett_lower_state_qn="010101",
+            pickett_upper_state_qn="010102",
             notes="test notes"
         )
         self.assertEqual(str(line), "line of "+line.meta.species.iupac_name)
