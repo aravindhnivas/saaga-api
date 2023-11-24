@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from core.models import Linelist
-from data.serializers import LinelistSerializer, LinelistChangeSerializer
+from data.serializers import LinelistSerializer
 
 
 def create_linelist(**params):
@@ -117,6 +117,10 @@ class PrivateLinelistApiTests(TestCase):
         for k, v in payload.items():
             if k != '_change_reason':
                 self.assertEqual(v.lower(), getattr(linelist, k))
+        self.assertEqual(Linelist.history.filter(id=linelist.id).first(
+        ).history_change_reason, payload['_change_reason'])
+        self.assertEqual(Linelist.history.filter(id=linelist.id).first(
+        ).history_user_id, self.user.id)
         history_count = Linelist.history.filter(id=linelist.id).count()
         self.assertEqual(history_count, 2)
 
@@ -133,6 +137,10 @@ class PrivateLinelistApiTests(TestCase):
         for k, v in payload.items():
             if k != '_change_reason':
                 self.assertEqual(v.lower(), getattr(linelist, k))
+        self.assertEqual(Linelist.history.filter(id=linelist.id).first(
+        ).history_change_reason, payload['_change_reason'])
+        self.assertEqual(Linelist.history.filter(id=linelist.id).first(
+        ).history_user_id, self.user.id)
         history_count = Linelist.history.filter(id=linelist.id).count()
         self.assertEqual(history_count, 2)
 
@@ -144,5 +152,9 @@ class PrivateLinelistApiTests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Linelist.objects.filter(id=linelist.id).exists())
+        self.assertEqual(Linelist.history.filter(id=linelist.id).first(
+        ).history_change_reason, 'Test delete')
+        self.assertEqual(Linelist.history.filter(id=linelist.id).first(
+        ).history_user_id, self.user.id)
         history_count = Linelist.history.filter(id=linelist.id).count()
         self.assertEqual(history_count, 2)

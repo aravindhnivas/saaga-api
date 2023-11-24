@@ -190,6 +190,10 @@ class PrivateSpeciesApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         species.refresh_from_db()
         self.assertEqual(species.iupac_name, payload['iupac_name'])
+        self.assertEqual(Species.history.filter(id=species.id).first(
+        ).history_change_reason, payload['_change_reason'])
+        self.assertEqual(Species.history.filter(id=species.id).first(
+        ).history_user_id, self.user.id)
         history_count = Species.history.filter(
             id=species.id).count()
         self.assertEqual(history_count, 2)
@@ -217,6 +221,10 @@ class PrivateSpeciesApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         species.refresh_from_db()
         self.assertEqual(species.standard_inchi, payload['standard_inchi'])
+        self.assertEqual(Species.history.filter(id=species.id).first(
+        ).history_change_reason, payload['_change_reason'])
+        self.assertEqual(Species.history.filter(id=species.id).first(
+        ).history_user_id, self.user.id)
         history_count = Species.history.filter(
             id=species.id).count()
         self.assertEqual(history_count, 2)
@@ -230,6 +238,10 @@ class PrivateSpeciesApiTests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Species.objects.filter(id=species.id).exists())
+        self.assertEqual(Species.history.filter(id=species.id).first(
+        ).history_change_reason, 'Test delete reason')
+        self.assertEqual(Species.history.filter(id=species.id).first(
+        ).history_user_id, self.user.id)
         history_count = Species.history.filter(
             id=species.id).count()
         self.assertEqual(history_count, 2)

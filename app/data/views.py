@@ -15,13 +15,11 @@ import json
 import selfies as sf
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy as _
-import requests
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, extend_schema_view
 from django.http import FileResponse
 import io
 from data.parse_metadata import read_intfile, read_varfile, read_qpartfile
 from data.parse_line import parse_cat
-from django.core.exceptions import ValidationError
 
 
 class LinelistViewSet(viewsets.ModelViewSet):
@@ -274,7 +272,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
                                 c_const=c_const, partition_function=partition_dict)
             else:
                 serializer.save(partition_function=partition_dict)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

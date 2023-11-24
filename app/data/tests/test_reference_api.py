@@ -165,6 +165,10 @@ class PrivateReferenceApiTests(TestCase):
         for k, v in payload.items():
             if k != '_change_reason':
                 self.assertEqual(v, getattr(reference, k))
+        self.assertEqual(Reference.history.filter(id=reference.id).first(
+        ).history_change_reason, payload['_change_reason'])
+        self.assertEqual(Reference.history.filter(id=reference.id).first(
+        ).history_user_id, self.user.id)
         history_count = Reference.history.filter(id=reference.id).count()
         self.assertEqual(history_count, 2)
 
@@ -187,6 +191,10 @@ class PrivateReferenceApiTests(TestCase):
             if k not in ['_change_reason', 'bibtex']:
                 self.assertEqual(v, getattr(reference, k))
         self.assertTrue(os.path.exists(reference.bibtex.path))
+        self.assertEqual(Reference.history.filter(id=reference.id).first(
+        ).history_change_reason, payload['_change_reason'])
+        self.assertEqual(Reference.history.filter(id=reference.id).first(
+        ).history_user_id, self.user.id)
         history_count = Reference.history.filter(id=reference.id).count()
         self.assertEqual(history_count, 2)
         reference.bibtex.delete()
@@ -199,5 +207,9 @@ class PrivateReferenceApiTests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Reference.objects.filter(id=reference.id).exists())
+        self.assertEqual(Reference.history.filter(id=reference.id).first(
+        ).history_change_reason, 'Test delete reason')
+        self.assertEqual(Reference.history.filter(id=reference.id).first(
+        ).history_user_id, self.user.id)
         history_count = Reference.history.filter(id=reference.id).count()
         self.assertEqual(history_count, 2)
