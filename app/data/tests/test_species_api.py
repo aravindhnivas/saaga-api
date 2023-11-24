@@ -6,11 +6,16 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Species
+from core.models import Species, SpeciesMetadata, Linelist
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import selfies as sf
 import json
+
+
+def create_linelist(linelist_name='Test Linelist'):
+    """Helper function to create a linelist."""
+    return Linelist.objects.create(linelist_name=linelist_name)
 
 
 def create_species(**params):
@@ -34,6 +39,36 @@ def create_species(**params):
                     mol_obj=Chem.MolFromSmiles(defaults['smiles']))
 
     return Species.objects.create(**defaults)
+
+
+def create_meta(species_id, linelist_id, **params):
+    """Helper function to create a species."""
+    defaults = {
+        'species_id': species_id,
+        'molecule_tag': 1,
+        'hyperfine': False,
+        'degree_of_freedom': 3,
+        'category': 'asymmetric top',
+        'partition_function': json.dumps({'300.000': '331777.6674'}),
+        'mu_a': 0.5,
+        'mu_b': 0,
+        'mu_c': 0,
+        'a_const': 0.123,
+        'b_const': 0,
+        'c_const': 0,
+        'linelist_id': linelist_id,
+        'data_date': '2020-01-01',
+        'data_contributor': 'Test Contributor',
+        'int_file': 'test_int_file',
+        'var_file': 'test_var_file',
+        'fit_file': 'test_fit_file',
+        'lin_file': 'test_lin_file',
+        'qpart_file': 'test_qpart_file',
+        'notes': 'Test Species Metadata',
+    }
+    defaults.update(params)
+
+    return SpeciesMetadata.objects.create(**defaults)
 
 
 class PublicSpeciesApiTests(TestCase):
@@ -229,6 +264,27 @@ class PrivateSpeciesApiTests(TestCase):
             id=species.id).count()
         self.assertEqual(history_count, 2)
 
+    def test_full_update_species_without_reason_fails(self):
+        """Test updating a species with put without change reason fails."""
+        species = create_species(standard_inchi='test inchi full update')
+        url = reverse('data:species-detail', args=[species.id])
+        payload = {
+            'name': json.dumps(['common_name', 'Test Species']),
+            'iupac_name': 'Test IUPAC Name',
+            'name_formula': 'Test Name Formula',
+            'name_html': 'Test Name HTML',
+            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
+            'smiles': 'CCCCC',
+            'standard_inchi': 'test inchi full update payload',
+            'standard_inchi_key': 'CCCCC',
+            'selfies': sf.encoder('CCCCC'),
+            'mol_obj': Chem.MolFromSmiles('CCCCC'),
+            'notes': 'Test Species',
+        }
+
+        res = self.client.put(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_species(self):
         """Test deleting a species."""
         species = create_species(standard_inchi='test inchi delete')
@@ -245,3 +301,23 @@ class PrivateSpeciesApiTests(TestCase):
         history_count = Species.history.filter(
             id=species.id).count()
         self.assertEqual(history_count, 2)
+
+    def test_delete_species_without_delete_reason_fails(self):
+        """Test deleting a species without delete reason fails."""
+        species = create_species()
+        url = reverse('data:species-detail', args=[species.id])
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Species.objects.filter(id=species.id).exists())
+
+    def test_delete_referenced_species_fails(self):
+        """Test deleting a referenced species fails."""
+        species = create_species()
+        linelist = create_linelist()
+        create_meta(species.id, linelist.id)
+        url = reverse('data:species-detail',
+                      args=[species.id]) + '?delete_reason=Test delete reason'
+
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Species.objects.filter(id=species.id).exists())

@@ -4,7 +4,35 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from core.models import Linelist
-from data.serializers import LinelistSerializer
+from data.serializers import LinelistSerializer, Species, SpeciesMetadata
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+import json
+import selfies as sf
+from django.db.utils import IntegrityError
+
+
+def create_species(**params):
+    """Helper function to create a species."""
+    defaults = {
+        'name': ['common_name', 'some_name'],
+        'iupac_name': 'Test IUPAC Name',
+        'name_formula': 'Test Name Formula',
+        'name_html': 'Test Name HTML',
+        'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('C')),
+        'smiles': 'C',
+        'standard_inchi': 'Test InChI',
+        'standard_inchi_key': 'Test InChI Key',
+        'selfies': sf.encoder('C'),
+        'mol_obj': Chem.MolFromSmiles('C'),
+        'notes': 'Test Species',
+    }
+    defaults.update(params)
+    defaults.update(molecular_mass=Descriptors.ExactMolWt(Chem.MolFromSmiles(defaults['smiles'])),
+                    selfies=sf.encoder(defaults['smiles']),
+                    mol_obj=Chem.MolFromSmiles(defaults['smiles']))
+
+    return Species.objects.create(**defaults)
 
 
 def create_linelist(**params):
@@ -15,6 +43,36 @@ def create_linelist(**params):
     defaults.update(params)
 
     return Linelist.objects.create(**defaults)
+
+
+def create_meta(species_id, linelist_id, **params):
+    """Helper function to create a species."""
+    defaults = {
+        'species_id': species_id,
+        'molecule_tag': 1,
+        'hyperfine': False,
+        'degree_of_freedom': 3,
+        'category': 'asymmetric top',
+        'partition_function': json.dumps({'300.000': '331777.6674'}),
+        'mu_a': 0.5,
+        'mu_b': 0,
+        'mu_c': 0,
+        'a_const': 0.123,
+        'b_const': 0,
+        'c_const': 0,
+        'linelist_id': linelist_id,
+        'data_date': '2020-01-01',
+        'data_contributor': 'Test Contributor',
+        'int_file': 'test_int_file',
+        'var_file': 'test_var_file',
+        'fit_file': 'test_fit_file',
+        'lin_file': 'test_lin_file',
+        'qpart_file': 'test_qpart_file',
+        'notes': 'Test Species Metadata',
+    }
+    defaults.update(params)
+
+    return SpeciesMetadata.objects.create(**defaults)
 
 
 class PublicLinelistApiTests(TestCase):
@@ -105,6 +163,14 @@ class PrivateLinelistApiTests(TestCase):
             linelist_name=payload['linelist_name'].lower()).exists()
         self.assertTrue(history_exists)
 
+    def test_create_duplicate_linelist_fails(self):
+        """Test creating a duplicate linelist fails."""
+        create_linelist(linelist_name='Test Linelist duplicate')
+        payload = {'linelist_name': 'Test Linelist duplicate'}
+        url = reverse('data:linelist-list')
+        with self.assertRaises(IntegrityError):
+            self.client.post(url, payload)
+
     def test_partial_update(self):
         """Test updating a linelist with patch."""
         linelist = create_linelist(linelist_name='Original linelist')
@@ -144,6 +210,15 @@ class PrivateLinelistApiTests(TestCase):
         history_count = Linelist.history.filter(id=linelist.id).count()
         self.assertEqual(history_count, 2)
 
+    def test_full_update_linelist_without_reason_fails(self):
+        """Test updating a linelist with put without a change reason fails."""
+        linelist = create_linelist(
+            linelist_name='Original linelist')
+        url = reverse('data:linelist-detail', args=[linelist.id])
+        payload = {'linelist_name': 'Updated Linelist'}
+        res = self.client.put(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_linelist(self):
         """Test deleting a linelist."""
         linelist = create_linelist()
@@ -158,3 +233,22 @@ class PrivateLinelistApiTests(TestCase):
         ).history_user_id, self.user.id)
         history_count = Linelist.history.filter(id=linelist.id).count()
         self.assertEqual(history_count, 2)
+
+    def test_delete_linelist_without_reason_fails(self):
+        """Test deleting a linelist without a delete reason fails."""
+        linelist = create_linelist()
+        url = reverse('data:linelist-detail', args=[linelist.id])
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Linelist.objects.filter(id=linelist.id).exists())
+
+    def test_delete_referenced_linelist_fails(self):
+        """Test deleting a linelist that is referenced by species metadata fails."""
+        linelist = create_linelist()
+        species = create_species()
+        create_meta(species.id, linelist.id)
+        url = reverse('data:linelist-detail',
+                      args=[linelist.id]) + '?delete_reason=Test delete referenced'
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Linelist.objects.filter(id=linelist.id).exists())

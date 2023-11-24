@@ -13,7 +13,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import SpeciesMetadata, Species, Linelist
+from core.models import SpeciesMetadata, Species, Linelist, Line
 import json
 from rdkit import Chem
 from rdkit.Chem import Descriptors
@@ -72,6 +72,34 @@ def create_meta(species_id, linelist_id, **params):
     defaults.update(params)
 
     return SpeciesMetadata.objects.create(**defaults)
+
+
+def create_line(meta_id, **params):
+    """Helper function to create a line."""
+    defaults = {
+        'meta_id': meta_id,
+        'measured': False,
+        'frequency': 100.000,
+        'uncertainty': 0.001,
+        'intensity': 0.001,
+        's_ij_mu2': 1.0,
+        'a_ij': 0.001,
+        'lower_state_energy': 0.001,
+        'upper_state_energy': 0.001,
+        'lower_state_degeneracy': 1,
+        'upper_state_degeneracy': 1,
+        'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
+        'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
+        'rovibrational': False,
+        'vib_qn': '',
+        'pickett_qn_code': 303,
+        'pickett_lower_state_qn': '010000',
+        'pickett_upper_state_qn': '010001',
+        'notes': 'test create line'
+    }
+    defaults.update(params)
+
+    return Line.objects.create(**defaults)
 
 
 class PublicMetaApiTests(TestCase):
@@ -326,6 +354,62 @@ S   1  1  0  50  0  1  1  1  1  -1   0
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_meta_with_wrong_file_fails(self):
+        """Test creating a species metadata with wrong file extension fails."""
+        species = create_species()
+        linelist = create_linelist()
+        url = reverse('data:speciesmetadata-list')
+        with tempfile.NamedTemporaryFile(suffix='.notint') as not_int_file, \
+                tempfile.NamedTemporaryFile(suffix='.var') as var_file, \
+                tempfile.NamedTemporaryFile(suffix='.fit') as fit_file, \
+                tempfile.NamedTemporaryFile(suffix='.lin') as lin_file, \
+                tempfile.NamedTemporaryFile(suffix='.qpart') as qpart_file:
+            not_int_file.write(b"""FURAN
+0  91 43282.2944  00  150  -7  -7 150.0  5
+ 001  0.661 /muA
+ 002  0.000 /muB
+ 003  0.000 /muC""")
+            not_int_file.seek(0)
+            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
+   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
+S   1  1  0  50  0  1  1  1  1  -1   0
+        10000   9.447840918743423E+03 6.36184172E-02 /A
+        20000   9.246852060423453E+03 1.63997319E-02 /B
+        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.seek(0)
+            fit_file.write(b'I am a fit file')
+            fit_file.seek(0)
+            lin_file.write(b'I am a lin file')
+            lin_file.seek(0)
+            qpart_file.write(b"""#form : interpolation
+200.000   331777.6674""")
+            qpart_file.seek(0)
+            payload = {
+                'species': species.id,
+                'molecule_tag': 1,
+                'hyperfine': True,
+                'degree_of_freedom': 3,
+                'category': 'asymmetric top',
+                'mu_a': 0.5,
+                'mu_b': 0,
+                'mu_c': 0,
+                'a_const': 0.123,
+                'b_const': 0,
+                'c_const': 0,
+                'linelist': linelist.id,
+                'data_date': '2020-01-01',
+                'data_contributor': 'Test Contributor',
+                'int_file': not_int_file,
+                'var_file': var_file,
+                'fit_file': fit_file,
+                'lin_file': lin_file,
+                'qpart_file': qpart_file,
+                'notes': 'Test Species Metadata',
+            }
+            res = self.client.post(url, payload, format='multipart')
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_partial_update_meta(self):
         """Test updating a species metadata with patch."""
         species = create_species()
@@ -419,6 +503,62 @@ S   1  1  0  50  0  1  1  1  1  -1   0
         meta.lin_file.delete()
         meta.qpart_file.delete()
 
+    def test_full_update_meta_without_reason_fails(self):
+        """Test updating a species metadata with put without change reason fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        url = reverse('data:speciesmetadata-detail', args=[meta.id])
+        with tempfile.NamedTemporaryFile(suffix='.int') as int_file, \
+                tempfile.NamedTemporaryFile(suffix='.var') as var_file, \
+                tempfile.NamedTemporaryFile(suffix='.fit') as fit_file, \
+                tempfile.NamedTemporaryFile(suffix='.lin') as lin_file, \
+                tempfile.NamedTemporaryFile(suffix='.qpart') as qpart_file:
+            int_file.write(b"""FURAN
+0  91 43282.2944  00  150  -7  -7 150.0  5
+ 001  0.661 /muA
+ 002  0.000 /muB
+ 003  0.000 /muC""")
+            int_file.seek(0)
+            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
+   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
+S   1  1  0  50  0  1  1  1  1  -1   0
+        10000   9.447840918743423E+03 6.36184172E-02 /A
+        20000   9.246852060423453E+03 1.63997319E-02 /B
+        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.seek(0)
+            fit_file.write(b'I am a fit file')
+            fit_file.seek(0)
+            lin_file.write(b'I am a lin file')
+            lin_file.seek(0)
+            qpart_file.write(b"""#form : interpolation
+200.000   331777.6674""")
+            qpart_file.seek(0)
+            payload = {
+                'species': species.id,
+                'molecule_tag': 1,
+                'hyperfine': True,
+                'degree_of_freedom': 3,
+                'category': 'asymmetric top',
+                'mu_a': 0.5,
+                'mu_b': 0,
+                'mu_c': 0,
+                'a_const': 0.123,
+                'b_const': 0,
+                'c_const': 0,
+                'linelist': linelist.id,
+                'data_date': '2020-01-01',
+                'data_contributor': 'Test Contributor',
+                'int_file': int_file,
+                'var_file': var_file,
+                'fit_file': fit_file,
+                'lin_file': lin_file,
+                'qpart_file': qpart_file,
+                'notes': 'Test Species Metadata Put',
+            }
+            res = self.client.put(url, payload, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_meta(self):
         """Test deleting a species metadata."""
         species = create_species()
@@ -437,3 +577,27 @@ S   1  1  0  50  0  1  1  1  1  -1   0
         history_count = SpeciesMetadata.history.filter(
             id=meta.id).count()
         self.assertEqual(history_count, 2)
+
+    def test_delete_meta_without_delete_reason_fails(self):
+        """Test deleting a species metadata without delete reason fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        url = reverse('data:speciesmetadata-detail', args=[meta.id])
+
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(SpeciesMetadata.objects.filter(id=meta.id).exists())
+
+    def test_delete_referenced_meta_fails(self):
+        """Test deleting a species metadata that is referenced fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        create_line(meta.id)
+        url = reverse('data:speciesmetadata-detail',
+                      args=[meta.id]) + '?delete_reason=Test delete reason'
+
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(SpeciesMetadata.objects.filter(id=meta.id).exists())

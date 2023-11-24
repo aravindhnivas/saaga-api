@@ -269,6 +269,22 @@ class PrivateMetarefApiTests(TestCase):
         history_count = MetaReference.history.filter(id=metaref.id).count()
         self.assertEqual(history_count, 2)
 
+    def test_full_update_metaref_without_reason_fails(self):
+        """Test updating a metareference with put without change reason fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        ref = create_reference()
+        metaref = create_metaref(meta.id, ref.id)
+        url = reverse('data:metareference-detail', args=[metaref.id])
+        payload = {'meta': meta.id,
+                   'ref': ref.id,
+                   'dipole_moment': True,
+                   'spectrum': True,
+                   'notes': 'Updated metaref put'}
+        res = self.client.put(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_metaref(self):
         """Test deleting a metareference."""
         species = create_species()
@@ -287,3 +303,15 @@ class PrivateMetarefApiTests(TestCase):
         ).history_user_id, self.user.id)
         history_count = MetaReference.history.filter(id=metaref.id).count()
         self.assertEqual(history_count, 2)
+
+    def test_delete_metaref_without_delete_reason_fails(self):
+        """Test deleting a metareference without delete reason fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        ref = create_reference()
+        metaref = create_metaref(meta.id, ref.id)
+        url = reverse('data:metareference-detail', args=[metaref.id])
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(MetaReference.objects.filter(id=metaref.id).exists())

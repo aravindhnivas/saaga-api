@@ -224,6 +224,78 @@ class PrivateLineApiTests(TestCase):
             organization='Test Organization')
         self.client.force_authenticate(self.user)
 
+    def test_create_line_with_wrong_cat_file_fails(self):
+        """Test creating a line with wrong cat file fails."""
+        url = reverse('data:line-list')
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        not_cat_file = tempfile.NamedTemporaryFile(suffix='.notcat')
+        payload = {
+            'meta': meta.id,
+            'cat_file': DjangoFile(not_cat_file),
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': False,
+            'vib_qn': '',
+            'notes': 'Test post'}
+
+        res = self.client.post(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_line_with_rovibrational_no_vib_qn_fails(self):
+        """Test creating a line with rovibrational no vib qn fails."""
+        url = reverse('data:line-list')
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
+        payload = {
+            'meta': meta.id,
+            'cat_file': DjangoFile(cat_file),
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': True,
+            'vib_qn': '',
+            'notes': 'Test post'}
+
+        res = self.client.post(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_line_with_rovibrational_wrong_vib_qn_fails(self):
+        """Test creating a line with rovibrational wrong vib qn fails."""
+        url = reverse('data:line-list')
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
+        payload = {
+            'meta': meta.id,
+            'cat_file': DjangoFile(cat_file),
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': True,
+            'vib_qn': 'N',
+            'notes': 'Test post'}
+
+        res = self.client.post(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_line_not_rovibrational_with_vib_qn_fails(self):
+        """Test creating line that is not rovibrational but with vib qn provided fails."""
+        url = reverse('data:line-list')
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
+        payload = {
+            'meta': meta.id,
+            'cat_file': DjangoFile(cat_file),
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': False,
+            'vib_qn': 'Kc',
+            'notes': 'Test post'}
+
+        res = self.client.post(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_partial_update(self):
         """Test updating a line with patch."""
         species = create_species()
@@ -282,6 +354,37 @@ class PrivateLineApiTests(TestCase):
         history_count = Line.history.filter(id=line.id).count()
         self.assertEqual(history_count, 2)
 
+    def test_full_update_line_without_reason_fails(self):
+        """Test updating a line with put without change reason fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        line = create_line(meta.id)
+        url = reverse('data:line-detail', args=[line.id])
+        payload = {
+            'meta': meta.id,
+            'measured': False,
+            'frequency': 100.000,
+            'uncertainty': 0.001,
+            'intensity': 0.001,
+            's_ij_mu2': 1.0,
+            'a_ij': 0.001,
+            'lower_state_energy': 0.001,
+            'upper_state_energy': 0.001,
+            'lower_state_degeneracy': 1,
+            'upper_state_degeneracy': 1,
+            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
+            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
+            'rovibrational': False,
+            'vib_qn': '',
+            'pickett_qn_code': 302,
+            'pickett_lower_state_qn': '010000',
+            'pickett_upper_state_qn': '010001',
+            'notes': 'test full update line',
+        }
+        res = self.client.put(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_delete_line(self):
         """Test deleting a line."""
         species = create_species()
@@ -299,3 +402,55 @@ class PrivateLineApiTests(TestCase):
         ).history_user_id, self.user.id)
         history_count = Line.history.filter(id=line.id).count()
         self.assertEqual(history_count, 2)
+
+    def delete_line_without_delete_reason_fails(self):
+        """Test deleting a line without delete reason fails."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        line = create_line(meta.id)
+        url = reverse('data:line-detail', args=[line.id])
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_query_lines_min_max(self):
+        """Test querying lines with min and max frequencies both specified."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        create_line(meta.id, frequency=100.000)
+        create_line(meta.id, frequency=200.000)
+        url = reverse('data:line-query') + '?min_freq=99.000&max_freq=201.000'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+    def test_query_lines_min(self):
+        """Test querying lines with min frequency specified."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        create_line(meta.id, frequency=100.000)
+        create_line(meta.id, frequency=200.000)
+        url = reverse('data:line-query') + '?min_freq=99.000'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+    def test_query_lines_max(self):
+        """Test querying lines with max frequency specified."""
+        species = create_species()
+        linelist = create_linelist()
+        meta = create_meta(species.id, linelist.id)
+        create_line(meta.id, frequency=100.000)
+        create_line(meta.id, frequency=200.000)
+        url = reverse('data:line-query') + '?max_freq=201.000'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+
+    def test_query_lines_without_freq_fails(self):
+        """Test querying lines without frequency specified fails."""
+        url = reverse('data:line-query')
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

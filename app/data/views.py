@@ -334,21 +334,11 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST, data='{delete_reason: Invalid Delete Reason}')
-        try:
-            instance = self.get_object()
-            instance._change_reason = self.request.query_params['delete_reason']
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # if protected, cannot be deleted, show error message
-        except ProtectedError as exception:
-            message = f"Cannot delete as metadata reference {str(instance)} is being referenced through protected foreign key"
-            response_msg = {
-                "code": "server_error",
-                "message": _("Internal server error."),
-                "error": {"type": str(type(exception)), "message": message},
-            }
-            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        instance = self.get_object()
+        instance._change_reason = self.request.query_params['delete_reason']
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class LineViewSet(viewsets.ModelViewSet):
@@ -494,6 +484,14 @@ class LineViewSet(viewsets.ModelViewSet):
                 frequency__gte=min_freq, frequency__lte=max_freq)
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        elif min_freq:
+            queryset = queryset.filter(frequency__gte=min_freq)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif max_freq:
+            queryset = queryset.filter(frequency__lte=max_freq)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({'error': _('No min_freq and/or max_freq provided')}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -506,18 +504,8 @@ class LineViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST, data='{delete_reason: Invalid Delete Reason}')
-        try:
-            instance = self.get_object()
-            instance._change_reason = self.request.query_params['delete_reason']
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # if protected, cannot be deleted, show error message
-        except ProtectedError as exception:
-            message = f"Cannot delete as line {str(instance)} is being referenced through protected foreign key"
-            response_msg = {
-                "code": "server_error",
-                "message": _("Internal server error."),
-                "error": {"type": str(type(exception)), "message": message},
-            }
-            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        instance = self.get_object()
+        instance._change_reason = self.request.query_params['delete_reason']
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
