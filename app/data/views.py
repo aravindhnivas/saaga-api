@@ -1,12 +1,13 @@
 """
 Views for data APIs.
 """
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django_rdkit.models import *
+from django_rdkit.models import *  # noqa: F403
 from core.models import (Species, Linelist, SpeciesMetadata,
                          Reference, MetaReference, Line)
 from data import serializers
@@ -186,7 +187,8 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         substruct = self.request.query_params.get('substruct')
         if substruct:
             return self.queryset.filter(
-                mol_obj__hassubstruct=QMOL(Value(substruct))).order_by('-id')
+                mol_obj__hassubstruct=QMOL(  # noqa: F405
+                    Value(substruct))).order_by('-id')  # noqa: F405
         return self.queryset.order_by('-id')
 
     def get_serializer_class(self):
