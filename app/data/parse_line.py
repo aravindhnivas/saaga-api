@@ -1,10 +1,12 @@
 """
-SPCAT .cat file parsing script adapted from molsim package developed by Brett McGuire et al.
+SPCAT .cat file parsing script adapted from molsim package
+developed by Brett McGuire et al.
 """
 import numpy as np
 import re
 import scipy.constants
-from data.class_parse_catfile import Catalog, Level, Molecule, PartitionFunction, _read_txt
+from data.class_parse_catfile import (
+    Catalog, Level, PartitionFunction, _read_txt)
 
 # Boltzmann's constants in cm-1/K
 kcm = scipy.constants.k * (scipy.constants.h**-1) * \
@@ -14,26 +16,30 @@ ccm = scipy.constants.c * 100  # speed of light in cm/s
 
 def _make_qnstr(qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8):
     qn_list = [qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8]
-    tmp_list = [str(x).zfill(2) for x in qn_list if x != None]
+    tmp_list = [str(x).zfill(2) for x in qn_list if x is not None]
     return ''.join(tmp_list)
 
 
 def _read_spcat(filein):
     '''
     Reads an SPCAT catalog and returns spliced out numpy arrays.
-    Catalog energy units for elow are converted to K from cm-1.	
+    Catalog energy units for elow are converted to K from cm-1.
     '''
 
     # read in the catalog
     raw_arr = _read_txt(filein)
 
     # set up some basic lists to populate
-    frequency, freq_err, logint, dof, elow, gup, tag, qnformat, qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8, qn9, qn10, qn11, qn12 = ([
-    ] for i in range(20))
+    frequency, freq_err, logint, dof, elow, gup, tag, qnformat, \
+        qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8, qn9, qn10, qn11, \
+        qn12 = ([] for _ in range(20))
 
     # split everything out
     for x in raw_arr:
-        # if there is a * in there, then the catalog was simulated too high for SPCAT format and we need to skip the line.
+        """
+        if there is a * in there, then the catalog was
+        simulated too high for SPCAT format and we need to skip the line.
+        """
         if '*' in x:
             continue
         else:
@@ -58,7 +64,8 @@ def _read_spcat(filein):
             qn11.append(x[75:77].strip())
             qn12.append(x[77:].strip())
 
-    # now go through and fix everything into the appropriate formats and make numpy arrays as needed
+    # now go through and fix everything into the appropriate
+    # formats and make numpy arrays as needed
 
     # we start with the easy ones that don't have nonsense letters
     frequency = np.array(frequency)
@@ -80,11 +87,13 @@ def _read_spcat(filein):
 
     elow /= kcm
 
-    # now we use a sub-function to fix the letters and +/- that show up in gup, and the qns, and returns floats
+    # now we use a sub-function to fix the letters and
+    # +/- that show up in gup, and the qns, and returns floats
     def _fix_spcat(x):
         '''Fixes letters in something that's read in and returns floats'''
 
-        # fix blanks - we just want them to be nice nones rather than empty strings
+        # fix blanks - we just want them to be nice nones
+        # rather than empty strings
 
         if x == '':
             return None
@@ -142,7 +151,8 @@ def _read_spcat(filein):
                     'y': -250,
                     'z': -260,
                     }
-        # spinv said the minimum quantum number is -259, but I think it's a mistake, it should be able to store down to -269.
+        # spinv said the minimum quantum number is -259, but I
+        # think it's a mistake, it should be able to store down to -269.
 
         # replace any characters that are NOT alphabets with an empty string
         alpha = re.sub('[^a-zA-Z]+', '', x)
@@ -158,7 +168,8 @@ def _read_spcat(filein):
                 # if it's positive, we need to add
                 return alphabet + int(x[1])
 
-    # run the other arrays through the fixer, then convert them to what they need to be
+    # run the other arrays through the fixer, then convert
+    # them to what they need to be
 
     gup = [_fix_spcat(x) for x in gup]
     gup = np.array(gup)
@@ -205,9 +216,11 @@ def _read_spcat(filein):
 
     # make the qnstrings
     qn_list_up = [_make_qnstr(qn1, qn2, qn3, qn4, qn5, qn6, None, None)
-                  for qn1, qn2, qn3, qn4, qn5, qn6 in zip(qn1, qn2, qn3, qn4, qn5, qn6)]
+                  for qn1, qn2, qn3, qn4, qn5, qn6 in zip(
+                      qn1, qn2, qn3, qn4, qn5, qn6)]
     qn_list_low = [_make_qnstr(qn7, qn8, qn9, qn10, qn11, qn12, None, None)
-                   for qn7, qn8, qn9, qn10, qn11, qn12 in zip(qn7, qn8, qn9, qn10, qn11, qn12)]
+                   for qn7, qn8, qn9, qn10, qn11, qn12 in zip(
+                       qn7, qn8, qn9, qn10, qn11, qn12)]
 
     split_cat = {
         'frequency': 	frequency,
@@ -244,12 +257,13 @@ def _read_spcat(filein):
 
 def _load_catalog(filein):
     '''
-    Reads in a catalog file of the specified type and returns a catalog object.  
-    Optionally accepts a catdict dictionary to preload the catalog object with 
-    additional information. Defaults to loading an spcat catalog.
+    Reads in a catalog file of the specified type and returns a catalog
+    object. Optionally accepts a catdict dictionary to preload the
+    catalog object with additional information. Defaults to loading
+    an spcat catalog.
 
-    Anything in catdict will overwrite what's loaded in from the read catalog
-    function, so use cautiously.
+    Anything in catdict will overwrite what's loaded in from the
+    read catalog function, so use cautiously.
     '''
 
     new_dict = _read_spcat(filein)  # read in the catalog file and produce the
@@ -260,30 +274,42 @@ def _load_catalog(filein):
     return cat
 
 
-def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low, qn6low, qn7low, qn8low, qn1up, qn2up,
-                     qn3up, qn4up, qn5up, qn6up, qn7up, qn8up, frequency, elow, gup,
-                     qn_list_low, qn_list_up, level_qns, level_dict, qnstrfmt=None):
+def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low,
+                     qn6low, qn7low, qn8low, qn1up, qn2up,
+                     qn3up, qn4up, qn5up, qn6up, qn7up, qn8up,
+                     frequency, elow, gup, qn_list_low, qn_list_up,
+                     level_qns, level_dict, qnstrfmt=None):
 
-    # we need to sort out unique levels from our catalog.  Those will have unique quantum
-    # numbers. When we find a match to a lower level, add the info in.
+    # we need to sort out unique levels from our catalog.
+    # Those will have unique quantum numbers. When we find
+    # a match to a lower level, add the info in.
     for x in range(len(frequency)):
         qnstr_low = qn_list_low[x]
         level_dict[qnstr_low] = {'energy':	elow[x],
                                  'g':	None,
                                  'g_flag':	False,
-                                 'qn1':	qn1low[x] if qn1low is not None else None,
-                                 'qn2':	qn2low[x] if qn2low is not None else None,
-                                 'qn3':	qn3low[x] if qn3low is not None else None,
-                                 'qn4':	qn4low[x] if qn4low is not None else None,
-                                 'qn5':	qn5low[x] if qn5low is not None else None,
-                                 'qn6':	qn6low[x] if qn6low is not None else None,
-                                 'qn7':	qn7low[x] if qn7low is not None else None,
-                                 'qn8':	qn8low[x] if qn8low is not None else None,
+                                 'qn1':	qn1low[x] if qn1low is not None
+                                 else None,
+                                 'qn2':	qn2low[x] if qn2low is not None
+                                 else None,
+                                 'qn3':	qn3low[x] if qn3low is not None
+                                 else None,
+                                 'qn4':	qn4low[x] if qn4low is not None
+                                 else None,
+                                 'qn5':	qn5low[x] if qn5low is not None
+                                 else None,
+                                 'qn6':	qn6low[x] if qn6low is not None
+                                 else None,
+                                 'qn7':	qn7low[x] if qn7low is not None
+                                 else None,
+                                 'qn8':	qn8low[x] if qn8low is not None
+                                 else None,
                                  'id':	qn_list_low[x],
                                  'qnstrfmt':	qnstrfmt,
                                  }
 
-    # do it again to fill in energy levels that were upper states and didn't get hit
+    # do it again to fill in energy levels that were
+    # upper states and didn't get hit
     for x in range(len(frequency)):
         qnstr_up = qn_list_up[x]
         if level_dict[qnstr_up] is None:
@@ -293,14 +319,22 @@ def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low, qn6low, qn7low, qn8
             level_dict[qnstr_up] = {'energy':	elow[x] + freq_K,
                                     'g':	gup[x],
                                     'g_flag':	False,
-                                    'qn1':	qn1up[x] if qn1up is not None else None,
-                                    'qn2':	qn2up[x] if qn2up is not None else None,
-                                    'qn3':	qn3up[x] if qn3up is not None else None,
-                                    'qn4':	qn4up[x] if qn4up is not None else None,
-                                    'qn5':	qn5up[x] if qn5up is not None else None,
-                                    'qn6':	qn6up[x] if qn6up is not None else None,
-                                    'qn7':	qn7up[x] if qn7up is not None else None,
-                                    'qn8':	qn8up[x] if qn8up is not None else None,
+                                    'qn1':	qn1up[x] if qn1up is not None
+                                    else None,
+                                    'qn2':	qn2up[x] if qn2up is not None
+                                    else None,
+                                    'qn3':	qn3up[x] if qn3up is not None
+                                    else None,
+                                    'qn4':	qn4up[x] if qn4up is not None
+                                    else None,
+                                    'qn5':	qn5up[x] if qn5up is not None
+                                    else None,
+                                    'qn6':	qn6up[x] if qn6up is not None
+                                    else None,
+                                    'qn7':	qn7up[x] if qn7up is not None
+                                    else None,
+                                    'qn8':	qn8up[x] if qn8up is not None
+                                    else None,
                                     'id':	qn_list_up[x],
                                     'qnstrfmt':	qnstrfmt,
                                     }
@@ -311,8 +345,10 @@ def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low, qn6low, qn7low, qn8
         if level_dict[qnstr_up]['g'] is None:
             level_dict[qnstr_up]['g'] = gup[x]
 
-    # now go through and fill any degeneracies that didn't get hit (probably ground states)
-    # assume it's just 2J+1.  Set the flag for a calculated degeneracy to True.
+    # now go through and fill any degeneracies that didn't
+    # get hit (probably ground states)
+    # assume it's just 2J+1.  Set the flag for a
+    # calculated degeneracy to True.
     for x in level_dict:
         if level_dict[x]['g'] is None:
             level_dict[x]['g'] = 2*level_dict[x]['qn1'] + 1
@@ -324,29 +360,32 @@ def _make_level_dict(qn1low, qn2low, qn3low, qn4low, qn5low, qn6low, qn7low, qn8
 def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
               qpart_file=None):
     '''
-    Loads a molecule in from a catalog file.  Default catalog type is molsim.  Override
-    things with catdict.  Generates energy level objects, transition objects, a partition
+    Loads a molecule in from a catalog file.  Default catalog
+    type is molsim.  Override things with catdict.  Generates
+    energy level objects, transition objects, a partition
     function object and	a molecule object which it returns.
     '''
 
     # load the catalog in
     cat = _load_catalog(filein)
 
-    # now we have to make a hash for every entries upper and lower state.  If this already
-    # exists in the catalog, great.  If not, we have to make it.
+    # now we have to make a hash for every entries upper and
+    # lower state.  If this already exists in the catalog, great.
+    # If not, we have to make it.
     if cat.qnup_str is None:
-        qnups = [cat.qn1up, cat.qn2up, cat.qn3up, cat.qn4up, cat.qn5up, cat.qn6up, cat.qn7up,
-                 cat.qn8up]
-        qn_list_up = [_make_qnstr(qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8) for qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8 in zip(
-            cat.qn1up, cat.qn2up, cat.qn3up, cat.qn4up, cat.qn5up, cat.qn6up, cat.qn7up, cat.qn8up)]
+        qn_list_up = [_make_qnstr(
+            qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8)
+            for qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8 in zip(
+            cat.qn1up, cat.qn2up, cat.qn3up, cat.qn4up,
+            cat.qn5up, cat.qn6up, cat.qn7up, cat.qn8up)]
     else:
         qn_list_up = cat.qnup_str
 
     if cat.qnlow_str is None:
-        qnlows = [cat.qn1low, cat.qn2low, cat.qn3low, cat.qn4low, cat.qn5low, cat.qn6low,
-                  cat.qn7low, cat.qn8low]
-        qn_list_low = [_make_qnstr(qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8) for qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8 in zip(
-            cat.qn1low, cat.qn2low, cat.qn3low, cat.qn4low, cat.qn5low, cat.qn6low, cat.qn7low, cat.qn8low)]
+        qn_list_low = [_make_qnstr(qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8)
+                       for qn1, qn2, qn3, qn4, qn5, qn6, qn7, qn8 in zip(
+            cat.qn1low, cat.qn2low, cat.qn3low, cat.qn4low, cat.qn5low,
+            cat.qn6low, cat.qn7low, cat.qn8low)]
     else:
         qn_list_low = cat.qnlow_str
 
@@ -354,8 +393,9 @@ def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
     level_qns = list(set(list(level_qns)))  # get the unique ones
     level_dict = dict.fromkeys(level_qns)
 
-    # now we find unique energy levels.  We just get the dictionary of levels, since
-    # that function is computationally intensive and we want to njit it.
+    # now we find unique energy levels.  We just get the dictionary
+    # of levels, since that function is computationally intensive
+    # and we want to njit it.
 
     level_dict = _make_level_dict(
         cat.qn1low,
@@ -405,9 +445,8 @@ def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
     # sort them so the lowest energy is first
     levels.sort(key=lambda x: x.energy)
 
-    # we'll now update the catalog with some of the things we've calculated like eup and
-    # glow unless they're already present
-    level_ids = np.array([x.id for i, x in np.ndenumerate(levels)])
+    # we'll now update the catalog with some of the things we've
+    # calculated like eup and glow unless they're already present
     tmp_dict = {}
     for x in levels:
         tmp_dict[x.id] = [x.g, x.energy]
@@ -430,25 +469,34 @@ def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
         partition_dict['qpart_file'] = qpart_file
     # make the partition function object and assign it
     qpart = PartitionFunction(
-        qpart_file=partition_dict['qpart_file'] if 'qpart_file' in partition_dict else None,
-        form=partition_dict['form'] if 'form' in partition_dict else None,
-        params=partition_dict['params'] if 'params' in partition_dict else None,
-        temps=partition_dict['temps'] if 'temps' in partition_dict else None,
+        qpart_file=partition_dict['qpart_file'] if 'qpart_file' in
+        partition_dict else None,
+        form=partition_dict['form'] if 'form' in partition_dict
+        else None,
+        params=partition_dict['params'] if 'params' in partition_dict
+        else None,
+        temps=partition_dict['temps'] if 'temps' in partition_dict
+        else None,
         vals=partition_dict['vals'] if 'vals' in partition_dict else None,
         mol=partition_dict['mol'] if 'mol' in partition_dict else None,
         gs=partition_dict['gs'] if 'gs' in partition_dict else None,
-        energies=partition_dict['energies'] if 'energies' in partition_dict else None,
+        energies=partition_dict['energies'] if 'energies' in partition_dict
+        else None,
         sigma=partition_dict['sigma'] if 'sigma' in partition_dict else 1.,
-        vib_states=partition_dict['vib_states'] if 'vib_states' in partition_dict else None,
-        vib_is_K=partition_dict['vib_is_K'] if 'vib_is_K' in partition_dict else None,
+        vib_states=partition_dict['vib_states'] if 'vib_states' in
+        partition_dict else None,
+        vib_is_K=partition_dict['vib_is_K'] if 'vib_is_K' in partition_dict
+        else None,
         notes=partition_dict['notes'] if 'notes' in partition_dict else None,
     )
 
     # set sijmu and aij
     cat._set_sijmu_aij(qpart)
-    if len(qn_label_list) != len(cat.qnlow_str[0])/2 or len(qn_label_list) != len(cat.qnup_str[0])/2:
+    if len(qn_label_list) != len(cat.qnlow_str[0])/2 or \
+            len(qn_label_list) != len(cat.qnup_str[0])/2:
         raise ValueError(
-            'Quantum number labels do not match the number of quantum numbers in .cat file')
+            'Quantum number labels do not match the number of \
+            quantum numbers in .cat file')
     lower_state_qn_dict_list = []
     upper_state_qn_dict_list = []
 
@@ -463,4 +511,7 @@ def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
         lower_state_qn_dict_list.append(lower_state_qn_dict)
         upper_state_qn_dict_list.append(upper_state_qn_dict)
 
-    return cat.frequency, cat.freq_err, cat.logint, cat.sijmu, cat.aij, cat.elow, cat.eup, cat.glow, cat.gup, cat.qnformat, cat.qnlow_str, cat.qnup_str, lower_state_qn_dict_list, upper_state_qn_dict_list
+    return cat.frequency, cat.freq_err, cat.logint, cat.sijmu, \
+        cat.aij, cat.elow, cat.eup, cat.glow, cat.gup, cat.qnformat, \
+        cat.qnlow_str, cat.qnup_str, lower_state_qn_dict_list, \
+        upper_state_qn_dict_list

@@ -3,7 +3,8 @@ Serializers for data APIs.
 """
 from rest_framework import serializers
 
-from core.models import Species, Linelist, SpeciesMetadata, Reference, MetaReference, Line
+from core.models import (Species, Linelist, SpeciesMetadata,
+                         Reference, MetaReference, Line)
 
 
 class LinelistSerializer(serializers.ModelSerializer):
@@ -48,8 +49,9 @@ class SpeciesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Species
-        fields = ['id', 'name', 'iupac_name', 'name_formula', 'name_html', 'molecular_mass',
-                  'smiles', 'standard_inchi', 'standard_inchi_key', 'selfies', 'notes']
+        fields = ['id', 'name', 'iupac_name', 'name_formula',
+                  'name_html', 'molecular_mass', 'smiles',
+                  'standard_inchi', 'standard_inchi_key', 'selfies', 'notes']
         read_only_fields = ['id', 'molecular_mass', 'selfies']
 
 
@@ -79,9 +81,10 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SpeciesMetadata
-        fields = ['id', 'species', 'molecule_tag', 'hyperfine', 'degree_of_freedom',
-                  'category', 'partition_function', 'mu_a', 'mu_b', 'mu_c', 'a_const',
-                  'b_const', 'c_const', 'linelist', 'data_date', 'data_contributor', 'qpart_file',
+        fields = ['id', 'species', 'molecule_tag', 'hyperfine',
+                  'degree_of_freedom', 'category', 'partition_function',
+                  'mu_a', 'mu_b', 'mu_c', 'a_const', 'b_const', 'c_const',
+                  'linelist', 'data_date', 'data_contributor', 'qpart_file',
                   'int_file', 'var_file', 'fit_file', 'lin_file', 'notes']
         read_only_fields = ['id', 'partition_function']
 
@@ -137,14 +140,22 @@ class LineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Line
-        fields = ['id', 'meta', 'measured', 'cat_file', 'qn_label_str', 'frequency', 'uncertainty', 'intensity',
-                  's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy', 'lower_state_energy',
-                  'upper_state_degeneracy', 'lower_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'contains_rovibrational', 'rovibrational', 'vib_qn',
-                  'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
+        fields = ['id', 'meta', 'measured', 'cat_file', 'qn_label_str',
+                  'frequency', 'uncertainty', 'intensity',
+                  's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy',
+                  'lower_state_energy', 'upper_state_degeneracy',
+                  'lower_state_degeneracy', 'upper_state_qn',
+                  'lower_state_qn', 'contains_rovibrational',
+                  'rovibrational', 'vib_qn', 'pickett_qn_code',
+                  'pickett_upper_state_qn', 'pickett_lower_state_qn',
                   'notes']
-        read_only_fields = ['id', 'measured', 'frequency', 'uncertainty', 'intensity',
-                            's_ij', 's_ij_mu2', 'a_ij', 'lower_state_energy', 'upper_state_energy', 'lower_state_degeneracy',
-                            'upper_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'rovibrational', 'pickett_qn_code', 'pickett_upper_state_qn',
+        read_only_fields = ['id', 'measured', 'frequency', 'uncertainty',
+                            'intensity', 's_ij', 's_ij_mu2', 'a_ij',
+                            'lower_state_energy', 'upper_state_energy',
+                            'lower_state_degeneracy',
+                            'upper_state_degeneracy', 'upper_state_qn',
+                            'lower_state_qn', 'rovibrational',
+                            'pickett_qn_code', 'pickett_upper_state_qn',
                             'pickett_lower_state_qn']
 
 
@@ -168,11 +179,13 @@ class LineSerializerList(serializers.ModelSerializer):
 
     class Meta:
         model = Line
-        fields = ['id', 'meta', 'measured', 'frequency', 'uncertainty', 'intensity',
-                  's_ij', 's_ij_mu2', 'a_ij', 'upper_state_energy', 'lower_state_energy',
-                  'upper_state_degeneracy', 'lower_state_degeneracy', 'upper_state_qn', 'lower_state_qn', 'rovibrational', 'vib_qn',
-                  'pickett_qn_code', 'pickett_upper_state_qn', 'pickett_lower_state_qn',
-                  'notes']
+        fields = ['id', 'meta', 'measured', 'frequency', 'uncertainty',
+                  'intensity', 's_ij', 's_ij_mu2', 'a_ij',
+                  'upper_state_energy', 'lower_state_energy',
+                  'upper_state_degeneracy', 'lower_state_degeneracy',
+                  'upper_state_qn', 'lower_state_qn', 'rovibrational',
+                  'vib_qn', 'pickett_qn_code', 'pickett_upper_state_qn',
+                  'pickett_lower_state_qn', 'notes']
         read_only_fields = ['id']
 
 
@@ -201,8 +214,10 @@ class QuerySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Line
-        fields = ['frequency', 'measured', 'uncertainty', 'intensity', 'lower_state_qn', 'upper_state_qn',
-                  'lower_state_energy', 'upper_state_energy', 's_ij', 's_ij_mu2', 'a_ij',
+        fields = ['frequency', 'measured', 'uncertainty', 'intensity',
+                  'lower_state_qn', 'upper_state_qn',
+                  'lower_state_energy', 'upper_state_energy',
+                  's_ij', 's_ij_mu2', 'a_ij',
                   'rovibrational']
 
     def to_representation(self, instance):

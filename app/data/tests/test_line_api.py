@@ -1,13 +1,6 @@
 """
 Test for Line APIs.
 """
-"""
-Test for metareference APIs.
-"""
-
-
-
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -21,6 +14,8 @@ from rdkit.Chem import Descriptors
 import selfies as sf
 import tempfile
 from django.core.files import File as DjangoFile
+
+
 def create_linelist(linelist_name='Test Linelist'):
     """Helper function to create a linelist."""
     return Linelist.objects.create(linelist_name=linelist_name)
@@ -128,7 +123,8 @@ class PublicLineApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_put(self):
-        """Test that authentication is required for put updating metareference."""
+        """Test that authentication is required for put
+        updating metareference."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -279,7 +275,8 @@ class PrivateLineApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_line_not_rovibrational_with_vib_qn_fails(self):
-        """Test creating line that is not rovibrational but with vib qn provided fails."""
+        """Test creating line that is not rovibrational but with
+        vib qn provided fails."""
         url = reverse('data:line-list')
         species = create_species()
         linelist = create_linelist()
@@ -392,7 +389,8 @@ class PrivateLineApiTests(TestCase):
         meta = create_meta(species.id, linelist.id)
         line = create_line(meta.id)
         url = reverse('data:line-detail',
-                      args=[line.id]) + '?delete_reason=Test delete reason line'
+                      args=[line.id]) + \
+            '?delete_reason=Test delete reason line'
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Line.objects.filter(id=line.id).exists())

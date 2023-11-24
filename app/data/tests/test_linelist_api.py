@@ -28,9 +28,10 @@ def create_species(**params):
         'notes': 'Test Species',
     }
     defaults.update(params)
-    defaults.update(molecular_mass=Descriptors.ExactMolWt(Chem.MolFromSmiles(defaults['smiles'])),
-                    selfies=sf.encoder(defaults['smiles']),
-                    mol_obj=Chem.MolFromSmiles(defaults['smiles']))
+    defaults.update(molecular_mass=Descriptors.ExactMolWt(
+        Chem.MolFromSmiles(defaults['smiles'])),
+        selfies=sf.encoder(defaults['smiles']),
+        mol_obj=Chem.MolFromSmiles(defaults['smiles']))
 
     return Species.objects.create(**defaults)
 
@@ -82,7 +83,8 @@ class PublicLinelistApiTests(TestCase):
         self.client = APIClient()
 
     def test_auth_required_for_post(self):
-        """Test that authentication is required for post creating linelists."""
+        """Test that authentication is required for post
+        creating linelists."""
         url = reverse('data:linelist-list')
         payload = {'linelist_name': 'Test Linelist'}
 
@@ -99,7 +101,8 @@ class PublicLinelistApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_patch(self):
-        """Test that authentication is required for patch updating linelists."""
+        """Test that authentication is required for
+        patch updating linelists."""
         linelist = create_linelist()
         url = reverse('data:linelist-detail', args=[linelist.id])
         payload = {'linelist_name': 'Updated Linelist'}
@@ -243,12 +246,14 @@ class PrivateLinelistApiTests(TestCase):
         self.assertTrue(Linelist.objects.filter(id=linelist.id).exists())
 
     def test_delete_referenced_linelist_fails(self):
-        """Test deleting a linelist that is referenced by species metadata fails."""
+        """Test deleting a linelist that is referenced by species
+        metadata fails."""
         linelist = create_linelist()
         species = create_species()
         create_meta(species.id, linelist.id)
         url = reverse('data:linelist-detail',
-                      args=[linelist.id]) + '?delete_reason=Test delete referenced'
+                      args=[linelist.id]) + \
+            '?delete_reason=Test delete referenced'
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(Linelist.objects.filter(id=linelist.id).exists())

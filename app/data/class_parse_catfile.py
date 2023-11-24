@@ -4,6 +4,10 @@ Classes from molsim - for parsing .cat file into database line table.
 
 import numpy as np
 from scipy.interpolate import interp1d
+import scipy.constants
+
+h = scipy.constants.h  # Planck's constant in Js
+k = scipy.constants.k  # Boltzmann's constant in J/K
 
 
 def _read_txt(filein):
@@ -434,8 +438,7 @@ class PartitionFunction(object):
             Set to True if vibstates are given in Kelvin
 
     notes :	str
-            Any notes for this partition function.														
-
+            Any notes for this partition function.
     '''
 
     def __init__(
@@ -528,13 +531,19 @@ class PartitionFunction(object):
         functionals = ['poly', 'polynomial', 'power', 'pow', 'rotcons']
 
         if self.flag == 'functional' and self.form not in functionals:
-            print('ERROR: The partition function has been specified to be calculated '
-                  'analytically using a functional form.  The form specified is either '
-                  'not currently supported, or is unrecognized.  The form string that '
-                  'was entered was: "{}". Please choose from this list of options:\n'
-                  '\t-- "poly" or "polynomial" for any order polynmial function\n'
+            print('ERROR: The partition function has been specified \
+                to be calculated '
+                  'analytically using a functional form.  \
+                  The form specified is either '
+                  'not currently supported, or is unrecognized.  \
+                  The form string that '
+                  'was entered was: "{}". Please choose from \
+                  this list of options:\n'
+                  '\t-- "poly" or "polynomial" for any order \
+                  polynmial function\n'
                   '\t-- "pow" or "power" for a power law function\n'
-                  '\t-- "rotcons" to estimate from Gordy & Cook rotational constants '
+                  '\t-- "rotcons" to estimate from Gordy & Cook \
+                rotational constants '
                   'formalism.\n Qrot is set to 1 until this is corrected.'
                   )
             return False
@@ -568,19 +577,26 @@ class PartitionFunction(object):
             # if it's rotational constants
             if self.form == 'rotcons':
                 # sort out if there's sigma specified or not
-                if list not in [type(x) for x in self.params]:  # no sigma, use defaults
+                if list not in [type(x) for x in self.params]:
+                    # no sigma, use defaults
                     if len(self.params) == 1:
                         return k*T/(h * self.params[0]*1E6)
                     if len(self.params) == 2:
-                        return (5.34E6/1)*np.sqrt((T**3/(self.params[1]**2 * self.params[0])))
+                        return (5.34E6/1)*np.sqrt((
+                            T**3/(self.params[1]**2 * self.params[0])))
                     if len(self.params) == 3:
-                        return (5.34E6/1)*np.sqrt((T**3/(self.params[2] * self.params[1] * self.params[0])))
+                        return (5.34E6/1)*np.sqrt((
+                            T**3/(self.params[2] * self.params[1]
+                                  * self.params[0])))
 
                 if list in [type(x) for x in self.params]:  # use a sigma
                     if len(self.params) == 3:
-                        return (5.34E6/self.params[2][0])*np.sqrt((T**3/(self.params[1]**2 * self.params[0])))
+                        return (5.34E6/self.params[2][0])*np.sqrt((
+                            T**3/(self.params[1]**2 * self.params[0])))
                     if len(self.params) == 4:
-                        return (5.34E6/self.params[3][0])*np.sqrt((T**3/(self.params[2] * self.params[1] * self.params[0])))
+                        return (5.34E6/self.params[3][0])*np.sqrt((
+                            T**3/(self.params[2] * self.params[1] *
+                                  self.params[0])))
 
         # if the user provided arrays for interpolation
         if self.flag == 'interpolation':
@@ -601,7 +617,8 @@ class PartitionFunction(object):
 
     def qvib(self, T):
         '''
-        Calculate and return the vibrational partition function at temperature T
+        Calculate and return the vibrational partition
+        function at temperature T
         '''
 
         # if there's no states specified, return 1.
@@ -610,9 +627,12 @@ class PartitionFunction(object):
 
         # otherwise do the calculation and return based on the units
         if self.vib_is_K is True:
-            return np.prod(np.sum(np.exp((-self.vib_states[:, np.newaxis]*np.arange(100))/(T)), axis=1))
+            return np.prod(np.sum(np.exp((
+                -self.vib_states[:, np.newaxis]*np.arange(100))/(T)), axis=1))
         else:
-            return np.prod(np.sum(np.exp((-self.vib_states[:, np.newaxis]*np.arange(100))/(0.695*T)), axis=1))
+            return np.prod(np.sum(np.exp((
+                -self.vib_states[:, np.newaxis] *
+                np.arange(100))/(0.695*T)), axis=1))
 
     def q(self, T):
         '''
@@ -625,10 +645,10 @@ class PartitionFunction(object):
 class Molecule(object):
 
     '''
-    The molecule class holds all the information for a single molecule.  Note that this
-    does not include anything about an observed population of this molecule.  It is 
-    only the physical properties of a molecule.  Things like column density and temp
-    are part of the <classname> class.
+    The molecule class holds all the information for a single molecule.
+    Note that this does not include anything about an observed population
+    of this molecule.  It is only the physical properties of a molecule.
+    Things like column density and temp are part of the <classname> class.
     '''
 
     def __init__(

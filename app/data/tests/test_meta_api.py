@@ -1,13 +1,6 @@
 """
 Test species metadata APIs.
 """
-"""
-Test species APIs.
-"""
-
-
-
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -19,6 +12,8 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 import selfies as sf
 import tempfile
+
+
 def create_linelist(linelist_name='Test Linelist'):
     """Helper function to create a linelist."""
     return Linelist.objects.create(linelist_name=linelist_name)
@@ -109,7 +104,8 @@ class PublicMetaApiTests(TestCase):
         self.client = APIClient()
 
     def test_auth_required_for_post(self):
-        """Test that authentication is required for creating species metadata."""
+        """Test that authentication is required for creating
+        species metadata."""
         url = reverse('data:speciesmetadata-list')
         species = create_species()
         linelist = create_linelist()
@@ -141,7 +137,8 @@ class PublicMetaApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_put(self):
-        """Test that authentication is required for put updating species metadata."""
+        """Test that authentication is required for put updating
+        species metadata."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -175,7 +172,8 @@ class PublicMetaApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_patch(self):
-        """Test that authentication is required for patch updating species metadata."""
+        """Test that authentication is required for patch updating
+        species metadata."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -187,7 +185,8 @@ class PublicMetaApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_delete(self):
-        """Test that authentication is required for deleting species metadata."""
+        """Test that authentication is required for deleting
+        species metadata."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -249,12 +248,19 @@ class PrivateSpeciesApiTests(TestCase):
  002  0.000 /muB
  003  0.000 /muC""")
             int_file.seek(0)
-            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
-   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
-S   1  1  0  50  0  1  1  1  1  -1   0
-        10000   9.447840918743423E+03 6.36184172E-02 /A
-        20000   9.246852060423453E+03 1.63997319E-02 /B
-        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.write(b"FURAN                        "
+                           b"                "
+                           b"WedThu MaWeFri May 19 17:01:15 2023\n"
+                           b"   3    9   40    0     0.0000E+00"
+                           b"     5.0000E+20     "
+                           b"1.0000E+00 1.0000000000\n"
+                           b"S   1  1  0  50  0  1  1  1  1  -1   0\n"
+                           b"        10000   9.447840918743423E+03 "
+                           b"6.36184172E-02 /A\n"
+                           b"        20000   9.246852060423453E+03 "
+                           b"1.63997319E-02 /B\n"
+                           b"        30000   4.671341872421471E+03 "
+                           b"5.27198401E-02 /C")
             var_file.seek(0)
             fit_file.write(b'I am a fit file')
             fit_file.seek(0)
@@ -299,7 +305,8 @@ S   1  1  0  50  0  1  1  1  1  -1   0
         meta.qpart_file.delete()
 
     def test_create_meta_without_300K(self):
-        """Test creating a species metadata with qpart that does not contain 300K fails."""
+        """Test creating a species metadata with qpart
+        that does not contain 300K fails."""
         species = create_species()
         linelist = create_linelist()
         url = reverse('data:speciesmetadata-list')
@@ -314,12 +321,18 @@ S   1  1  0  50  0  1  1  1  1  -1   0
  002  0.000 /muB
  003  0.000 /muC""")
             int_file.seek(0)
-            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
-   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
-S   1  1  0  50  0  1  1  1  1  -1   0
-        10000   9.447840918743423E+03 6.36184172E-02 /A
-        20000   9.246852060423453E+03 1.63997319E-02 /B
-        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.write(b"FURAN                                        "
+                           b"WedThu MaWeFri May 19 17:01:15 2023\n"
+                           b"   3    9   40    0     0.0000E+00"
+                           b"     5.0000E+20     "
+                           b"1.0000E+00 1.0000000000\n"
+                           b"S   1  1  0  50  0  1  1  1  1  -1   0\n"
+                           b"        10000   9.447840918743423E+03 "
+                           b"6.36184172E-02 /A\n"
+                           b"        20000   9.246852060423453E+03 "
+                           b"1.63997319E-02 /B\n"
+                           b"        30000   4.671341872421471E+03 "
+                           b"5.27198401E-02 /C")
             var_file.seek(0)
             fit_file.write(b'I am a fit file')
             fit_file.seek(0)
@@ -355,7 +368,8 @@ S   1  1  0  50  0  1  1  1  1  -1   0
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_meta_with_wrong_file_fails(self):
-        """Test creating a species metadata with wrong file extension fails."""
+        """Test creating a species metadata with wrong file
+        extension fails."""
         species = create_species()
         linelist = create_linelist()
         url = reverse('data:speciesmetadata-list')
@@ -370,12 +384,18 @@ S   1  1  0  50  0  1  1  1  1  -1   0
  002  0.000 /muB
  003  0.000 /muC""")
             not_int_file.seek(0)
-            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
-   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
-S   1  1  0  50  0  1  1  1  1  -1   0
-        10000   9.447840918743423E+03 6.36184172E-02 /A
-        20000   9.246852060423453E+03 1.63997319E-02 /B
-        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.write(b"FURAN                                        "
+                           b"WedThu MaWeFri May 19 17:01:15 2023\n"
+                           b"   3    9   40    0     0.0000E+00     "
+                           b"5.0000E+20     "
+                           b"1.0000E+00 1.0000000000\n"
+                           b"S   1  1  0  50  0  1  1  1  1  -1   0\n"
+                           b"        10000   9.447840918743423E+03 "
+                           b"6.36184172E-02 /A\n"
+                           b"        20000   9.246852060423453E+03 "
+                           b"1.63997319E-02 /B\n"
+                           b"        30000   4.671341872421471E+03 "
+                           b"5.27198401E-02 /C")
             var_file.seek(0)
             fit_file.write(b'I am a fit file')
             fit_file.seek(0)
@@ -448,12 +468,18 @@ S   1  1  0  50  0  1  1  1  1  -1   0
  002  0.000 /muB
  003  0.000 /muC""")
             int_file.seek(0)
-            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
-   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
-S   1  1  0  50  0  1  1  1  1  -1   0
-        10000   9.447840918743423E+03 6.36184172E-02 /A
-        20000   9.246852060423453E+03 1.63997319E-02 /B
-        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.write(b"FURAN                                        "
+                           b"WedThu MaWeFri May 19 17:01:15 2023\n"
+                           b"   3    9   40    0     0.0000E+00     "
+                           b"5.0000E+20     "
+                           b"1.0000E+00 1.0000000000\n"
+                           b"S   1  1  0  50  0  1  1  1  1  -1   0\n"
+                           b"        10000   9.447840918743423E+03 "
+                           b"6.36184172E-02 /A\n"
+                           b"        20000   9.246852060423453E+03 "
+                           b"1.63997319E-02 /B\n"
+                           b"        30000   4.671341872421471E+03 "
+                           b"5.27198401E-02 /C")
             var_file.seek(0)
             fit_file.write(b'I am a fit file')
             fit_file.seek(0)
@@ -504,7 +530,8 @@ S   1  1  0  50  0  1  1  1  1  -1   0
         meta.qpart_file.delete()
 
     def test_full_update_meta_without_reason_fails(self):
-        """Test updating a species metadata with put without change reason fails."""
+        """Test updating a species metadata with put without
+        change reason fails."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -520,12 +547,18 @@ S   1  1  0  50  0  1  1  1  1  -1   0
  002  0.000 /muB
  003  0.000 /muC""")
             int_file.seek(0)
-            var_file.write(b"""FURAN                                        WedThu MaWeFri May 19 17:01:15 2023
-   3    9   40    0     0.0000E+00     5.0000E+20     1.0000E+00 1.0000000000
-S   1  1  0  50  0  1  1  1  1  -1   0
-        10000   9.447840918743423E+03 6.36184172E-02 /A
-        20000   9.246852060423453E+03 1.63997319E-02 /B
-        30000   4.671341872421471E+03 5.27198401E-02 /C""")
+            var_file.write(b"FURAN                                        "
+                           b"WedThu MaWeFri May 19 17:01:15 2023\n"
+                           b"   3    9   40    0     0.0000E+00     "
+                           b"5.0000E+20     "
+                           b"1.0000E+00 1.0000000000\n"
+                           b"S   1  1  0  50  0  1  1  1  1  -1   0\n"
+                           b"        10000   9.447840918743423E+03 "
+                           b"6.36184172E-02 /A\n"
+                           b"        20000   9.246852060423453E+03 "
+                           b"1.63997319E-02 /B\n"
+                           b"        30000   4.671341872421471E+03 "
+                           b"5.27198401E-02 /C")
             var_file.seek(0)
             fit_file.write(b'I am a fit file')
             fit_file.seek(0)

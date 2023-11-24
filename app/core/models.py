@@ -3,7 +3,6 @@ Database models.
 """
 import os
 import uuid
-from django.conf import settings
 from django_rdkit import models
 from django.contrib.auth.models import (
     AbstractBaseUser,

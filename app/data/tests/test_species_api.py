@@ -34,9 +34,10 @@ def create_species(**params):
         'notes': 'Test Species',
     }
     defaults.update(params)
-    defaults.update(molecular_mass=Descriptors.ExactMolWt(Chem.MolFromSmiles(defaults['smiles'])),
-                    selfies=sf.encoder(defaults['smiles']),
-                    mol_obj=Chem.MolFromSmiles(defaults['smiles']))
+    defaults.update(molecular_mass=Descriptors.ExactMolWt(
+        Chem.MolFromSmiles(defaults['smiles'])),
+        selfies=sf.encoder(defaults['smiles']),
+        mol_obj=Chem.MolFromSmiles(defaults['smiles']))
 
     return Species.objects.create(**defaults)
 
@@ -177,7 +178,8 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCC')),
+            'molecular_mass': Descriptors.ExactMolWt(
+                Chem.MolFromSmiles('CCCC')),
             'smiles': 'CCCC',
             'standard_inchi': 'test inchi4',
             'standard_inchi_key': 'test inchi4',
@@ -202,7 +204,8 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
+            'molecular_mass': Descriptors.ExactMolWt(
+                Chem.MolFromSmiles('CCCCC')),
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi5',
             'standard_inchi_key': 'CCCCC',
@@ -242,7 +245,8 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
+            'molecular_mass': Descriptors.ExactMolWt(
+                Chem.MolFromSmiles('CCCCC')),
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi full update payload',
             'standard_inchi_key': 'CCCCC',
@@ -273,7 +277,8 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
+            'molecular_mass': Descriptors.ExactMolWt(
+                Chem.MolFromSmiles('CCCCC')),
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi full update payload',
             'standard_inchi_key': 'CCCCC',
@@ -289,7 +294,8 @@ class PrivateSpeciesApiTests(TestCase):
         """Test deleting a species."""
         species = create_species(standard_inchi='test inchi delete')
         url = reverse('data:species-detail',
-                      args=[species.id]) + '?delete_reason=Test delete reason'
+                      args=[species.id]) + \
+            '?delete_reason=Test delete reason'
 
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
@@ -316,7 +322,8 @@ class PrivateSpeciesApiTests(TestCase):
         linelist = create_linelist()
         create_meta(species.id, linelist.id)
         url = reverse('data:species-detail',
-                      args=[species.id]) + '?delete_reason=Test delete reason'
+                      args=[species.id]) + \
+            '?delete_reason=Test delete reason'
 
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

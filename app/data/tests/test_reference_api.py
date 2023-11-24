@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Reference, Species, Linelist, SpeciesMetadata, MetaReference
+from core.models import (Reference, Species, Linelist,
+                         SpeciesMetadata, MetaReference)
 import tempfile
 import os
 import json
@@ -44,9 +45,10 @@ def create_species(**params):
         'notes': 'Test Species',
     }
     defaults.update(params)
-    defaults.update(molecular_mass=Descriptors.ExactMolWt(Chem.MolFromSmiles(defaults['smiles'])),
-                    selfies=sf.encoder(defaults['smiles']),
-                    mol_obj=Chem.MolFromSmiles(defaults['smiles']))
+    defaults.update(molecular_mass=Descriptors.ExactMolWt(
+        Chem.MolFromSmiles(defaults['smiles'])),
+        selfies=sf.encoder(defaults['smiles']),
+        mol_obj=Chem.MolFromSmiles(defaults['smiles']))
 
     return Species.objects.create(**defaults)
 
@@ -111,7 +113,8 @@ class PublicReferenceApiTests(TestCase):
         self.client = APIClient()
 
     def test_auth_required_for_post(self):
-        """Test that authentication is required for post creating references."""
+        """Test that authentication is required for post
+        creating references."""
         url = reverse('data:reference-list')
         payload = {
             'doi': '10.1021/acs.jcim.0c00128',
@@ -123,7 +126,8 @@ class PublicReferenceApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_put(self):
-        """Test that authentication is required for put updating references."""
+        """Test that authentication is required for put
+        updating references."""
         reference = create_reference()
         url = reverse('data:reference-detail', args=[reference.id])
         payload = {
@@ -137,7 +141,8 @@ class PublicReferenceApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_patch(self):
-        """Test that authentication is required for patch updating references."""
+        """Test that authentication is required for patch
+        updating references."""
         reference = create_reference()
         url = reverse('data:reference-detail', args=[reference.id])
         payload = {'doi': 'new doi', '_change_reason': 'Test change reason'}
@@ -149,7 +154,8 @@ class PublicReferenceApiTests(TestCase):
         """Test that authentication is required for deleting references."""
         reference = create_reference()
         url = reverse('data:reference-detail',
-                      args=[reference.id]) + '?delete_reason=Test delete reason'
+                      args=[reference.id]) + \
+            '?delete_reason=Test delete reason'
 
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

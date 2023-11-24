@@ -6,7 +6,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Linelist, Species, SpeciesMetadata, Reference, MetaReference
+from core.models import (Linelist, Species, SpeciesMetadata,
+                         Reference, MetaReference)
 from data.serializers import MetaReferenceSerializer
 import json
 from rdkit import Chem
@@ -103,7 +104,8 @@ class PublicMetarefApiTests(TestCase):
         self.client = APIClient()
 
     def test_auth_required_for_post(self):
-        """Test that authentication is required for post creating metareference."""
+        """Test that authentication is required for post
+        creating metareference."""
         url = reverse('data:metareference-list')
         species = create_species()
         linelist = create_linelist()
@@ -120,7 +122,8 @@ class PublicMetarefApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_put(self):
-        """Test that authentication is required for put updating metareference."""
+        """Test that authentication is required for put updating
+        metareference."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -138,7 +141,8 @@ class PublicMetarefApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_patch(self):
-        """Test that authentication is required for patch updating metareference."""
+        """Test that authentication is required for patch updating
+        metareference."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -270,7 +274,8 @@ class PrivateMetarefApiTests(TestCase):
         self.assertEqual(history_count, 2)
 
     def test_full_update_metaref_without_reason_fails(self):
-        """Test updating a metareference with put without change reason fails."""
+        """Test updating a metareference with put without change
+        reason fails."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -293,7 +298,8 @@ class PrivateMetarefApiTests(TestCase):
         ref = create_reference()
         metaref = create_metaref(meta.id, ref.id)
         url = reverse('data:metareference-detail',
-                      args=[metaref.id]) + '?delete_reason=Test delete reason metaref'
+                      args=[metaref.id]) + \
+            '?delete_reason=Test delete reason metaref'
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(MetaReference.objects.filter(id=metaref.id).exists())

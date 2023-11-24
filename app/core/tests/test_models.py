@@ -4,7 +4,6 @@ Test for models
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from core import models
-import django.utils.timezone as timezone
 import datetime
 from django.core.files.uploadedfile import SimpleUploadedFile
 from decimal import Decimal
@@ -246,7 +245,8 @@ class ModelTests(TestCase):
         self.assertEqual(str(species), species.iupac_name)
 
     def test_create_species_duplicate(self):
-        """Test creating a species with duplicate standard_inchi raises error."""
+        """Test creating a species with
+        duplicate standard_inchi raises error."""
         create_species(standard_inchi="test standard inchi duplicate")
         with self.assertRaises(IntegrityError):
             create_species(standard_inchi="test standard inchi duplicate")
