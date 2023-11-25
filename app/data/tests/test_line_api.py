@@ -442,10 +442,10 @@ class PrivateLineApiTests(TestCase):
         meta = create_meta(species.id, linelist.id)
         create_line(meta.id, frequency=100.000)
         create_line(meta.id, frequency=200.000)
-        url = reverse('data:line-query') + '?max_freq=201.000'
+        url = reverse('data:line-query') + '?max_freq=101.000'
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 2)
+        self.assertEqual(len(res.data), 1)
 
     def test_query_lines_without_freq_fails(self):
         """Test querying lines without frequency specified fails."""
