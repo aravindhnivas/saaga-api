@@ -1,3 +1,4 @@
+# Dockerfile for development environment.
 # Docker image, bullseye is debian linux distribution
 FROM python:3.9-bullseye
 
@@ -10,7 +11,6 @@ ENV PYTHONUNBUFFERED 1
 # Copy files and folder into docker image.
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
-COPY ./scripts /scripts
 COPY ./app /app
 
 # Default directory that our commands run from.
@@ -41,13 +41,9 @@ RUN python -m venv /py && \
     mkdir -p /vol/web/media && \
     mkdir -p /vol/web/static && \
     chown -R django-user:django-user /vol && \
-    chmod -R 755 /vol && \
-    chmod -R +x /scripts
-
+    chmod -R 755 /vol
 # Run Python command automatically from virtual environment.
-ENV PATH="/scripts:/py/bin:$PATH"
+ENV PATH="/py/bin:$PATH"
 
 # Specify the user that we are switching to.
 USER django-user
-
-CMD ["run.sh"]
