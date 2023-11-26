@@ -10,6 +10,7 @@ ENV PYTHONUNBUFFERED 1
 # Copy files and folder into docker image.
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
+COPY ./scripts /scripts
 COPY ./app /app
 
 # Default directory that our commands run from.
@@ -40,10 +41,13 @@ RUN python -m venv /py && \
     mkdir -p /vol/web/media && \
     mkdir -p /vol/web/static && \
     chown -R django-user:django-user /vol && \
-    chmod -R 755 /vol
+    chmod -R 755 /vol && \
+    chmod -R +x /scripts
 
 # Run Python command automatically from virtual environment.
-ENV PATH="/py/bin:$PATH"
+ENV PATH="/scripts:/py/bin:$PATH"
 
 # Specify the user that we are switching to.
 USER django-user
+
+CMD ["run.sh"]
