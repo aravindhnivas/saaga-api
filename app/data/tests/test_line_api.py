@@ -42,7 +42,7 @@ def create_species(**params):
 
 
 def create_meta(species_id, linelist_id, **params):
-    """Helper function to create a species."""
+    """Helper function to create species metadata."""
     defaults = {
         'species_id': species_id,
         'molecule_tag': 1,
@@ -168,7 +168,7 @@ class PublicLineApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_auth_required_for_delete(self):
-        """Test that authentication is required for deleting metareference."""
+        """Test that authentication is required for deleting line."""
         species = create_species()
         linelist = create_linelist()
         meta = create_meta(species.id, linelist.id)
@@ -239,7 +239,7 @@ class PrivateLineApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_line_with_rovibrational_no_vib_qn_fails(self):
-        """Test creating a line with rovibrational no vib qn fails."""
+        """Test creating a line with rovibrational true but no vib qn fails"""
         url = reverse('data:line-list')
         species = create_species()
         linelist = create_linelist()
@@ -257,7 +257,7 @@ class PrivateLineApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_line_with_rovibrational_wrong_vib_qn_fails(self):
-        """Test creating a line with rovibrational wrong vib qn fails."""
+        """Test creating a line with rovibrational wrong but vib qn fails."""
         url = reverse('data:line-list')
         species = create_species()
         linelist = create_linelist()

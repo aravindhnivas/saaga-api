@@ -31,6 +31,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
 
     def get_permissions(self):
+        """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             permission_classes = [IsAuthenticated]
         else:
@@ -54,6 +55,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
         ]
     )
     def destroy(self, request, *args, **kwargs):
+        """query param delete_reason must be present for DELETE requests."""
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data='{delete_reason: Invalid Delete Reason}')
@@ -84,6 +86,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
 
     def get_permissions(self):
+        """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             permission_classes = [IsAuthenticated]
         else:
@@ -143,6 +146,7 @@ bibtex ids to merge")
         ]
     )
     def destroy(self, request, *args, **kwargs):
+        """query param delete_reason must be present for DELETE requests."""
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data='{delete_reason: Invalid Delete Reason}')
@@ -176,6 +180,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
 
     def get_permissions(self):
+        """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             permission_classes = [IsAuthenticated]
         else:
@@ -198,7 +203,8 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
     def perform_create(self, serializer):
-        """Create a new species."""
+        """Create a new species and autopopulate molecular mass,
+        selfies, and rdkit mol object from canonical smiles."""
         smiles = self.request.data.get('smiles')
         canonical_smiles = Chem.CanonSmiles(smiles)
         selfies_string = sf.encoder(canonical_smiles)
@@ -215,6 +221,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         ]
     )
     def destroy(self, request, *args, **kwargs):
+        """query param delete_reason must be present for DELETE requests."""
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data='{delete_reason: Invalid Delete Reason}')
@@ -244,6 +251,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
 
     def get_permissions(self):
+        """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             permission_classes = [IsAuthenticated]
         else:
@@ -266,6 +274,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         int_file = request.FILES.get('int_file')
         var_file = request.FILES.get('var_file')
         qpart_file = request.FILES.get('qpart_file')
+        # Check that the qpart file contains 300.000 K
         try:
             partition_dict = read_qpartfile(qpart_file)
         except ValueError:
@@ -277,6 +286,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         if serializer.is_valid():
+            # Read from .int and .var files if they are uploaded.
             if int_file and var_file:
                 mu_a, mu_b, mu_c = read_intfile(int_file)
                 a_const, b_const, c_const = read_varfile(var_file)
@@ -307,6 +317,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         ]
     )
     def destroy(self, request, *args, **kwargs):
+        """query param delete_reason must be present for DELETE requests."""
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data='{delete_reason: Invalid Delete Reason}')
@@ -336,6 +347,7 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
 
     def get_permissions(self):
+        """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             permission_classes = [IsAuthenticated]
         else:
@@ -359,6 +371,7 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
         ]
     )
     def destroy(self, request, *args, **kwargs):
+        """query param delete_reason must be present for DELETE requests."""
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data='{delete_reason: Invalid Delete Reason}')
@@ -376,6 +389,7 @@ class LineViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
 
     def get_permissions(self):
+        """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             permission_classes = [IsAuthenticated]
         else:
@@ -402,7 +416,7 @@ class LineViewSet(viewsets.ModelViewSet):
         return qn_str.split(',')
 
     def create(self, request, *args, **kwargs):
-        """Create a line."""
+        """Create a line from .cat file."""
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors,
@@ -414,6 +428,9 @@ class LineViewSet(viewsets.ModelViewSet):
         contains_rovibrational = request.data['contains_rovibrational']
         vib_qn = request.data['vib_qn']
         if eval(contains_rovibrational.capitalize()):
+            """Check if the .cat file contains rovibrational lines,
+            If so, check that the vibrational quantum number label
+            is provided."""
             if not vib_qn:
                 response_msg = {
                     "code": "server_error",
@@ -460,6 +477,7 @@ class LineViewSet(viewsets.ModelViewSet):
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         meta_obj = SpeciesMetadata.objects.get(id=meta_id)
         qpart_file = None
+        # Check if the corresponding species metadata has a qpart file.
         try:
             qpart_file = meta_obj.qpart_file.open('r')
         except FileNotFoundError:
@@ -472,6 +490,7 @@ class LineViewSet(viewsets.ModelViewSet):
                           "Please upload the qpart file."},
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        # Extract info from the .cat file.
         try:
             frequency, uncertainty, intensity, s_ij_mu2, a_ij, \
                 lower_state_energy, upper_state_energy, \
@@ -493,6 +512,9 @@ class LineViewSet(viewsets.ModelViewSet):
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         input_dict_list = []
         if eval(contains_rovibrational.capitalize()):
+            """Check if the .cat file contains rovibrational lines,
+            If so, determines which particular line contains
+            rovibrational transition."""
             for i in range(len(frequency)):
                 input_dict_list.append({'meta': meta_id,
                                         'measured': measured,
@@ -582,6 +604,7 @@ class LineViewSet(viewsets.ModelViewSet):
     )
     @action(methods=['GET'], detail=False, url_path='query')
     def query(self, request):
+        """Query lines by frequency range."""
         min_freq = request.query_params.get('min_freq')
         max_freq = request.query_params.get('max_freq')
         queryset = self.get_queryset()
@@ -610,6 +633,7 @@ class LineViewSet(viewsets.ModelViewSet):
         ]
     )
     def destroy(self, request, *args, **kwargs):
+        """query param delete_reason must be present for DELETE requests."""
         if 'delete_reason' not in self.request.query_params:
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data='{delete_reason: Invalid Delete Reason}')

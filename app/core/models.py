@@ -99,6 +99,7 @@ register(User)
 
 
 class Linelist(models.Model):
+    """Linelist object."""
     linelist_name = models.CharField(max_length=255, unique=True)
     history = HistoricalRecords()
 
@@ -111,7 +112,7 @@ class Linelist(models.Model):
 
 
 class Reference(models.Model):
-    """References object."""
+    """Reference object."""
     doi = models.CharField(max_length=255, blank=True)
     ref_url = models.CharField(max_length=255, unique=True)
     bibtex = models.FileField(upload_to=bib_file_path,
@@ -209,7 +210,7 @@ class SpeciesMetadata(models.Model):
 
 
 class MetaReference(models.Model):
-    """Metadata references object."""
+    """Metadata reference object relating species metadata with references"""
     meta = models.ForeignKey(
         'SpeciesMetadata',
         on_delete=models.PROTECT
@@ -225,8 +226,8 @@ class MetaReference(models.Model):
 
     def __str__(self):
         if self.dipole_moment and self.spectrum:
-            return "metadata reference for dipole moment \
-and spectrum of "+self.meta.species.iupac_name
+            return "metadata reference for dipole moment "\
+                "and spectrum of " + self.meta.species.iupac_name
         elif self.dipole_moment:
             return "metadata reference for dipole moment of " + \
                 self.meta.species.iupac_name
@@ -238,7 +239,7 @@ and spectrum of "+self.meta.species.iupac_name
 
 
 class Line(models.Model):
-    """Lines object."""
+    """Line object."""
     meta = models.ForeignKey(
         'SpeciesMetadata',
         on_delete=models.PROTECT

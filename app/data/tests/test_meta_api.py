@@ -40,7 +40,7 @@ def create_species(**params):
 
 
 def create_meta(species_id, linelist_id, **params):
-    """Helper function to create a species."""
+    """Helper function to create species metadata."""
     defaults = {
         'species_id': species_id,
         'molecule_tag': 1,
@@ -315,11 +315,11 @@ class PrivateSpeciesApiTests(TestCase):
                 tempfile.NamedTemporaryFile(suffix='.fit') as fit_file, \
                 tempfile.NamedTemporaryFile(suffix='.lin') as lin_file, \
                 tempfile.NamedTemporaryFile(suffix='.qpart') as qpart_file:
-            int_file.write(b"""FURAN
-0  91 43282.2944  00  150  -7  -7 150.0  5
- 001  0.661 /muA
- 002  0.000 /muB
- 003  0.000 /muC""")
+            int_file.write(b"FURAN"
+                           b"0  91 43282.2944  00  150  -7  -7 150.0  5\n"
+                           b" 001  0.661 /muA\n"
+                           b" 002  0.000 /muB\n"
+                           b" 003  0.000 /muC")
             int_file.seek(0)
             var_file.write(b"FURAN                                        "
                            b"WedThu MaWeFri May 19 17:01:15 2023\n"
@@ -338,8 +338,8 @@ class PrivateSpeciesApiTests(TestCase):
             fit_file.seek(0)
             lin_file.write(b'I am a lin file')
             lin_file.seek(0)
-            qpart_file.write(b"""#form : interpolation
-200.000   331777.6674""")
+            qpart_file.write(b"#form : interpolation\n"
+                             b"200.000   331777.6674")
             qpart_file.seek(0)
             payload = {
                 'species': species.id,
@@ -378,11 +378,11 @@ class PrivateSpeciesApiTests(TestCase):
                 tempfile.NamedTemporaryFile(suffix='.fit') as fit_file, \
                 tempfile.NamedTemporaryFile(suffix='.lin') as lin_file, \
                 tempfile.NamedTemporaryFile(suffix='.qpart') as qpart_file:
-            not_int_file.write(b"""FURAN
-0  91 43282.2944  00  150  -7  -7 150.0  5
- 001  0.661 /muA
- 002  0.000 /muB
- 003  0.000 /muC""")
+            not_int_file.write(b"FURAN\n"
+                               b"0  91 43282.2944  00  150  -7  -7 150.0  5\n"
+                               b" 001  0.661 /muA\n"
+                               b" 002  0.000 /muB\n"
+                               b" 003  0.000 /muC")
             not_int_file.seek(0)
             var_file.write(b"FURAN                                        "
                            b"WedThu MaWeFri May 19 17:01:15 2023\n"
@@ -401,8 +401,8 @@ class PrivateSpeciesApiTests(TestCase):
             fit_file.seek(0)
             lin_file.write(b'I am a lin file')
             lin_file.seek(0)
-            qpart_file.write(b"""#form : interpolation
-200.000   331777.6674""")
+            qpart_file.write(b"#form : interpolation\n"
+                             b"200.000   331777.6674")
             qpart_file.seek(0)
             payload = {
                 'species': species.id,
@@ -462,11 +462,11 @@ class PrivateSpeciesApiTests(TestCase):
                 tempfile.NamedTemporaryFile(suffix='.fit') as fit_file, \
                 tempfile.NamedTemporaryFile(suffix='.lin') as lin_file, \
                 tempfile.NamedTemporaryFile(suffix='.qpart') as qpart_file:
-            int_file.write(b"""FURAN
-0  91 43282.2944  00  150  -7  -7 150.0  5
- 001  0.661 /muA
- 002  0.000 /muB
- 003  0.000 /muC""")
+            int_file.write(b"FURAN\n"
+                           b"0  91 43282.2944  00  150  -7  -7 150.0  5\n"
+                           b" 001  0.661 /muA\n"
+                           b" 002  0.000 /muB\n"
+                           b" 003  0.000 /muC")
             int_file.seek(0)
             var_file.write(b"FURAN                                        "
                            b"WedThu MaWeFri May 19 17:01:15 2023\n"
@@ -485,8 +485,8 @@ class PrivateSpeciesApiTests(TestCase):
             fit_file.seek(0)
             lin_file.write(b'I am a lin file')
             lin_file.seek(0)
-            qpart_file.write(b"""#form : interpolation
-200.000   331777.6674""")
+            qpart_file.write(b"#form : interpolation\n"
+                             b"200.000   331777.6674")
             qpart_file.seek(0)
             payload = {
                 'species': species.id,
@@ -541,11 +541,11 @@ class PrivateSpeciesApiTests(TestCase):
                 tempfile.NamedTemporaryFile(suffix='.fit') as fit_file, \
                 tempfile.NamedTemporaryFile(suffix='.lin') as lin_file, \
                 tempfile.NamedTemporaryFile(suffix='.qpart') as qpart_file:
-            int_file.write(b"""FURAN
-0  91 43282.2944  00  150  -7  -7 150.0  5
- 001  0.661 /muA
- 002  0.000 /muB
- 003  0.000 /muC""")
+            int_file.write(b"FURAN\n"
+                           b"0  91 43282.2944  00  150  -7  -7 150.0  5\n"
+                           b" 001  0.661 /muA\n"
+                           b" 002  0.000 /muB\n"
+                           b" 003  0.000 /muC")
             int_file.seek(0)
             var_file.write(b"FURAN                                        "
                            b"WedThu MaWeFri May 19 17:01:15 2023\n"
@@ -564,8 +564,8 @@ class PrivateSpeciesApiTests(TestCase):
             fit_file.seek(0)
             lin_file.write(b'I am a lin file')
             lin_file.seek(0)
-            qpart_file.write(b"""#form : interpolation
-200.000   331777.6674""")
+            qpart_file.write(b"#form : interpolation\n"
+                             b"200.000   331777.6674")
             qpart_file.seek(0)
             payload = {
                 'species': species.id,

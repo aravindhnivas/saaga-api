@@ -47,7 +47,7 @@ def create_linelist(**params):
 
 
 def create_meta(species_id, linelist_id, **params):
-    """Helper function to create a species."""
+    """Helper function to create species metadata."""
     defaults = {
         'species_id': species_id,
         'molecule_tag': 1,

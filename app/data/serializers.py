@@ -117,7 +117,7 @@ class MetaReferenceChangeSerializer(MetaReferenceSerializer):
 
 
 class LineSerializer(serializers.ModelSerializer):
-    """Serializer for lines."""
+    """Serializer for creating lines with POST request."""
     frequency = serializers.DecimalField(
         max_digits=None, decimal_places=None, read_only=True)
     uncertainty = serializers.DecimalField(
@@ -160,6 +160,8 @@ class LineSerializer(serializers.ModelSerializer):
 
 
 class LineSerializerList(serializers.ModelSerializer):
+    """Serializer for creating lines in the backend
+    after receiving POST request."""
     frequency = serializers.DecimalField(
         max_digits=None, decimal_places=None)
     uncertainty = serializers.DecimalField(
@@ -199,7 +201,8 @@ class LineChangeSerializerList(LineSerializerList):
 
 
 class QuerySerializer(serializers.ModelSerializer):
-    """Serilizer for querying lines falling within specified range."""
+    """Serilizer for querying lines falling
+    within specified frequency range."""
     frequency = serializers.DecimalField(max_digits=None, decimal_places=None)
     uncertainty = serializers.DecimalField(
         max_digits=None, decimal_places=None)

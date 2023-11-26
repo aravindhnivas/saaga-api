@@ -64,7 +64,7 @@ def create_linelist(**params):
 
 
 def create_meta(species_id, linelist_id, **params):
-    """Helper function to create a species."""
+    """Helper function to create a species metadata."""
     defaults = {
         'species_id': species_id,
         'molecule_tag': 1,
@@ -315,7 +315,7 @@ class PrivateReferenceApiTests(TestCase):
         self.assertEqual(history_count, 2)
 
     def test_delete_reference_without_delete_reason_fails(self):
-        """Test deleting a reference without delete reason."""
+        """Test deleting a reference without delete reason fails."""
         reference = create_reference()
         url = reverse('data:reference-detail', args=[reference.id])
         res = self.client.delete(url)

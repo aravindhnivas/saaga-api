@@ -43,7 +43,7 @@ def create_species(**params):
 
 
 def create_meta(species_id, linelist_id, **params):
-    """Helper function to create a species."""
+    """Helper function to create a species metadata."""
     defaults = {
         'species_id': species_id,
         'molecule_tag': 1,
@@ -79,7 +79,7 @@ class PublicSpeciesApiTests(TestCase):
         self.client = APIClient()
 
     def test_auth_required_for_post(self):
-        """Test that authentication is required for creating species."""
+        """Test that authentication is required for post creating species."""
         url = reverse('data:species-list')
         payload = {
             'name': ['common_name', 'test_name'],
@@ -196,7 +196,7 @@ class PrivateSpeciesApiTests(TestCase):
         self.assertEqual(history_count, 1)
 
     def test_create_species_with_existing_inchi(self):
-        """Test creating a species with an existing InChI."""
+        """Test creating a species with an existing InChI fails."""
         create_species(standard_inchi='test inchi5')
         url = reverse('data:species-list')
         payload = {

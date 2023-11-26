@@ -1,5 +1,6 @@
 """
 Classes from molsim - for parsing .cat file into database line table.
+Directly adapted from McGuire et al. with minor edits.
 """
 
 import numpy as np

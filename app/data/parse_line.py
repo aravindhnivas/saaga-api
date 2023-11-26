@@ -89,6 +89,8 @@ def _read_spcat(filein):
 
     # now we use a sub-function to fix the letters and
     # +/- that show up in gup, and the qns, and returns floats
+    # Edited by Jasmine to account for upper and lower case alphabets
+    # that represent positive and negative quantum numbers respectively.
     def _fix_spcat(x):
         '''Fixes letters in something that's read in and returns floats'''
 
@@ -500,6 +502,8 @@ def parse_cat(filein, qn_label_list, qnstrfmt=None, partition_dict=None,
     lower_state_qn_dict_list = []
     upper_state_qn_dict_list = []
 
+    # Reformat lower and upper quantum state number strings into dictionaries
+    # The dictionaries are appended to lists.
     for i in range(len(cat.frequency)):
         lower_state_qn_dict = {}
         upper_state_qn_dict = {}
