@@ -64,9 +64,9 @@ class SpeciesAdmin(admin.ModelAdmin):
                 )
             }
         ),
-        (_('Records'), {'fields': ('entry_date', 'entry_staff', 'notes')})
+        (_('Records'), {'fields': ('notes',)})
     )
-    readonly_fields = ['selfies', 'display_mol', 'entry_date', 'entry_staff']
+    readonly_fields = ['selfies', 'display_mol']
     add_fieldsets = (
         (None, {
             'classes': ('wide',),

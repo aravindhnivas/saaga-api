@@ -29,7 +29,7 @@ class CommandTests(SimpleTestCase):
     """Test commands."""
 
     def test_wait_for_db_ready(self, patched_check):
-        """Test waiting for database if database ready."""
+        """Test waiting for database if database is ready."""
         # When check is called inside the test case, it returns the true value.
         patched_check.return_value = True
         # Check if the command can be called.

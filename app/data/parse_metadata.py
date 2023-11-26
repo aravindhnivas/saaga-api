@@ -28,7 +28,6 @@ def read_varfile(filein):
     b_const = Decimal(file[4].split()[1].decode())
     # c_const is fifth line second column
     c_const = Decimal(file[5].split()[1].decode())
-    print(a_const, b_const, c_const)
     return a_const, b_const, c_const
 
 

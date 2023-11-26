@@ -23,6 +23,7 @@ ARG DEV=false
 RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
     apt-get update && \
+    # Install dependencies required for psycopg2
     apt-get install -y build-essential postgresql postgresql-client postgresql-server-dev-all libpq-dev python3.9-dev && \
     # Install requirements inside docker image.
     /py/bin/pip install -r /tmp/requirements.txt && \
