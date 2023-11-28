@@ -161,6 +161,6 @@ cython_debug/
 
 zach_sample.ipynb
 sample.ipynb
-app/core/management/commands/seed_db.py
-app/core/management/commands/seed_payload.py
-app/core/management/commands/seed_files
+seed_db.py
+seed_payload.py
+seed_files

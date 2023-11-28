@@ -130,12 +130,12 @@ class Species(models.Model):
     class Meta:
         verbose_name_plural = 'Species'
     name = models.JSONField()
-    iupac_name = models.CharField(max_length=255)
+    iupac_name = models.CharField(max_length=255, unique=True)
     name_formula = models.CharField(max_length=255)
     name_html = models.CharField(max_length=255)
     molecular_mass = ArbitraryDecimalField()
     smiles = models.CharField(max_length=255)
-    standard_inchi = models.CharField(max_length=255, unique=True)
+    standard_inchi = models.CharField(max_length=255)
     standard_inchi_key = models.CharField(max_length=255)
     selfies = models.CharField(max_length=255)
     mol_obj = models.MolField()
