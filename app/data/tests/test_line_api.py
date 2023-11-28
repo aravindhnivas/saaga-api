@@ -132,24 +132,11 @@ class PublicLineApiTests(TestCase):
         url = reverse('data:line-detail', args=[line.id])
         payload = {
             'meta': meta.id,
-            'measured': False,
-            'frequency': 100.000,
-            'uncertainty': 0.001,
-            'intensity': 0.001,
-            's_ij_mu2': 1.0,
-            'a_ij': 0.001,
-            'lower_state_energy': 0.001,
-            'upper_state_energy': 0.001,
-            'lower_state_degeneracy': 1,
-            'upper_state_degeneracy': 1,
-            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
-            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
-            'rovibrational': False,
-            'vibrational': '',
-            'pickett_qn_code': 303,
-            'pickett_lower_state_qn': '010000',
-            'pickett_upper_state_qn': '010001',
-            'notes': 'test create line put',
+            'cat_file': 'cat_file',
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': False,
+            'vib_qn': '',
+            'notes': 'Test post',
             '_change_reason': 'Test change reason'
         }
         res = self.client.put(url, payload)
@@ -321,24 +308,11 @@ class PrivateLineApiTests(TestCase):
         url = reverse('data:line-detail', args=[line.id])
         payload = {
             'meta': meta.id,
-            'measured': False,
-            'frequency': 100.000,
-            'uncertainty': 0.001,
-            'intensity': 0.001,
-            's_ij_mu2': 1.0,
-            'a_ij': 0.001,
-            'lower_state_energy': 0.001,
-            'upper_state_energy': 0.001,
-            'lower_state_degeneracy': 1,
-            'upper_state_degeneracy': 1,
-            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
-            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
-            'rovibrational': False,
+            'cat_file': 'cat_file',
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': False,
             'vib_qn': '',
-            'pickett_qn_code': 302,
-            'pickett_lower_state_qn': '010000',
-            'pickett_upper_state_qn': '010001',
-            'notes': 'test full update line',
+            'notes': 'Test post',
             '_change_reason': 'Test put full update'
         }
         res = self.client.put(url, payload)
@@ -360,24 +334,11 @@ class PrivateLineApiTests(TestCase):
         url = reverse('data:line-detail', args=[line.id])
         payload = {
             'meta': meta.id,
-            'measured': False,
-            'frequency': 100.000,
-            'uncertainty': 0.001,
-            'intensity': 0.001,
-            's_ij_mu2': 1.0,
-            'a_ij': 0.001,
-            'lower_state_energy': 0.001,
-            'upper_state_energy': 0.001,
-            'lower_state_degeneracy': 1,
-            'upper_state_degeneracy': 1,
-            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
-            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
-            'rovibrational': False,
+            'cat_file': 'cat_file',
+            'qn_label_str': 'J,Ka,Kc',
+            'contains_rovibrational': False,
             'vib_qn': '',
-            'pickett_qn_code': 302,
-            'pickett_lower_state_qn': '010000',
-            'pickett_upper_state_qn': '010001',
-            'notes': 'test full update line',
+            'notes': 'Test post'
         }
         res = self.client.put(url, payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
