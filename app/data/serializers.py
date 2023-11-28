@@ -61,7 +61,8 @@ class SpeciesChangeSerializer(SpeciesSerializer):
         max_length=255, write_only=True, required=True)
 
     class Meta(SpeciesSerializer.Meta):
-        fields = SpeciesSerializer.Meta.fields + ['_change_reason']
+        fields = SpeciesSerializer.Meta.fields + ['_change_reason', 'mol_obj']
+        read_only_fields = ['id']
 
 
 class SpeciesMetadataSerializer(serializers.ModelSerializer):
@@ -96,6 +97,7 @@ class SpeciesMetadataChangeSerializer(SpeciesMetadataSerializer):
 
     class Meta(SpeciesMetadataSerializer.Meta):
         fields = SpeciesMetadataSerializer.Meta.fields + ['_change_reason']
+        read_only_fields = ['id']
 
 
 class MetaReferenceSerializer(serializers.ModelSerializer):

@@ -306,14 +306,26 @@ class PrivateLineApiTests(TestCase):
         meta = create_meta(species.id, linelist.id)
         line = create_line(meta.id)
         url = reverse('data:line-detail', args=[line.id])
-        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
         payload = {
-            'meta': meta.id,
-            'cat_file': DjangoFile(cat_file),
-            'qn_label_str': 'J,Ka,Kc',
-            'contains_rovibrational': False,
+            'meta_id': meta_id,
+            'measured': False,
+            'frequency': 100.000,
+            'uncertainty': 0.001,
+            'intensity': 0.001,
+            's_ij_mu2': 1.0,
+            'a_ij': 0.001,
+            'lower_state_energy': 0.001,
+            'upper_state_energy': 0.001,
+            'lower_state_degeneracy': 1,
+            'upper_state_degeneracy': 1,
+            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
+            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
+            'rovibrational': False,
             'vib_qn': '',
-            'notes': 'Test post',
+            'pickett_qn_code': 303,
+            'pickett_lower_state_qn': '010000',
+            'pickett_upper_state_qn': '010001',
+            'notes': 'test create line',
             '_change_reason': 'Test put full update'
         }
         res = self.client.put(url, payload)
@@ -335,12 +347,25 @@ class PrivateLineApiTests(TestCase):
         url = reverse('data:line-detail', args=[line.id])
         cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
         payload = {
-            'meta': meta.id,
-            'cat_file': DjangoFile(cat_file),
-            'qn_label_str': 'J,Ka,Kc',
-            'contains_rovibrational': False,
+            'meta_id': meta_id,
+            'measured': False,
+            'frequency': 100.000,
+            'uncertainty': 0.001,
+            'intensity': 0.001,
+            's_ij_mu2': 1.0,
+            'a_ij': 0.001,
+            'lower_state_energy': 0.001,
+            'upper_state_energy': 0.001,
+            'lower_state_degeneracy': 1,
+            'upper_state_degeneracy': 1,
+            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
+            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
+            'rovibrational': False,
             'vib_qn': '',
-            'notes': 'Test post'
+            'pickett_qn_code': 303,
+            'pickett_lower_state_qn': '010000',
+            'pickett_upper_state_qn': '010001',
+            'notes': 'test create line',
         }
         res = self.client.put(url, payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
