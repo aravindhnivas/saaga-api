@@ -318,8 +318,8 @@ class PrivateLineApiTests(TestCase):
             'upper_state_energy': 0.001,
             'lower_state_degeneracy': 1,
             'upper_state_degeneracy': 1,
-            'lower_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 0}),
-            'upper_state_qn': json.dumps({'J': 1, 'Ka': 0, 'Kc': 1}),
+            'lower_state_qn': {'J': 1, 'Ka': 0, 'Kc': 0},
+            'upper_state_qn': {'J': 1, 'Ka': 0, 'Kc': 1},
             'rovibrational': False,
             'vib_qn': '',
             'pickett_qn_code': 303,
@@ -329,6 +329,7 @@ class PrivateLineApiTests(TestCase):
             '_change_reason': 'Test put full update'
         }
         res = self.client.put(url, payload)
+        print(res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         line.refresh_from_db()
         self.assertEqual(Line.history.filter(id=line.id).first(

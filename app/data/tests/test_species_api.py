@@ -236,13 +236,12 @@ class PrivateSpeciesApiTests(TestCase):
             'standard_inchi_key': 'CCCCC',
             'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
             'selfies': sf.encoder('CCCCC'),
-            'mol_obj': Chem.MolFromSmiles('CCCCC'),
+            'mol_obj': 'CCCCC',
             'notes': 'Test Species',
             '_change_reason': 'Test change reason',
         }
 
         res = self.client.put(url, payload)
-        print(res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         species.refresh_from_db()
         self.assertEqual(species.standard_inchi, payload['standard_inchi'])
