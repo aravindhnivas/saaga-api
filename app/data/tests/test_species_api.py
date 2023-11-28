@@ -234,6 +234,9 @@ class PrivateSpeciesApiTests(TestCase):
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi full update payload',
             'standard_inchi_key': 'CCCCC',
+            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
+            'selfies': sf.encoder('CCCCC'),
+            'mol_obj': Chem.MolFromSmiles('CCCCC'),
             'notes': 'Test Species',
             '_change_reason': 'Test change reason',
         }
@@ -262,6 +265,9 @@ class PrivateSpeciesApiTests(TestCase):
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi full update payload',
             'standard_inchi_key': 'CCCCC',
+            'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
+            'selfies': sf.encoder('CCCCC'),
+            'mol_obj': Chem.MolFromSmiles('CCCCC'),
             'notes': 'Test Species',
         }
 
