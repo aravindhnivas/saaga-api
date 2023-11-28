@@ -185,9 +185,9 @@ class PrivateSpeciesApiTests(TestCase):
             id=species.id).count()
         self.assertEqual(history_count, 1)
 
-    def test_create_species_with_existing_inchi(self):
-        """Test creating a species with an existing InChI fails."""
-        create_species(standard_inchi='test inchi5')
+    def test_create_species_with_existing_iupac(self):
+        """Test creating a species with an existing iupac name fails."""
+        create_species(iupac_name='Test IUPAC Name')
         url = reverse('data:species-list')
         payload = {
             'name': json.dumps(['common_name', 'Test Species']),
