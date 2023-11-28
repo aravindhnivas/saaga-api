@@ -86,12 +86,9 @@ class PublicSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': 123.45,
-            'smiles': 'Test SMILES',
+            'smiles': 'C',
             'standard_inchi': 'Test InChI',
             'standard_inchi_key': 'Test InChI Key',
-            'selfies': 'Test SELFIES',
-            'mol_obj': Chem.MolFromSmiles('C'),
             'notes': 'Test Species',
         }
 
@@ -107,12 +104,9 @@ class PublicSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': 123.45,
-            'smiles': 'CC',
+            'smiles': 'C',
             'standard_inchi': 'Test InChI',
             'standard_inchi_key': 'Test InChI Key',
-            'selfies': sf.encoder('CC'),
-            'mol_obj': Chem.MolFromSmiles('CC'),
             'notes': 'Test Species',
             '_change_reason': 'Test change reason',
         }
@@ -178,13 +172,9 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(
-                Chem.MolFromSmiles('CCCC')),
             'smiles': 'CCCC',
             'standard_inchi': 'test inchi4',
             'standard_inchi_key': 'test inchi4',
-            'selfies': sf.encoder('CCCC'),
-            'mol_obj': Chem.MolFromSmiles('CCCC'),
             'notes': 'Test Species',
         }
 
@@ -204,13 +194,9 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(
-                Chem.MolFromSmiles('CCCCC')),
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi5',
             'standard_inchi_key': 'CCCCC',
-            'selfies': sf.encoder('CCCCC'),
-            'mol_obj': Chem.MolFromSmiles('CCCCC'),
             'notes': 'Test Species',
         }
 
@@ -245,13 +231,9 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(
-                Chem.MolFromSmiles('CCCCC')),
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi full update payload',
             'standard_inchi_key': 'CCCCC',
-            'selfies': sf.encoder('CCCCC'),
-            'mol_obj': Chem.MolFromSmiles('CCCCC'),
             'notes': 'Test Species',
             '_change_reason': 'Test change reason',
         }
@@ -277,13 +259,9 @@ class PrivateSpeciesApiTests(TestCase):
             'iupac_name': 'Test IUPAC Name',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
-            'molecular_mass': Descriptors.ExactMolWt(
-                Chem.MolFromSmiles('CCCCC')),
             'smiles': 'CCCCC',
             'standard_inchi': 'test inchi full update payload',
             'standard_inchi_key': 'CCCCC',
-            'selfies': sf.encoder('CCCCC'),
-            'mol_obj': Chem.MolFromSmiles('CCCCC'),
             'notes': 'Test Species',
         }
 
