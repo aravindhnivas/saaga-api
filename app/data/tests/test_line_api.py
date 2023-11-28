@@ -345,7 +345,6 @@ class PrivateLineApiTests(TestCase):
         meta = create_meta(species.id, linelist.id)
         line = create_line(meta.id)
         url = reverse('data:line-detail', args=[line.id])
-        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
         payload = {
             'meta': meta.id,
             'measured': False,
