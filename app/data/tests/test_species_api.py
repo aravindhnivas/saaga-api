@@ -135,8 +135,8 @@ class PublicSpeciesApiTests(TestCase):
 
     def test_get_species_list(self):
         """Test getting a list of species."""
-        create_species(smiles='C', standard_inchi='test inchi1')
-        create_species(smiles='CC', standard_inchi='test inchi2')
+        create_species(smiles='C', iupac_name='test iupac1')
+        create_species(smiles='CC', iupac_name='test iupac2')
         url = reverse('data:species-list')
 
         res = self.client.get(url)
@@ -145,7 +145,7 @@ class PublicSpeciesApiTests(TestCase):
 
     def test_get_species_detail(self):
         """Test getting a species detail."""
-        species = create_species(smiles='CCC', standard_inchi='test inchi3')
+        species = create_species(smiles='CCC', iupac_name='test iupac3')
         url = reverse('data:species-detail', args=[species.id])
 
         res = self.client.get(url)
@@ -205,7 +205,7 @@ class PrivateSpeciesApiTests(TestCase):
 
     def test_partial_update_species(self):
         """Test updating a species with patch."""
-        species = create_species(standard_inchi='test inchi partial update')
+        species = create_species(iupac_name='test iupac partial update')
         url = reverse('data:species-detail', args=[species.id])
         payload = {'iupac_name': 'test name partial update',
                    '_change_reason': 'Test change reason'}
@@ -224,11 +224,11 @@ class PrivateSpeciesApiTests(TestCase):
 
     def test_full_update_species(self):
         """Test updating a species with put."""
-        species = create_species(standard_inchi='test inchi full update')
+        species = create_species(iupac_name='test iupac full update')
         url = reverse('data:species-detail', args=[species.id])
         payload = {
             'name': json.dumps(['common_name', 'Test Species']),
-            'iupac_name': 'Test IUPAC Name',
+            'iupac_name': 'Test IUPAC Name full update',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
             'smiles': 'CCCCC',
@@ -244,7 +244,7 @@ class PrivateSpeciesApiTests(TestCase):
         res = self.client.put(url, payload)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         species.refresh_from_db()
-        self.assertEqual(species.standard_inchi, payload['standard_inchi'])
+        self.assertEqual(species.iupac_name, payload['iupac_name'])
         self.assertEqual(Species.history.filter(id=species.id).first(
         ).history_change_reason, payload['_change_reason'])
         self.assertEqual(Species.history.filter(id=species.id).first(
@@ -255,11 +255,11 @@ class PrivateSpeciesApiTests(TestCase):
 
     def test_full_update_species_without_reason_fails(self):
         """Test updating a species with put without change reason fails."""
-        species = create_species(standard_inchi='test inchi full update')
+        species = create_species(iupac_name='test iupac full update')
         url = reverse('data:species-detail', args=[species.id])
         payload = {
             'name': json.dumps(['common_name', 'Test Species']),
-            'iupac_name': 'Test IUPAC Name',
+            'iupac_name': 'Test IUPAC Name full update',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
             'smiles': 'CCCCC',
@@ -276,7 +276,7 @@ class PrivateSpeciesApiTests(TestCase):
 
     def test_delete_species(self):
         """Test deleting a species."""
-        species = create_species(standard_inchi='test inchi delete')
+        species = create_species(iupac_name='test iupac delete')
         url = reverse('data:species-detail',
                       args=[species.id]) + \
             '?delete_reason=Test delete reason'
