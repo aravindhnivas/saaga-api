@@ -30,14 +30,14 @@ def create_species(**params):
         'standard_inchi': 'Test InChI',
         'standard_inchi_key': 'Test InChI Key',
         'selfies': sf.encoder('C'),
-        'mol_obj': Chem.MolFromSmiles('C'),
+        'mol_obj': 'C',
         'notes': 'Test Species',
     }
     defaults.update(params)
     defaults.update(molecular_mass=Descriptors.ExactMolWt(
         Chem.MolFromSmiles(defaults['smiles'])),
         selfies=sf.encoder(defaults['smiles']),
-        mol_obj=Chem.MolFromSmiles(defaults['smiles']))
+        mol_obj=defaults['smiles'])
 
     return Species.objects.create(**defaults)
 
@@ -267,7 +267,7 @@ class PrivateSpeciesApiTests(TestCase):
             'standard_inchi_key': 'CCCCC',
             'molecular_mass': Descriptors.ExactMolWt(Chem.MolFromSmiles('CCCCC')),
             'selfies': sf.encoder('CCCCC'),
-            'mol_obj': Chem.MolFromSmiles('CCCCC'),
+            'mol_obj': 'CCCCC',
             'notes': 'Test Species',
         }
 
