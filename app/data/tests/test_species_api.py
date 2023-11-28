@@ -187,11 +187,11 @@ class PrivateSpeciesApiTests(TestCase):
 
     def test_create_species_with_existing_iupac(self):
         """Test creating a species with an existing iupac name fails."""
-        create_species(iupac_name='Test IUPAC Name')
+        create_species(iupac_name='Test IUPAC Name existing')
         url = reverse('data:species-list')
         payload = {
             'name': json.dumps(['common_name', 'Test Species']),
-            'iupac_name': 'Test IUPAC Name',
+            'iupac_name': 'Test IUPAC Name existing',
             'name_formula': 'Test Name Formula',
             'name_html': 'Test Name HTML',
             'smiles': 'CCCCC',
