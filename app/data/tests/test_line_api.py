@@ -307,7 +307,7 @@ class PrivateLineApiTests(TestCase):
         line = create_line(meta.id)
         url = reverse('data:line-detail', args=[line.id])
         payload = {
-            'meta_id': meta.id,
+            'meta': meta.id,
             'measured': False,
             'frequency': 100.000,
             'uncertainty': 0.001,
@@ -348,7 +348,7 @@ class PrivateLineApiTests(TestCase):
         url = reverse('data:line-detail', args=[line.id])
         cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
         payload = {
-            'meta_id': meta.id,
+            'meta': meta.id,
             'measured': False,
             'frequency': 100.000,
             'uncertainty': 0.001,
