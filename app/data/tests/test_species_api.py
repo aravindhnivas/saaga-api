@@ -242,6 +242,7 @@ class PrivateSpeciesApiTests(TestCase):
         }
 
         res = self.client.put(url, payload)
+        print(res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         species.refresh_from_db()
         self.assertEqual(species.standard_inchi, payload['standard_inchi'])
