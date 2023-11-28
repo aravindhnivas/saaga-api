@@ -306,9 +306,10 @@ class PrivateLineApiTests(TestCase):
         meta = create_meta(species.id, linelist.id)
         line = create_line(meta.id)
         url = reverse('data:line-detail', args=[line.id])
+        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
         payload = {
             'meta': meta.id,
-            'cat_file': 'cat_file',
+            'cat_file': DjangoFile(cat_file),
             'qn_label_str': 'J,Ka,Kc',
             'contains_rovibrational': False,
             'vib_qn': '',
@@ -332,9 +333,10 @@ class PrivateLineApiTests(TestCase):
         meta = create_meta(species.id, linelist.id)
         line = create_line(meta.id)
         url = reverse('data:line-detail', args=[line.id])
+        cat_file = tempfile.NamedTemporaryFile(suffix='.cat')
         payload = {
             'meta': meta.id,
-            'cat_file': 'cat_file',
+            'cat_file': DjangoFile(cat_file),
             'qn_label_str': 'J,Ka,Kc',
             'contains_rovibrational': False,
             'vib_qn': '',
