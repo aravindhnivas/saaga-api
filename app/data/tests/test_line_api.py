@@ -33,7 +33,7 @@ def create_species(**params):
         'standard_inchi': 'test inchi',
         'standard_inchi_key': 'test inchi',
         'selfies': sf.encoder('CC'),
-        'mol_obj': Chem.MolFromSmiles('CC'),
+        'mol_obj': 'CC',
         'notes': 'Test Species',
     }
     defaults.update(params)
@@ -329,7 +329,6 @@ class PrivateLineApiTests(TestCase):
             '_change_reason': 'Test put full update'
         }
         res = self.client.put(url, payload)
-        print(res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         line.refresh_from_db()
         self.assertEqual(Line.history.filter(id=line.id).first(
