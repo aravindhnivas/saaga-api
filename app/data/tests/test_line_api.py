@@ -33,7 +33,7 @@ def create_species(**params):
         'standard_inchi': 'test inchi',
         'standard_inchi_key': 'test inchi',
         'selfies': sf.encoder('CC'),
-        'mol_obj': Chem.MolFromSmiles('CC'),
+        'mol_obj': 'CC',
         'notes': 'Test Species',
     }
     defaults.update(params)
