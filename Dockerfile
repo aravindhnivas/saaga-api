@@ -42,7 +42,8 @@ RUN python -m venv /py && \
     mkdir -p /vol/web/media && \
     mkdir -p /vol/web/static && \
     chown -R django-user:django-user /vol && \
-    chmod -R 755 /vol
+    chmod -R 755 /vol && \
+    chmod -R +x /scripts
 # Run Python command automatically from virtual environment.
 ENV PATH="/scripts:/py/bin:$PATH"
 
