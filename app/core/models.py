@@ -16,6 +16,7 @@ import base64
 from django.core.validators import FileExtensionValidator
 from simple_history.models import HistoricalRecords
 from simple_history import register
+from django.contrib.postgres.indexes import GistIndex
 
 
 class ArbitraryDecimalField(models.DecimalField):
@@ -129,6 +130,9 @@ class Species(models.Model):
     """Species object."""
     class Meta:
         verbose_name_plural = 'Species'
+        indexes = [
+            GistIndex(fields=['mol_obj']),
+        ]
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255, unique=True)
     name_formula = models.CharField(max_length=255)
