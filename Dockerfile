@@ -43,7 +43,7 @@ RUN python -m venv /py && \
     chown -R django-user:django-user /vol && \
     chmod -R 755 /vol
 # Run Python command automatically from virtual environment.
-ENV PATH="/py/bin:$PATH"
+ENV PATH="/scripts:/py/bin:$PATH"
 
 # Specify the user that we are switching to.
 USER django-user
