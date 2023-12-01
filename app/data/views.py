@@ -274,6 +274,15 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         int_file = request.FILES.get('int_file')
         var_file = request.FILES.get('var_file')
         qpart_file = request.FILES.get('qpart_file')
+        if qpart_file.name.split('.')[-1] != 'qpart':
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": "ValidationError",
+                          "message": "The file you uploaded "
+                          "is not a .qpart file. Please upload a .qpart file."},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
         # Check that the qpart file contains 300.000 K
         try:
             partition_dict = read_qpartfile(qpart_file)
