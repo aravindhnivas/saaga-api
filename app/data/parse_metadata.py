@@ -1,5 +1,6 @@
 """
-For extracting dipole moments from .int files.
+For extracting metadata (dipole moments, rotational constants,
+and partition function) from .int, .var, and .qpart files, respectively.
 """
 from decimal import Decimal
 
