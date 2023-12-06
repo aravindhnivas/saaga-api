@@ -4,3 +4,12 @@ The SAAGA project aims to create an automated pipeline for characterizing chemic
 
 The database is already set up and hosted on Amazon RDS. The RESTful API allows CRUD operations of the database, in which admins can perform the full CRUD operations while other users can read and query the database.
 The API is under development and the database is yet to be filled with data. The API is written using Python and Django with Docker. The setup of the API is done, and database model development is in progress right now.
+
+
+# Commands
+
+## Run the app and database container using docker compose in background
+`sudo docker compose -f docker-compose-deploy.yml up -d`
+
+## Create a superuser
+`docker compose -f docker-compose-deploy.yml run --rm app sh -c ‘python manage.py createsuperuser`
