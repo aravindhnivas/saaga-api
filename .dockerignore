@@ -16,3 +16,5 @@ venv/
 
 zach_sample.ipynb
 sample.ipynb
+db_seeder
+.DS_Store

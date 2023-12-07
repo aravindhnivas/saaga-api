@@ -159,8 +159,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-zach_sample.ipynb
-sample.ipynb
-seed_db.py
-seed_payload.py
-seed_files
+db_seeder
+.DS_Store
