@@ -1,0 +1,7 @@
+{
+  // turn off save on format
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
+}
