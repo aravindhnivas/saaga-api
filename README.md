@@ -20,3 +20,6 @@ Now navigate to <http://localhost:8000/api/user/token> and login with the superu
 
 Authenticate with the token in the header of the request
 `Token <token>`
+
+<!-- DROP SCHEMA public CASCADE;
+CREATE SCHEMA public; -->
