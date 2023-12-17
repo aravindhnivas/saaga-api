@@ -23,3 +23,5 @@ Authenticate with the token in the header of the request
 
 <!-- DROP SCHEMA public CASCADE;
 CREATE SCHEMA public; -->
+<!-- docker compose -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname -->
+
