@@ -21,7 +21,11 @@ Now navigate to <http://localhost:8000/api/user/token> and login with the superu
 Authenticate with the token in the header of the request
 `Token <token>`
 
-<!-- DROP SCHEMA public CASCADE;
-CREATE SCHEMA public; -->
-<!-- docker compose -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname -->
+## Connect to the database
+`docker compose -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname`
+
+## Reset the database
+`DROP SCHEMA public CASCADE;`
+`CREATE SCHEMA public;`
+
 
