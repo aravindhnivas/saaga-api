@@ -165,7 +165,7 @@ SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
-    "http://herzberg.mit.edu/",
+    "http://herzberg.mit.edu",
 ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
