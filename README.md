@@ -9,11 +9,19 @@ The API is under development and the database is yet to be filled with data. The
 
 ## Run the app and database container using docker compose in background
 
-`sudo docker compose -f docker-compose-deploy.yml up -d`
+### Production
+
+`docker-compose -p prod -f docker-compose-deploy.yml up -d`
+
+### Development
+
+`docker-compose -p dev -f docker-compose.yml up -d`
+
+_Note: the `-p` flag is used to specify the project name, which is used as the prefix of the container name. This is useful when running multiple docker-compose files at the same time._
 
 ## Create a superuser
 
-`docker compose -f docker-compose-deploy.yml run --rm app sh -c ‘python manage.py createsuperuser`
+`docker-compose -p prod -f docker-compose-deploy.yml run --rm app sh -c ‘python manage.py createsuperuser`
 
 Create a superuser with email and password
 Now navigate to <http://localhost:8000/api/user/token> and login with the superuser credentials to get the token
@@ -22,10 +30,19 @@ Authenticate with the token in the header of the request
 `Token <token>`
 
 ## Connect to the database
-`docker compose -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname`
+`docker-compose -p prod -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname`
+
+if needed replace (as defined in the docker-compose file) or .env file:
+- `rootuser` with the username
+- `saagadb` with the password
+- `5432` with the port
+- `dbname` with the database name
+
 
 ## Reset the database
+
+To check the table list `\dt`
+
 `DROP SCHEMA public CASCADE;`
+
 `CREATE SCHEMA public;`
-
-
