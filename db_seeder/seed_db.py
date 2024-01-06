@@ -17,7 +17,11 @@ print(f"{args=}")
 domain = os.getenv("DOMAIN" + ("_DEV" if args.dev else ""))
 port = os.getenv("PORT" + ("_DEV" if args.dev else ""))
 url = f"http://{domain}:{port}"
-TOKEN = f"Token {os.getenv('TOKEN' + ('_DEV' if args.dev else ''))}"
+token_key = f"{os.getenv('TOKEN' + ('_DEV' if args.dev else ''))}"
+
+TOKEN = None
+if token_key:
+    TOKEN = f"Token {token_key}"
 
 print(f"Posting on {url=} using {TOKEN=}")
 
