@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 import argparse
 from loguru import logger
 
-logger.add("./logs/file_{time}.log")
+# logger.add("./logs/file_{time}.log")
+logger.add("./logs/file_info.log", level="INFO")
+logger.add("./logs/file_error.log", level="ERROR")
 load_dotenv()
 
 parser = argparse.ArgumentParser(description="Process some integers.")
@@ -104,7 +106,7 @@ def make_requests():
         return
 
     post_linelist(linelist_list)
-    post_payload(payload_list)
+    # post_payload(payload_list)
 
 
 if __name__ == "__main__":
