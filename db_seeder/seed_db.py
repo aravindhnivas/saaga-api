@@ -17,13 +17,13 @@ print(f"{args=}")
 domain = os.getenv("DOMAIN" + ("_DEV" if args.dev else ""))
 port = os.getenv("PORT" + ("_DEV" if args.dev else ""))
 url = f"http://{domain}:{port}"
-token_key = f"{os.getenv('TOKEN' + ('_DEV' if args.dev else ''))}"
+token_key = os.getenv("TOKEN" + ("_DEV" if args.dev else ""))
 
 TOKEN = None
 if token_key:
     TOKEN = f"Token {token_key}"
 
-print(f"Posting on {url=} using {TOKEN=}")
+# print(f"Posting on {url=} using {TOKEN=}")
 
 
 def safe_post_request(endpoint, data, files=None):
@@ -104,7 +104,7 @@ def make_requests():
         return
 
     post_linelist(linelist_list)
-    post_payload(payload_list)
+    # post_payload(payload_list)
 
 
 if __name__ == "__main__":
