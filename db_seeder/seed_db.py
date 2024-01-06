@@ -1,9 +1,12 @@
+import sys
 from seed_payload import linelist_list, payload_list
 import os
 import requests
 from dotenv import load_dotenv
 import argparse
+from loguru import logger
 
+logger.add("./logs/file_{time}.log")
 load_dotenv()
 
 parser = argparse.ArgumentParser(description="Process some integers.")
@@ -12,7 +15,7 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-print(f"{args=}")
+logger.info(f"{args=}")
 
 domain = os.getenv("DOMAIN" + ("_DEV" if args.dev else ""))
 port = os.getenv("PORT" + ("_DEV" if args.dev else ""))
@@ -23,31 +26,27 @@ TOKEN = None
 if token_key:
     TOKEN = f"Token {token_key}"
 
-# print(f"Posting on {url=} using {TOKEN=}")
-
 
 def safe_post_request(endpoint, data, files=None):
     address = f"{url}{endpoint}"
-    print(f"Posting to {address}")
+    logger.info(f"Posting to {address=} with {data=}")
     headers = {"Authorization": TOKEN, "accept": "application/json"}
-    print(f"{data=}\n")
     res = requests.post(address, headers=headers, data=data, files=files)
 
     if res.ok:
-        print(f"Successfully posted to {endpoint}!")
+        logger.success(f"Successfully posted to {endpoint=}!\n\n")
     else:
-        print("##########################\n")
-        print(f"Error posting ({res.status_code}): response to {endpoint}! ")
-        print(f"{res.request.body=}\n")
-        print(f"Error reason: {res.text}\nContinuing...")
-        print("##########################\n")
-        # raise Exception(res.text)
+        logger.error(
+            f"\nerror code: ({res.status_code}) posting to {endpoint=} with {data=}!\n "
+        )
+        logger.error(f"{res.text}\nContinuing...\n\n")
 
     return res
 
 
+@logger.catch
 def post_linelist(linelist_list):
-    print("Posting linelist data...")
+    logger.info("Posting linelist data...")
     for linelist in linelist_list:
         safe_post_request(
             "/api/data/linelist/",
@@ -56,7 +55,7 @@ def post_linelist(linelist_list):
 
 
 def post_payload(payload_list):
-    print("Posting species data...")
+    logger.info("Posting species data...")
 
     for payload in payload_list:
         safe_post_request(
@@ -95,12 +94,13 @@ def post_payload(payload_list):
                 data=line_payload,
                 files={"cat_file": meta["line"]["cat_file"]},
             )
-    print("Done!")
+    logger.info("Done!")
 
 
+@logger.catch
 def make_requests():
     if TOKEN is None:
-        print("No token found. Please set the TOKEN environment variable.")
+        logger.error("No token found. Please set the TOKEN environment variable.")
         return
 
     post_linelist(linelist_list)
