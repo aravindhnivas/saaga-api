@@ -46,3 +46,5 @@ To check the table list `\dt`
 `DROP SCHEMA public CASCADE;`
 
 `CREATE SCHEMA public;`
+
+restart the docker container
