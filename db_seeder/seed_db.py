@@ -104,7 +104,7 @@ def make_requests():
         return
 
     post_linelist(linelist_list)
-    # post_payload(payload_list)
+    post_payload(payload_list)
 
 
 if __name__ == "__main__":
