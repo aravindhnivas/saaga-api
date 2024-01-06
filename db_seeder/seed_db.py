@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description="Process some integers.")
 parser.add_argument(
     "--dev", dest="dev", action="store_true", help="run in development mode"
 )
+
 args = parser.parse_args()
 print(f"{args=}")
 
@@ -19,6 +20,7 @@ url = f"http://{domain}:{port}"
 TOKEN = f"Token {os.getenv('TOKEN' + ('_DEV' if args.dev else ''))}"
 
 print(f"Posting on {url=} using {TOKEN=}")
+
 
 def safe_post_request(endpoint, data, files=None):
     address = f"{url}{endpoint}"
@@ -30,8 +32,11 @@ def safe_post_request(endpoint, data, files=None):
     if res.ok:
         print(f"Successfully posted to {endpoint}!")
     else:
-        print(f"Error posting: response code {res.status_code}")
-        print(f"\n{res.text}\n")
+        print("##########################\n")
+        print(f"Error posting ({res.status_code}): response to {endpoint}! ")
+        print(f"{res.request.body=}\n")
+        print(f"Error reason: {res.text}\nContinuing...")
+        print("##########################\n")
         # raise Exception(res.text)
 
     return res
@@ -97,6 +102,6 @@ def make_requests():
     post_linelist(linelist_list)
     post_payload(payload_list)
 
+
 if __name__ == "__main__":
     make_requests()
-    # pass
