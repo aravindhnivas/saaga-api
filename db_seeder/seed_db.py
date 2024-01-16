@@ -6,8 +6,8 @@ import argparse
 from loguru import logger
 import json
 
-logger.add("./logs/file_info_{time}.log", level="INFO")
-logger.add("./logs/file_error_{time}.log", level="ERROR")
+logger.add("./logs/file_info.log", level="INFO")
+logger.add("./logs/file_error.log", level="ERROR")
 load_dotenv()
 
 parser = argparse.ArgumentParser(description="Process some integers.")
