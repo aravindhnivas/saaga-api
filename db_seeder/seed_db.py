@@ -116,33 +116,6 @@ def post_payload(payload_list):
                 logger.error(f"Failed to post metadata for {payload['species']['iupac_name']}")
                 continue
 
-            # # Posting references
-            # ref_ids = []
-            # for ref in meta["reference"]:
-            #     ref_payload = {x: ref[x] for x in ref if x not in ["bibtex"]}
-            #     ref_id = safe_post_request(
-            #         "/api/data/reference/",
-            #         data=ref_payload,
-            #         files={"bibtex": ref["bibtex"]},
-            #     )
-            #     if ref_id is None:
-            #         logger.error(f"Failed to post reference for {payload['species']['iupac_name']}")
-            #         continue
-            #     ref_ids.append(ref_id)
-
-            # # Posting meta references
-            # for i, meta_ref in enumerate(meta["meta_reference"]):
-            #     meta_ref['ref'] = ref_ids[i]
-            #     if meta_ref['ref'] is None:
-            #         logger.error(f"Failed to post meta reference for {payload['species']['iupac_name']}")
-            #         continue
-                
-            #     meta_ref['meta'] = meta_id
-            #     safe_post_request(
-            #         "/api/data/meta-reference/",
-            #         data=meta_ref,
-            #     )
-                
             for ref, meta_ref in zip(meta["reference"], meta["meta_reference"]):
                 ref_payload = {x: ref[x] for x in ref if x not in ["bibtex"]}
                 ref_id = safe_post_request(
@@ -189,7 +162,7 @@ def make_requests():
         return
 
     post_linelist(linelist_list)
-    # post_payload(payload_list[: args.n])
+    post_payload(payload_list[: args.n])
 
 
 if __name__ == "__main__":
