@@ -318,6 +318,23 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+            
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "species_id", OpenApiTypes.STR,
+                description="Filter species-metadata with with species id"
+            )
+        ]
+    )
+    @action(methods=['GET'], detail=False, url_path='query')
+    def query(self, request):
+        """Query species-metadata by species_id."""
+        species_id = request.query_params.get('species_id')
+        queryset = self.get_queryset()
+        queryset = queryset.filter(species=species_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         parameters=[
