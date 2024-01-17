@@ -323,7 +323,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         parameters=[
             OpenApiParameter(
                 "species_id", OpenApiTypes.STR,
-                description="Filter species-metadata with with species id"
+                description="Filter species-metadata with species id"
             )
         ]
     )
@@ -390,6 +390,23 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
             return serializers.MetaReferenceChangeSerializer
         return self.serializer_class
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "meta_id", OpenApiTypes.STR,
+                description="Filter metareference with meta id"
+            )
+        ]
+    )
+    @action(methods=['GET'], detail=False, url_path='query')
+    def query(self, request):
+        """Query metadata-reference by meta_id."""
+        meta_id = request.query_params.get('meta_id')
+        queryset = self.get_queryset()
+        queryset = queryset.filter(meta=meta_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     @extend_schema(
         parameters=[
             OpenApiParameter("delete_reason", OpenApiTypes.STR,
