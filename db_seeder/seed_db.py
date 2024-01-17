@@ -45,11 +45,11 @@ def safe_post_request(endpoint, data, files=None):
     res = requests.post(address, headers=headers, data=data, files=files)
 
     if res.ok:
-        logger.success(f"Successfully posted to {endpoint=}!\n\n")
+        logger.success(f"Successfully posted to {endpoint=}!")
 
         data = json.loads(res.text)
         if isinstance(data, dict):
-            logger.info(f"Linelist ID: {data['id']}")
+            logger.info(f"returned ID: {data['id']=}\n\n")
             return int(data["id"])
         else:
             return None
