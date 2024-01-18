@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from django_rdkit.models import *  # noqa: F403
+from django_rdkit.models import QMOL, Value  # noqa: F403
 from core.models import (Species, Linelist, SpeciesMetadata,
                          Reference, MetaReference, Line)
 from data import serializers
