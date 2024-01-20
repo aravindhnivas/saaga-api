@@ -43,6 +43,9 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - 5050:80
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 volumes:
   dev-db-data-herzberg:
   dev-static-data-herzberg:
+  pgadmin_data:
