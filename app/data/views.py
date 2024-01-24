@@ -78,7 +78,17 @@ is being referenced through protected foreign key"
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "doi",
+                OpenApiTypes.STR,
+                description="Filter species by doi",
+            )
+        ]
+    )
+)
 class ReferenceViewSet(viewsets.ModelViewSet):
     """View for reference APIs."""
     serializer_class = serializers.ReferenceSerializer
@@ -95,7 +105,11 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve references."""
-        return self.queryset.order_by('-id')
+        doi = self.request.query_params.get("doi")
+        if doi is not None:
+            return self.queryset.filter(doi=doi).order_by("-id")
+        else:
+            return self.queryset.order_by('-id')
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
