@@ -29,6 +29,16 @@ class LinelistViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.LinelistSerializer
     queryset = Linelist.objects.all()
     authentication_classes = [TokenAuthentication]
+    
+    def create(self, request):
+        """Create a new linelist."""
+        # print(f"{request.user.id=}")
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -263,7 +273,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SpeciesMetadataSerializer
     queryset = SpeciesMetadata.objects.all()
     authentication_classes = [TokenAuthentication]
-
+    
     def get_permissions(self):
         """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:

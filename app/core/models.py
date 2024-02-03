@@ -18,7 +18,6 @@ from simple_history.models import HistoricalRecords
 from simple_history import register
 from django.contrib.postgres.indexes import GistIndex
 
-
 class ArbitraryDecimalField(models.DecimalField):
     """
     Custom DecimalField that allows for arbitrary precision
@@ -87,8 +86,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     organization = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
 
     REQUIRED_FIELDS = ['name', 'organization']
     objects = UserManager()
