@@ -19,6 +19,8 @@ The API is under development and the database is yet to be filled with data. The
 
 _Note: the `-p` flag is used to specify the project name, which is used as the prefix of the container name. This is useful when running multiple docker-compose files at the same time._
 
+
+
 ## Create a superuser
 
 `docker-compose -p prod -f docker-compose-deploy.yml run --rm app sh -c ‘python manage.py createsuperuser`
@@ -28,6 +30,21 @@ Now navigate to <http://localhost:8000/api/user/token> and login with the superu
 
 Authenticate with the token in the header of the request
 `Token <token>`
+
+
+## Logging in as a root user in docker teminal
+
+`docker exec -u 0 -it container_name /bin/bash`
+
+ - `docker exec`: This is the Docker command to run a command in a running container.
+ - `-u 0`: This option specifies that the command should be run as the root user.
+ - `-it`: These options make the command interactive (-i) and allocate a pseudo-TTY (-t), which makes it feel like you're directly typing in the container's terminal.
+container_name`: This should be replaced with the name or ID of your container.
+ - `/bin/bash`: This is the command to run in the container. It starts a Bash shell.
+
+After running this command, you'll be logged into the container as the root user and can run any commands you need.
+
+This is usefull to run commands like `python manage.py makemigrations`, `python manage.py migrate` or `python manage.py createsuperuser` in the container.
 
 ## Connect to the database
 `docker-compose -p prod -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname`
