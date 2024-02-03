@@ -3,7 +3,7 @@ For extracting metadata (dipole moments, rotational constants,
 and partition function) from .int, .var, and .qpart files, respectively.
 """
 from decimal import Decimal
-
+import re
 
 def read_intfile(filein):
     '''Reads in .int file and returns diple moments'''
@@ -35,10 +35,18 @@ def read_varfile(filein):
 def read_qpartfile(filein):
     '''Reads in .qpart file and returns partition function'''
     file = filein.read().splitlines()
+    # print(file)
     partition_dict = {}
-    for line in file[1:]:
+    for line in file:
+        if "#" in line.decode():
+            continue
         split_line = line.split()
         partition_dict[split_line[0].decode()] = split_line[1].decode()
-    if '300.000' not in partition_dict:
+    # print(partition_dict)
+    # if '300.000' not in partition_dict:
+    #     raise ValueError('Partition function does not contain 300.000 K')
+    pattern = re.compile(r'300\.0*')
+    # Check each key in the dictionary
+    if not any(pattern.fullmatch(key) for key in partition_dict):
         raise ValueError('Partition function does not contain 300.000 K')
     return partition_dict
