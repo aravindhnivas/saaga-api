@@ -17,7 +17,7 @@ from django.core.validators import FileExtensionValidator
 from simple_history.models import HistoricalRecords
 from simple_history import register
 from django.contrib.postgres.indexes import GistIndex
-
+from django.conf import settings
 class ArbitraryDecimalField(models.DecimalField):
     """
     Custom DecimalField that allows for arbitrary precision
@@ -58,21 +58,21 @@ def bib_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for users."""
 
-    def create_user(self, email, password, name, organization):
+    def create_user(self, email, password, name, organization, approver):
         """Create, save and return a new user."""
-        if not email or not password or not name or not organization:
+        if not email or not password or not name or not organization or not approver:
             raise ValueError('User must have an email, \
                               password, name, and organization')
         user = self.model(email=self.normalize_email(email),
-                          name=name, organization=organization)
+                          name=name, organization=organization, approver=approver)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password, name, organization):
+    def create_superuser(self, email, password, name, organization, approver):
         """Create and return a new superuser."""
-        user = self.create_user(email, password, name, organization)
+        user = self.create_user(email, password, name, organization, approver)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -88,7 +88,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-
+    approver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+    )
     REQUIRED_FIELDS = ['name', 'organization']
     objects = UserManager()
 
@@ -100,7 +103,15 @@ register(User)
 
 class Linelist(models.Model):
     """Linelist object."""
+    
     linelist_name = models.CharField(max_length=255, unique=True)
+    approved = models.BooleanField(default=False)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='uploaded_linelists',
+    )
+    
     history = HistoricalRecords()
 
     def save(self, *args, **kwargs):

@@ -20,7 +20,6 @@ The API is under development and the database is yet to be filled with data. The
 _Note: the `-p` flag is used to specify the project name, which is used as the prefix of the container name. This is useful when running multiple docker-compose files at the same time._
 
 
-
 ## Create a superuser
 
 `docker-compose -p prod -f docker-compose-deploy.yml run --rm app sh -c ‘python manage.py createsuperuser`

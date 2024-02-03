@@ -11,8 +11,8 @@ class LinelistSerializer(serializers.ModelSerializer):
     """Serialzer for linelists."""
     class Meta:
         model = Linelist
-        fields = ['id', 'linelist_name']
-        read_only_fields = ['id']
+        fields = ['id', 'linelist_name', 'uploaded_by', 'approved']
+        read_only_fields = ['id', 'uploaded_by']
 
 
 class LinelistChangeSerializer(LinelistSerializer):

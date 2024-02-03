@@ -22,24 +22,16 @@ from django.http import FileResponse
 import io
 from data.parse_metadata import read_intfile, read_varfile, read_qpartfile
 from data.parse_line import parse_cat
-
+from django_filters import rest_framework as filters
 
 class LinelistViewSet(viewsets.ModelViewSet):
     """View for linelist APIs."""
     serializer_class = serializers.LinelistSerializer
     queryset = Linelist.objects.all()
     authentication_classes = [TokenAuthentication]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('approved', 'uploaded_by', 'linelist_name')
     
-    def create(self, request):
-        """Create a new linelist."""
-        # print(f"{request.user.id=}")
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
     def get_permissions(self):
         """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
@@ -47,6 +39,14 @@ class LinelistViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = []
         return [permission() for permission in permission_classes]
+
+    def perform_create(self, serializer):
+        """Create a new linelist and autopopulate uploaded_by field 
+        with the user who uploaded it."""
+        user = self.request.user
+        if(user.is_staff or user.is_superuser):
+            approved = True
+        serializer.save(uploaded_by=self.request.user, approved=approved)
 
     def get_queryset(self):
         """Retrieve linelists."""

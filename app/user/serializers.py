@@ -6,15 +6,13 @@ from django.contrib.auth import (
     authenticate,
 )
 from django.utils.translation import gettext as _
-
 from rest_framework import serializers
-from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object."""
     class Meta:
         model = get_user_model()
-        fields = ['id', 'email', 'password', 'name', 'organization', 'is_superuser', 'is_staff', 'is_active']
+        fields = ['id', 'email', 'password', 'name', 'organization', 'is_superuser', 'is_staff', 'is_active', 'approver']
         extra_kwargs = {'password': {'write_only': True, 'min_length': 8}}
         read_only_fields = ['id']
         

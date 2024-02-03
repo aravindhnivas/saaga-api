@@ -11,6 +11,8 @@ from user.serializers import (
 from django.contrib.auth import get_user_model
 from .serializers import UserSerializer
 
+from django_filters import rest_framework as filters
+
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
     serializer_class = UserSerializer
@@ -40,7 +42,9 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAdminUser]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('email', 'name', 'organization', 'is_superuser', 'is_staff', 'is_active')
     
-    def get_object(self):
-        """Retrieve and return the authenticated user."""
-        return self.request.user
+    def get_queryset(self):
+        """Retrieve meta references."""
+        return self.queryset.order_by('-id')

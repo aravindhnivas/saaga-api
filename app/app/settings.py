@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     'user',
     'data',
     'simple_history',
-    'corsheaders'
+    'corsheaders',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
