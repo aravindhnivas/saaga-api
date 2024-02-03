@@ -47,6 +47,7 @@ After running this command, you'll be logged into the container as the root user
 This is usefull to run commands like `python manage.py makemigrations`, `python manage.py migrate` or `python manage.py createsuperuser` in the container.
 
 ## Connect to the database
+
 `docker-compose -p prod -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname`
 
 if needed replace (as defined in the docker-compose file) or .env file:
@@ -58,10 +59,10 @@ if needed replace (as defined in the docker-compose file) or .env file:
 
 ## Reset the database
 
-To check the table list `\dt`
-
-`DROP SCHEMA public CASCADE;`
-
-`CREATE SCHEMA public;`
+```bash
+\dt # To check the table list in the database
+DROP SCHEMA public CASCADE; # To drop the schema
+CREATE SCHEMA public; # To create the schema
+```
 
 restart the docker container
