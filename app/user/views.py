@@ -43,7 +43,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAdminUser]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ('email', 'name', 'organization', 'is_superuser', 'is_staff', 'is_active')
+    filterset_fields = ('email', 'name', 'organization', 'is_superuser', 'is_staff', 'is_active', 'approver')
     
     def get_queryset(self):
         """Retrieve meta references."""
