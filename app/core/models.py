@@ -58,9 +58,9 @@ def bib_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for users."""
 
-    def create_user(self, email, password, name, organization, approver):
+    def create_user(self, email, password, name, organization, approver = None):
         """Create, save and return a new user."""
-        if not email or not password or not name or not organization or not approver:
+        if not email or not password or not name or not organization:
             raise ValueError('User must have an email, \
                               password, name, and organization')
         user = self.model(email=self.normalize_email(email),
@@ -70,9 +70,9 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, password, name, organization, approver):
+    def create_superuser(self, email, password, name, organization):
         """Create and return a new superuser."""
-        user = self.create_user(email, password, name, organization, approver)
+        user = self.create_user(email, password, name, organization)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -90,7 +90,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     approver = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
     )
     REQUIRED_FIELDS = ['name', 'organization']
     objects = UserManager()
