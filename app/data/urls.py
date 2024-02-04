@@ -21,5 +21,6 @@ router.register('line', views.LineViewSet)
 app_name = 'data'
 
 urlpatterns = [
+    path('meta-ref-and-species/', views.MetaRefAndSpeciesViewSet.as_view(), name='meta-ref-and-species'),
     path('', include(router.urls))
 ]

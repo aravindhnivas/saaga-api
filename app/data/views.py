@@ -23,6 +23,7 @@ import io
 from data.parse_metadata import read_intfile, read_varfile, read_qpartfile
 from data.parse_line import parse_cat
 from django_filters import rest_framework as filters
+from drf_multiple_model.views import ObjectMultipleModelAPIView
 
 class LinelistViewSet(viewsets.ModelViewSet):
     """View for linelist APIs."""
@@ -768,3 +769,15 @@ class LineViewSet(viewsets.ModelViewSet):
         instance._change_reason = self.request.query_params['delete_reason']
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
+    # permission_classes = [IsAdminUser]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('approved', 'uploaded_by')
+    
+    querylist = [
+        {'queryset': MetaReference.objects.all(), 'serializer_class': serializers.MetaReferenceSerializer},
+        {'queryset': SpeciesMetadata.objects.all(), 'serializer_class': serializers.SpeciesMetadataSerializer},
+    ]
+    
