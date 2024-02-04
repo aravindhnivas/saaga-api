@@ -20,6 +20,8 @@ services:
   db:
     image: mcs07/postgres-rdkit
     restart: always
+    ports:
+      - "5431:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
@@ -38,6 +40,18 @@ services:
     volumes:
       - static-data:/vol/static
 
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - 5051:80
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
 volumes:
   postgres-data:
   static-data:
+  pgadmin_data:
