@@ -43,7 +43,8 @@ class LinelistViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new linelist and autopopulate uploaded_by and approved field."""
         user = self.request.user
-        if(user.is_staff or user.is_superuser):
+        approved = False
+        if user.is_superuser:
             approved = True
         serializer.save(uploaded_by=self.request.user, approved=approved)
 
@@ -349,8 +350,10 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new species metadata and autopopulate uploaded_by and approved field"""
         user = self.request.user
-        if(user.is_staff or user.is_superuser):
+        approved = False
+        if user.is_superuser:
             approved = True
+            
         serializer.save(uploaded_by=self.request.user, approved=approved)
         
     @extend_schema(
