@@ -6,7 +6,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django_rdkit.models import QMOL, Value  # noqa: F403
 from core.models import (Species, Linelist, SpeciesMetadata,
                          Reference, MetaReference, Line)
@@ -35,7 +35,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAdminUser]
         else:
             permission_classes = []
         return [permission() for permission in permission_classes]
@@ -299,6 +299,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """Create a new species metadata."""
         serializer = self.get_serializer(data=request.data)
+        
         int_file = request.FILES.get('int_file')
         var_file = request.FILES.get('var_file')
         qpart_file = request.FILES.get('qpart_file')
@@ -322,7 +323,16 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
                           "Partition function does not contain 300.000 K"},
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        
         if serializer.is_valid():
+            
+            user = self.request.user
+            approved = False
+            if user.is_superuser:
+                approved = True
+                
+            # serializer.save(uploaded_by=user, approved=approved)
+            
             # Read from .int and .var files if they are uploaded.
             if int_file and var_file:
                 mu_a, mu_b, mu_c = read_intfile(int_file)
@@ -330,31 +340,26 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
                 serializer.save(mu_a=mu_a, mu_b=mu_b,
                                 mu_c=mu_c, a_const=a_const,
                                 b_const=b_const, c_const=c_const,
-                                partition_function=partition_dict)
+                                partition_function=partition_dict,
+                                uploaded_by=user, approved=approved)
             elif int_file:
                 mu_a, mu_b, mu_c = read_intfile(int_file)
                 serializer.save(mu_a=mu_a, mu_b=mu_b,
-                                mu_c=mu_c, partition_function=partition_dict)
+                                mu_c=mu_c, partition_function=partition_dict,
+                                uploaded_by=user, approved=approved)
             elif var_file:
                 a_const, b_const, c_const = read_varfile(var_file)
                 serializer.save(a_const=a_const, b_const=b_const,
                                 c_const=c_const,
-                                partition_function=partition_dict)
+                                partition_function=partition_dict,
+                                uploaded_by=user, approved=approved)
             else:
-                serializer.save(partition_function=partition_dict)
+                serializer.save(partition_function=partition_dict,uploaded_by=user, approved=approved)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
     
-    def perform_create(self, serializer):
-        """Create a new species metadata and autopopulate uploaded_by and approved field"""
-        user = self.request.user
-        approved = False
-        if user.is_superuser:
-            approved = True
-            
-        serializer.save(uploaded_by=self.request.user, approved=approved)
         
     @extend_schema(
         parameters=[
