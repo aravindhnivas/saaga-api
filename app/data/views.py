@@ -41,8 +41,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
-        """Create a new linelist and autopopulate uploaded_by field 
-        with the user who uploaded it."""
+        """Create a new linelist and autopopulate uploaded_by and approved field."""
         user = self.request.user
         if(user.is_staff or user.is_superuser):
             approved = True
@@ -99,6 +98,8 @@ is being referenced through protected foreign key"
         ]
     )
 )
+
+
 class ReferenceViewSet(viewsets.ModelViewSet):
     """View for reference APIs."""
     serializer_class = serializers.ReferenceSerializer
@@ -273,6 +274,8 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SpeciesMetadataSerializer
     queryset = SpeciesMetadata.objects.all()
     authentication_classes = [TokenAuthentication]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('approved', 'uploaded_by', 'species', 'linelist')
     
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -342,7 +345,14 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
-            
+    
+    def perform_create(self, serializer):
+        """Create a new species metadata and autopopulate uploaded_by and approved field"""
+        user = self.request.user
+        if(user.is_staff or user.is_superuser):
+            approved = True
+        serializer.save(uploaded_by=self.request.user, approved=approved)
+        
     @extend_schema(
         parameters=[
             OpenApiParameter(

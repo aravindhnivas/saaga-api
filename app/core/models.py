@@ -103,15 +103,12 @@ register(User)
 
 class Linelist(models.Model):
     """Linelist object."""
-    
     linelist_name = models.CharField(max_length=255, unique=True)
     approved = models.BooleanField(default=False)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name='uploaded_linelists',
     )
-    
     history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
@@ -183,6 +180,11 @@ class SpeciesMetadata(models.Model):
     species = models.ForeignKey(
         'Species',
         on_delete=models.PROTECT
+    )
+    approved = models.BooleanField(default=False)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
     )
     molecule_tag = models.IntegerField(blank=True, null=True)
     hyperfine = models.BooleanField()

@@ -86,8 +86,9 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
                   'degree_of_freedom', 'category', 'partition_function',
                   'mu_a', 'mu_b', 'mu_c', 'a_const', 'b_const', 'c_const',
                   'linelist', 'data_date', 'data_contributor', 'qpart_file',
-                  'int_file', 'var_file', 'fit_file', 'lin_file', 'notes']
-        read_only_fields = ['id', 'partition_function']
+                  'int_file', 'var_file', 'fit_file', 'lin_file', 'notes', 
+                  'approved', 'uploaded_by']
+        read_only_fields = ['id', 'partition_function', 'uploaded_by']
 
 
 class SpeciesMetadataChangeSerializer(SpeciesMetadataSerializer):
