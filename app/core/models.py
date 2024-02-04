@@ -105,7 +105,7 @@ register(User)
 class Linelist(models.Model):
     """Linelist object."""
     linelist_name = models.CharField(max_length=255, unique=True)
-    approved = models.BooleanField(default=False)
+    approved = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -122,6 +122,11 @@ class Linelist(models.Model):
 
 class Reference(models.Model):
     """Reference object."""
+    approved = models.BooleanField(default=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+    )
     doi = models.CharField(max_length=255, blank=True)
     ref_url = models.CharField(max_length=255, unique=True)
     bibtex = models.FileField(upload_to=bib_file_path,
@@ -141,6 +146,11 @@ class Species(models.Model):
         indexes = [
             GistIndex(fields=['mol_obj']),
         ]
+    approved = models.BooleanField(default=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+    )
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255, unique=True)
     name_formula = models.CharField(max_length=255)
@@ -228,6 +238,11 @@ class SpeciesMetadata(models.Model):
 
 class MetaReference(models.Model):
     """Metadata reference object relating species metadata with references"""
+    approved = models.BooleanField(default=False)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+    )
     meta = models.ForeignKey(
         'SpeciesMetadata',
         on_delete=models.PROTECT
@@ -260,6 +275,11 @@ class Line(models.Model):
     meta = models.ForeignKey(
         'SpeciesMetadata',
         on_delete=models.PROTECT
+    )
+    approved = models.BooleanField(default=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
     )
     measured = models.BooleanField()
     frequency = ArbitraryDecimalField()

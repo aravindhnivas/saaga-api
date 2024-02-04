@@ -29,8 +29,8 @@ class ReferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reference
         fields = ['id', 'doi', 'ref_url', 'bibtex',
-                  'notes']
-        read_only_fields = ['id']
+                  'notes', 'uploaded_by', 'approved']
+        read_only_fields = ['id', 'uploaded_by']
 
 
 class ReferenceChangeSerializer(ReferenceSerializer):
@@ -51,8 +51,8 @@ class SpeciesSerializer(serializers.ModelSerializer):
         model = Species
         fields = ['id', 'name', 'iupac_name', 'name_formula',
                   'name_html', 'molecular_mass', 'smiles',
-                  'standard_inchi', 'standard_inchi_key', 'selfies', 'notes']
-        read_only_fields = ['id', 'molecular_mass', 'selfies']
+                  'standard_inchi', 'standard_inchi_key', 'selfies', 'notes', 'uploaded_by', 'approved']
+        read_only_fields = ['id', 'molecular_mass', 'selfies', 'uploaded_by']
 
 
 class SpeciesChangeSerializer(SpeciesSerializer):
@@ -106,8 +106,8 @@ class MetaReferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetaReference
         fields = ['id', 'meta', 'ref', 'dipole_moment',
-                  'spectrum', 'notes']
-        read_only_fields = ['id']
+                  'spectrum', 'notes', 'uploaded_by', 'approved']
+        read_only_fields = ['id', 'uploaded_by']
 
 
 class MetaReferenceChangeSerializer(MetaReferenceSerializer):
@@ -151,7 +151,7 @@ class LineSerializer(serializers.ModelSerializer):
                   'lower_state_qn', 'contains_rovibrational',
                   'rovibrational', 'vib_qn', 'pickett_qn_code',
                   'pickett_upper_state_qn', 'pickett_lower_state_qn',
-                  'notes']
+                  'notes', 'uploaded_by', 'approved']
         read_only_fields = ['id', 'measured', 'frequency', 'uncertainty',
                             'intensity', 's_ij', 's_ij_mu2', 'a_ij',
                             'lower_state_energy', 'upper_state_energy',
@@ -159,7 +159,7 @@ class LineSerializer(serializers.ModelSerializer):
                             'upper_state_degeneracy', 'upper_state_qn',
                             'lower_state_qn', 'rovibrational',
                             'pickett_qn_code', 'pickett_upper_state_qn',
-                            'pickett_lower_state_qn']
+                            'pickett_lower_state_qn', 'uploaded_by']
 
 
 class LineSerializerList(serializers.ModelSerializer):
@@ -190,8 +190,8 @@ class LineSerializerList(serializers.ModelSerializer):
                   'upper_state_degeneracy', 'lower_state_degeneracy',
                   'upper_state_qn', 'lower_state_qn', 'rovibrational',
                   'vib_qn', 'pickett_qn_code', 'pickett_upper_state_qn',
-                  'pickett_lower_state_qn', 'notes']
-        read_only_fields = ['id']
+                  'pickett_lower_state_qn', 'notes', 'uploaded_by', 'approved']
+        read_only_fields = ['id', 'uploaded_by']
 
 
 class LineChangeSerializerList(LineSerializerList):
@@ -224,7 +224,7 @@ class QuerySerializer(serializers.ModelSerializer):
                   'lower_state_qn', 'upper_state_qn',
                   'lower_state_energy', 'upper_state_energy',
                   's_ij', 's_ij_mu2', 'a_ij',
-                  'rovibrational']
+                  'rovibrational', 'uploaded_by', 'approved']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

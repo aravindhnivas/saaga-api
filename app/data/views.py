@@ -106,6 +106,8 @@ class ReferenceViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ReferenceSerializer
     queryset = Reference.objects.all()
     authentication_classes = [TokenAuthentication]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('approved', 'uploaded_by', 'doi')
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -117,11 +119,16 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve references."""
-        doi = self.request.query_params.get("doi")
-        if doi is not None:
-            return self.queryset.filter(doi=doi).order_by("-id")
-        else:
-            return self.queryset.order_by('-id')
+        return self.queryset.order_by('-id')
+            
+        
+    def perform_create(self, serializer):
+        """Create a new list and autopopulate uploaded_by and approved field."""
+        user = self.request.user
+        approved = False
+        if user.is_superuser:
+            approved = True
+        serializer.save(uploaded_by=self.request.user, approved=approved)
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -204,7 +211,9 @@ class SpeciesViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SpeciesSerializer
     queryset = Species.objects.all()
     authentication_classes = [TokenAuthentication]
-
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('approved', 'uploaded_by', 'selfies', 'smiles')
+    
     def get_permissions(self):
         """No authentication required for GET requests."""
         if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
@@ -231,6 +240,10 @@ class SpeciesViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new species and autopopulate molecular mass,
         selfies, and rdkit mol object from canonical smiles."""
+        
+        user = self.request.user
+        approved = user.is_superuser
+            
         smiles = self.request.data.get('smiles')
         canonical_smiles = Chem.CanonSmiles(smiles)
         selfies_string = sf.encoder(canonical_smiles)
@@ -238,7 +251,8 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         molecular_mass = Descriptors.ExactMolWt(rdkit_mol_obj)
         serializer.save(mol_obj=rdkit_mol_obj,
                         smiles=canonical_smiles, selfies=selfies_string,
-                        molecular_mass=molecular_mass)
+                        molecular_mass=molecular_mass,
+                        uploaded_by=self.request.user, approved=approved)
 
     @extend_schema(
         parameters=[
@@ -331,8 +345,6 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             if user.is_superuser:
                 approved = True
                 
-            # serializer.save(uploaded_by=user, approved=approved)
-            
             # Read from .int and .var files if they are uploaded.
             if int_file and var_file:
                 mu_a, mu_b, mu_c = read_intfile(int_file)
@@ -426,6 +438,8 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.MetaReferenceSerializer
     queryset = MetaReference.objects.all()
     authentication_classes = [TokenAuthentication]
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_fields = ('approved', 'uploaded_by', 'meta', 'ref', 'dipole_moment', 'spectrum')
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -435,6 +449,12 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
             permission_classes = []
         return [permission() for permission in permission_classes]
 
+    def perform_create(self, serializer):
+        """Create a new list and autopopulate uploaded_by and approved field."""
+        user = self.request.user
+        approved = user.is_superuser
+        serializer.save(uploaded_by=self.request.user, approved=approved)
+        
     def get_queryset(self):
         """Retrieve meta references."""
         return self.queryset.order_by('-id')
@@ -564,6 +584,7 @@ class LineViewSet(viewsets.ModelViewSet):
                                 status=status.HTTP_400_BAD_REQUEST)
         notes = request.data['notes']
         cat_file = request.FILES.get('cat_file')
+        
         if cat_file.name.split('.')[-1] != 'cat':
             response_msg = {
                 "code": "server_error",
@@ -608,6 +629,12 @@ class LineViewSet(viewsets.ModelViewSet):
                           "Please check the labels and try again."},
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = self.request.user
+        approved = False
+        if user.is_superuser:
+            approved = True
+            
         input_dict_list = []
         if eval(contains_rovibrational.capitalize()):
             """Check if the .cat file contains rovibrational lines,
@@ -683,10 +710,11 @@ class LineViewSet(viewsets.ModelViewSet):
                                         'pickett_upper_state_qn':
                                         pickett_upper_state_qn[i],
                                         'notes': notes})
+        
         serializer = serializers.LineSerializerList(
             data=input_dict_list, many=True)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(uploaded_by = user, approved = approved)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
