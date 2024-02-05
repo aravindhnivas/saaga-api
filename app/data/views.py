@@ -376,36 +376,6 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         
     @extend_schema(
         parameters=[
-            OpenApiParameter(
-                "species_id", OpenApiTypes.STR,
-                description="Filter species-metadata with species id"
-            ),
-            OpenApiParameter(
-                "linelist_id", OpenApiTypes.STR,
-                description="Filter species-metadata with linelist id"
-            )
-        ]
-    )
-    @action(methods=['GET'], detail=False, url_path='query')
-    def query(self, request):
-        """Query species-metadata by species_id."""
-        species_id = request.query_params.get('species_id')
-        linelist_id = request.query_params.get('linelist_id')
-        queryset = self.get_queryset()
-        if species_id and linelist_id:
-            queryset = queryset.filter(species=species_id,
-                                       linelist=linelist_id)
-        elif species_id:
-            queryset = queryset.filter(species=species_id)
-        elif linelist_id:
-            queryset = queryset.filter(linelist=linelist_id)
-        # queryset = self.get_queryset()
-        # queryset = queryset.filter(species=species_id)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @extend_schema(
-        parameters=[
             OpenApiParameter("delete_reason", OpenApiTypes.STR,
                              description="reason to delete")
         ]
@@ -466,23 +436,6 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
             return serializers.MetaReferenceChangeSerializer
         return self.serializer_class
 
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                "meta_id", OpenApiTypes.STR,
-                description="Filter metareference with meta id"
-            )
-        ]
-    )
-    @action(methods=['GET'], detail=False, url_path='query')
-    def query(self, request):
-        """Query metadata-reference by meta_id."""
-        meta_id = request.query_params.get('meta_id')
-        queryset = self.get_queryset()
-        queryset = queryset.filter(meta=meta_id)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
     @extend_schema(
         parameters=[
             OpenApiParameter("delete_reason", OpenApiTypes.STR,
