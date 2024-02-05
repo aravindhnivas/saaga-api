@@ -90,6 +90,15 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
                   'approved', 'uploaded_by']
         read_only_fields = ['id', 'partition_function', 'uploaded_by']
 
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['species_formula'] = instance.species.name_formula
+        representation['species_name'] = instance.species.iupac_name
+        representation['linelist_name'] = instance.linelist.linelist_name
+        representation['uploaded_by_name'] = instance.uploaded_by.name
+        return representation
+
 
 class SpeciesMetadataChangeSerializer(SpeciesMetadataSerializer):
     """Serializer for put and patch species metadata."""
