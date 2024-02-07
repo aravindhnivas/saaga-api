@@ -93,6 +93,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         on_delete=models.SET_NULL,
         null=True,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
     REQUIRED_FIELDS = ['name', 'organization']
     objects = UserManager()
 
@@ -110,6 +111,8 @@ class Linelist(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
@@ -133,6 +136,7 @@ class Reference(models.Model):
                               validators=[FileExtensionValidator(
                                   allowed_extensions=["bib"])])
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     def __str__(self):
@@ -162,6 +166,7 @@ class Species(models.Model):
     selfies = models.CharField(max_length=255)
     mol_obj = models.MolField()
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     def __str__(self):
@@ -230,6 +235,7 @@ class SpeciesMetadata(models.Model):
                                   FileExtensionValidator(
                                       allowed_extensions=["qpart"])])
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     def __str__(self):
@@ -254,6 +260,7 @@ class MetaReference(models.Model):
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     def __str__(self):
@@ -300,6 +307,7 @@ class Line(models.Model):
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     class Meta:
