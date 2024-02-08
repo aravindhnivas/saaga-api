@@ -1,6 +1,6 @@
 {
-  // turn off save on format
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-python.black-formatter",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   }
