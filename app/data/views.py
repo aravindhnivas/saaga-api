@@ -89,26 +89,13 @@ is being referenced through protected foreign key"
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema_view(
-    list=extend_schema(
-        parameters=[
-            OpenApiParameter(
-                "doi",
-                OpenApiTypes.STR,
-                description="Filter species by doi",
-            )
-        ]
-    )
-)
-
-
 class ReferenceViewSet(viewsets.ModelViewSet):
     """View for reference APIs."""
     serializer_class = serializers.ReferenceSerializer
     queryset = Reference.objects.all()
     authentication_classes = [TokenAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ('approved', 'uploaded_by', 'doi')
+    filterset_fields = ('approved', 'uploaded_by', 'doi', 'ref_url')
 
     def get_permissions(self):
         """No authentication required for GET requests."""
