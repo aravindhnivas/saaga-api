@@ -263,6 +263,9 @@ class SpeciesMetadata(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
+    class Meta:
+        unique_together = ["species", "linelist", "molecule_tag", "hyperfine"]
+
     def __str__(self):
         return "species metadata of " + self.species.iupac_name
 
@@ -282,6 +285,9 @@ class MetaReference(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
+    
+    class Meta:
+        unique_together = ["meta", "ref", "dipole_moment", "spectrum"]
 
     def __str__(self):
         if self.dipole_moment and self.spectrum:
@@ -333,6 +339,7 @@ class Line(models.Model):
 
     class Meta:
         indexes = [models.Index(fields=["frequency"])]
+        # unique_together = ["meta", "qn_label_str", "vib_qn"]
 
     def __str__(self):
         return "line of " + self.meta.species.iupac_name
