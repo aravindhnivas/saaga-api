@@ -2,26 +2,28 @@
 For extracting metadata (dipole moments, rotational constants,
 and partition function) from .int, .var, and .qpart files, respectively.
 """
+
 from decimal import Decimal
 import re
 
+
 def read_intfile(filein):
-    '''Reads in .int file and returns diple moments'''
+    """Reads in .int file and returns diple moments"""
     file = filein.read().splitlines()
     mu_a, mu_b, mu_c = None, None, None
     for line in file[2:]:
         split_line = line.split()
-        if split_line[0] == b'001':
+        if split_line[0] == b"001":
             mu_a = split_line[1].decode()
-        elif split_line[0] == b'002':
+        elif split_line[0] == b"002":
             mu_b = split_line[1].decode()
-        elif split_line[0] == b'003':
+        elif split_line[0] == b"003":
             mu_c = split_line[1].decode()
     return mu_a, mu_b, mu_c
 
 
 def read_varfile(filein):
-    '''Reads in .var file and returns rotational constants'''
+    """Reads in .var file and returns rotational constants"""
     file = filein.read().splitlines()
     # a_const is third line second column
     a_const = Decimal(file[3].split()[1].decode())
@@ -33,7 +35,7 @@ def read_varfile(filein):
 
 
 def read_qpartfile(filein):
-    '''Reads in .qpart file and returns partition function'''
+    """Reads in .qpart file and returns partition function"""
     file = filein.read().splitlines()
     # print(file)
     partition_dict = {}
@@ -45,8 +47,8 @@ def read_qpartfile(filein):
     # print(partition_dict)
     # if '300.000' not in partition_dict:
     #     raise ValueError('Partition function does not contain 300.000 K')
-    pattern = re.compile(r'300\.0*')
+    pattern = re.compile(r"300\.0*")
     # Check each key in the dictionary
     if not any(pattern.fullmatch(key) for key in partition_dict):
-        raise ValueError('Partition function does not contain 300.000 K')
+        raise ValueError("Partition function does not contain 300.000 K")
     return partition_dict

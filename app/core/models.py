@@ -1,13 +1,14 @@
 """
 Database models.
 """
+
 import os
 import uuid
 from django_rdkit import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
-    PermissionsMixin
+    PermissionsMixin,
 )
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -18,6 +19,8 @@ from simple_history.models import HistoricalRecords
 from simple_history import register
 from django.contrib.postgres.indexes import GistIndex
 from django.conf import settings
+
+
 class ArbitraryDecimalField(models.DecimalField):
     """
     Custom DecimalField that allows for arbitrary precision
@@ -35,8 +38,7 @@ class ArbitraryDecimalField(models.DecimalField):
 
     def db_type(self, connection):
         # pg or bust
-        assert connection.settings_dict["ENGINE"] == \
-            "django.db.backends.postgresql"
+        assert connection.settings_dict["ENGINE"] == "django.db.backends.postgresql"
         return "numeric"
 
 
@@ -44,27 +46,33 @@ def sp_file_path(instance, filename):
     """Generate file path for SPFIT/SPCAT
     (.int, .var, .lin, .fit, .qpart) files."""
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
-    return os.path.join('uploads', 'sp', filename)
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join("uploads", "sp", filename)
 
 
 def bib_file_path(instance, filename):
     """Generage file path for .bib files"""
     ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
-    return os.path.join('uploads', 'bib', filename)
+    filename = f"{uuid.uuid4()}{ext}"
+    return os.path.join("uploads", "bib", filename)
 
 
 class UserManager(BaseUserManager):
     """Manager for users."""
 
-    def create_user(self, email, password, name, organization, approver = None):
+    def create_user(self, email, password, name, organization, approver=None):
         """Create, save and return a new user."""
         if not email or not password or not name or not organization:
-            raise ValueError('User must have an email, \
-                              password, name, and organization')
-        user = self.model(email=self.normalize_email(email),
-                          name=name, organization=organization, approver=approver)
+            raise ValueError(
+                "User must have an email, \
+                              password, name, and organization"
+            )
+        user = self.model(
+            email=self.normalize_email(email),
+            name=name,
+            organization=organization,
+            approver=approver,
+        )
         user.set_password(password)
         user.save(using=self._db)
 
@@ -82,6 +90,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """Users in the system."""
+
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     organization = models.CharField(max_length=255)
@@ -94,10 +103,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    REQUIRED_FIELDS = ['name', 'organization']
+    REQUIRED_FIELDS = ["name", "organization"]
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
 
 
 register(User)
@@ -105,6 +114,7 @@ register(User)
 
 class Linelist(models.Model):
     """Linelist object."""
+
     linelist_name = models.CharField(max_length=255, unique=True)
     approved = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
@@ -125,6 +135,7 @@ class Linelist(models.Model):
 
 class Reference(models.Model):
     """Reference object."""
+
     approved = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -132,9 +143,10 @@ class Reference(models.Model):
     )
     doi = models.CharField(max_length=255, blank=True)
     ref_url = models.CharField(max_length=255, unique=True)
-    bibtex = models.FileField(upload_to=bib_file_path,
-                              validators=[FileExtensionValidator(
-                                  allowed_extensions=["bib"])])
+    bibtex = models.FileField(
+        upload_to=bib_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["bib"])],
+    )
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
@@ -145,11 +157,13 @@ class Reference(models.Model):
 
 class Species(models.Model):
     """Species object."""
+
     class Meta:
-        verbose_name_plural = 'Species'
+        verbose_name_plural = "Species"
         indexes = [
-            GistIndex(fields=['mol_obj']),
+            GistIndex(fields=["mol_obj"]),
         ]
+
     approved = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -182,21 +196,21 @@ class Species(models.Model):
             d2d.DrawMolecule(dm)
             d2d.FinishDrawing()
             text = d2d.GetDrawingText()
-            imtext = base64.b64encode(text).decode('utf8')
+            imtext = base64.b64encode(text).decode("utf8")
             html = '<img src="data:image/png;base64, {img}" alt="rdkit image">'
             return format_html(html, img=imtext)
-        return format_html('<strong>There is no image for this entry.<strong>')
-    display_mol.short_description = 'Display rdkit image'
+        return format_html("<strong>There is no image for this entry.<strong>")
+
+    display_mol.short_description = "Display rdkit image"
 
 
 class SpeciesMetadata(models.Model):
     """Species metadata object."""
+
     class Meta:
-        verbose_name_plural = 'Species metadata'
-    species = models.ForeignKey(
-        'Species',
-        on_delete=models.PROTECT
-    )
+        verbose_name_plural = "Species metadata"
+
+    species = models.ForeignKey("Species", on_delete=models.PROTECT)
     approved = models.BooleanField(default=False)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -213,50 +227,51 @@ class SpeciesMetadata(models.Model):
     a_const = ArbitraryDecimalField(null=True)
     b_const = ArbitraryDecimalField(null=True)
     c_const = ArbitraryDecimalField(null=True)
-    linelist = models.ForeignKey(
-        'Linelist',
-        on_delete=models.PROTECT
-    )
+    linelist = models.ForeignKey("Linelist", on_delete=models.PROTECT)
     data_date = models.DateField()
     data_contributor = models.CharField(max_length=255)
-    int_file = models.FileField(null=True, upload_to=sp_file_path,
-                                validators=[FileExtensionValidator(
-                                    allowed_extensions=["int"])])
-    var_file = models.FileField(null=True, upload_to=sp_file_path,
-                                validators=[FileExtensionValidator(
-                                    allowed_extensions=["var"])])
-    fit_file = models.FileField(null=True, upload_to=sp_file_path,
-                                validators=[FileExtensionValidator(
-                                    allowed_extensions=["fit"])])
-    lin_file = models.FileField(null=True, upload_to=sp_file_path,
-                                validators=[FileExtensionValidator(
-                                    allowed_extensions=["lin"])])
-    qpart_file = models.FileField(upload_to=sp_file_path, validators=[
-                                  FileExtensionValidator(
-                                      allowed_extensions=["qpart"])])
+    int_file = models.FileField(
+        null=True,
+        upload_to=sp_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["int"])],
+    )
+    var_file = models.FileField(
+        null=True,
+        upload_to=sp_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["var"])],
+    )
+    fit_file = models.FileField(
+        null=True,
+        upload_to=sp_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["fit"])],
+    )
+    lin_file = models.FileField(
+        null=True,
+        upload_to=sp_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["lin"])],
+    )
+    qpart_file = models.FileField(
+        upload_to=sp_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["qpart"])],
+    )
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     def __str__(self):
-        return "species metadata of "+self.species.iupac_name
+        return "species metadata of " + self.species.iupac_name
 
 
 class MetaReference(models.Model):
     """Metadata reference object relating species metadata with references"""
+
     approved = models.BooleanField(default=False)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
     )
-    meta = models.ForeignKey(
-        'SpeciesMetadata',
-        on_delete=models.PROTECT
-    )
-    ref = models.ForeignKey(
-        'Reference',
-        on_delete=models.PROTECT
-    )
+    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT)
+    ref = models.ForeignKey("Reference", on_delete=models.PROTECT)
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
     notes = models.TextField(blank=True)
@@ -265,24 +280,25 @@ class MetaReference(models.Model):
 
     def __str__(self):
         if self.dipole_moment and self.spectrum:
-            return "metadata reference for dipole moment "\
+            return (
+                "metadata reference for dipole moment "
                 "and spectrum of " + self.meta.species.iupac_name
+            )
         elif self.dipole_moment:
-            return "metadata reference for dipole moment of " + \
-                self.meta.species.iupac_name
+            return (
+                "metadata reference for dipole moment of "
+                + self.meta.species.iupac_name
+            )
         elif self.spectrum:
-            return "metadata reference for spectrum of " + \
-                self.meta.species.iupac_name
+            return "metadata reference for spectrum of " + self.meta.species.iupac_name
         else:
-            return "metadata reference for "+self.meta.species.iupac_name
+            return "metadata reference for " + self.meta.species.iupac_name
 
 
 class Line(models.Model):
     """Line object."""
-    meta = models.ForeignKey(
-        'SpeciesMetadata',
-        on_delete=models.PROTECT
-    )
+
+    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT)
     approved = models.BooleanField(default=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -311,9 +327,7 @@ class Line(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        indexes = [
-            models.Index(fields=['frequency'])
-        ]
+        indexes = [models.Index(fields=["frequency"])]
 
     def __str__(self):
-        return "line of "+self.meta.species.iupac_name
+        return "line of " + self.meta.species.iupac_name
