@@ -155,12 +155,19 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "var_file",
             "fit_file",
             "lin_file",
+            "cat_file",
             "notes",
             "approved",
             "uploaded_by",
             "created_at",
         ]
-        read_only_fields = ["id", "partition_function", "uploaded_by", "created_at"]
+        read_only_fields = [
+            "id",
+            "partition_function",
+            "uploaded_by",
+            "created_at",
+            "cat_file",
+        ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -281,9 +288,9 @@ class LineSerializer(serializers.ModelSerializer):
             "pickett_upper_state_qn",
             "pickett_lower_state_qn",
             "notes",
-            "uploaded_by",
-            "approved",
-            "created_at",
+            # "uploaded_by",
+            # "approved",
+            # "created_at",
         ]
         read_only_fields = [
             "id",
@@ -304,8 +311,8 @@ class LineSerializer(serializers.ModelSerializer):
             "pickett_qn_code",
             "pickett_upper_state_qn",
             "pickett_lower_state_qn",
-            "uploaded_by",
-            "created_at",
+            # "uploaded_by",
+            # "created_at",
         ]
 
 
@@ -348,11 +355,15 @@ class LineSerializerList(serializers.ModelSerializer):
             "pickett_upper_state_qn",
             "pickett_lower_state_qn",
             "notes",
-            "uploaded_by",
-            "approved",
-            "created_at",
+            # "uploaded_by",
+            # "approved",
+            # "created_at",
         ]
-        read_only_fields = ["id", "uploaded_by", "created_at"]
+
+        read_only_fields = [
+            "id",
+            #  "uploaded_by", "created_at"
+        ]
 
 
 class LineChangeSerializerList(LineSerializerList):
@@ -394,9 +405,9 @@ class QuerySerializer(serializers.ModelSerializer):
             "s_ij_mu2",
             "a_ij",
             "rovibrational",
-            "uploaded_by",
-            "approved",
-            "created_at",
+            # "uploaded_by",
+            # "approved",
+            # "created_at",
         ]
 
     def to_representation(self, instance):

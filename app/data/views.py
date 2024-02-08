@@ -126,18 +126,12 @@ class ReferenceViewSet(viewsets.ModelViewSet):
         return self.queryset.order_by("-id")
 
     def perform_create(self, serializer):
-        """Create a new list and autopopulate uploaded_by and approved field."""
-        user = self.request.user
-        approved = False
-        if user.is_superuser:
-            approved = True
-        serializer.save(uploaded_by=self.request.user, approved=approved)
+        """Create a new list and autopopulate uploaded_by field."""
+        serializer.save(uploaded_by=self.request.user)
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
-        if self.action == "upload_file":
-            return serializers.BibFileSerializer
-        elif self.action in ["update", "partial_update"]:
+        if self.action in ["update", "partial_update"]:
             return serializers.ReferenceChangeSerializer
         return self.serializer_class
 
@@ -150,8 +144,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
             OpenApiParameter(
                 "bibtex_ids",
                 OpenApiTypes.STR,
-                description="Comma-separated list of \
-bibtex ids to merge",
+                description="Comma-separated list of bibtex ids to merge",
             )
         ]
     )
@@ -302,8 +295,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
 
         # if protected, cannot be deleted, show error message
         except ProtectedError as exception:
-            message = f"Cannot delete as species {str(instance)} \
-is being referenced through protected foreign key"
+            message = f"Cannot delete as species {str(instance)} is being referenced through protected foreign key"
             response_msg = {
                 "code": "server_error",
                 "message": _("Internal server error."),
@@ -556,7 +548,7 @@ class LineViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        meta_id = request.data["meta"]
+
         measured = False  # default measured to false right now
         qn_label_list = self._get_qn_str_list(request.data["qn_label_str"])
         contains_rovibrational = request.data["contains_rovibrational"]
@@ -601,9 +593,10 @@ class LineViewSet(viewsets.ModelViewSet):
                     },
                 }
                 return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
-        notes = request.data["notes"]
-        cat_file = request.FILES.get("cat_file")
 
+        notes = request.data["notes"]
+
+        cat_file = request.FILES.get("cat_file")
         if cat_file.name.split(".")[-1] != "cat":
             response_msg = {
                 "code": "server_error",
@@ -615,7 +608,10 @@ class LineViewSet(viewsets.ModelViewSet):
                 },
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        meta_id = request.data["meta"]
         meta_obj = SpeciesMetadata.objects.get(id=meta_id)
+
         qpart_file = None
         # Check if the corresponding species metadata has a qpart file.
         try:
@@ -662,11 +658,6 @@ class LineViewSet(viewsets.ModelViewSet):
                 },
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
-
-        user = self.request.user
-        approved = False
-        if user.is_superuser:
-            approved = True
 
         input_dict_list = []
         if eval(contains_rovibrational.capitalize()):
@@ -728,7 +719,12 @@ class LineViewSet(viewsets.ModelViewSet):
 
         serializer = serializers.LineSerializerList(data=input_dict_list, many=True)
         if serializer.is_valid():
-            serializer.save(uploaded_by=user, approved=approved)
+            # saving the cat_file to species_metadata
+            meta_obj.cat_file = cat_file
+            meta_obj.save()
+            # and finally saving the lines
+            serializer.save()
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

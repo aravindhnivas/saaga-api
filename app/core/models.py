@@ -44,7 +44,7 @@ class ArbitraryDecimalField(models.DecimalField):
 
 def sp_file_path(instance, filename):
     """Generate file path for SPFIT/SPCAT
-    (.int, .var, .lin, .fit, .qpart) files."""
+    (.int, .var, .lin, .fit, .qpart, .cat) files."""
     ext = os.path.splitext(filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
     return os.path.join("uploads", "sp", filename)
@@ -254,6 +254,11 @@ class SpeciesMetadata(models.Model):
         upload_to=sp_file_path,
         validators=[FileExtensionValidator(allowed_extensions=["qpart"])],
     )
+    cat_file = models.FileField(
+        null=True,
+        upload_to=sp_file_path,
+        validators=[FileExtensionValidator(allowed_extensions=["cat"])],
+    )
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
@@ -299,11 +304,11 @@ class Line(models.Model):
     """Line object."""
 
     meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT)
-    approved = models.BooleanField(default=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-    )
+    # approved = models.BooleanField(default=True)
+    # uploaded_by = models.ForeignKey(
+    #     settings.AUTH_USER_MODEL,
+    #     on_delete=models.PROTECT,
+    # )
     measured = models.BooleanField()
     frequency = ArbitraryDecimalField()
     uncertainty = ArbitraryDecimalField()
@@ -323,7 +328,7 @@ class Line(models.Model):
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
 
     class Meta:
