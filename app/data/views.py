@@ -94,8 +94,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
 
         # if protected, cannot be deleted, show error message
         except ProtectedError as exception:
-            message = f"Cannot delete as linelist({str(instance)}) \
-is being referenced through protected foreign key"
+            message = f"Cannot delete as linelist({str(instance)}) is being referenced through protected foreign key"
             response_msg = {
                 "code": "server_error",
                 "message": _("Internal server error."),
@@ -311,7 +310,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     queryset = SpeciesMetadata.objects.all()
     authentication_classes = [TokenAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ("approved", "uploaded_by", "species", "linelist")
+    filterset_fields = ("approved", "uploaded_by", "species", "linelist", "hyperfine")
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -437,8 +436,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
 
         # if protected, cannot be deleted, show error message
         except ProtectedError as exception:
-            message = f"Cannot delete as species metadata \
-{str(instance)} is being referenced through protected foreign key"
+            message = f"Cannot delete as species metadata {str(instance)} is being referenced through protected foreign key"
             response_msg = {
                 "code": "server_error",
                 "message": _("Internal server error."),
@@ -724,7 +722,7 @@ class LineViewSet(viewsets.ModelViewSet):
             meta_obj.save()
             # and finally saving the lines
             serializer.save()
-            
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
