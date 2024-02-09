@@ -285,7 +285,7 @@ class MetaReference(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     history = HistoricalRecords()
-    
+
     class Meta:
         unique_together = ["meta", "ref", "dipole_moment", "spectrum"]
 
