@@ -59,9 +59,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new linelist and autopopulate uploaded_by and approved field."""
         user = self.request.user
-        approved = False
-        if user.is_superuser:
-            approved = True
+        approved = user.is_superuser
         serializer.save(uploaded_by=self.request.user, approved=approved)
 
     def get_queryset(self):
@@ -258,9 +256,6 @@ class SpeciesViewSet(viewsets.ModelViewSet):
         """Create a new species and autopopulate molecular mass,
         selfies, and rdkit mol object from canonical smiles."""
 
-        user = self.request.user
-        approved = user.is_superuser
-
         smiles = self.request.data.get("smiles")
         canonical_smiles = Chem.CanonSmiles(smiles)
         selfies_string = sf.encoder(canonical_smiles)
@@ -272,7 +267,6 @@ class SpeciesViewSet(viewsets.ModelViewSet):
             selfies=selfies_string,
             molecular_mass=molecular_mass,
             uploaded_by=self.request.user,
-            approved=approved,
         )
 
     @extend_schema(
@@ -367,52 +361,32 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
 
         if serializer.is_valid():
 
-            user = self.request.user
-            approved = False
-            if user.is_superuser:
-                approved = True
+            # Initialize variables
+            mu_a = mu_b = mu_c = a_const = b_const = c_const = None
 
             # Read from .int and .var files if they are uploaded.
-            if int_file and var_file:
+            if int_file:
                 mu_a, mu_b, mu_c = read_intfile(int_file)
+            if var_file:
                 a_const, b_const, c_const = read_varfile(var_file)
-                serializer.save(
-                    mu_a=mu_a,
-                    mu_b=mu_b,
-                    mu_c=mu_c,
-                    a_const=a_const,
-                    b_const=b_const,
-                    c_const=c_const,
-                    partition_function=partition_dict,
-                    uploaded_by=user,
-                    approved=approved,
-                )
-            elif int_file:
-                mu_a, mu_b, mu_c = read_intfile(int_file)
-                serializer.save(
-                    mu_a=mu_a,
-                    mu_b=mu_b,
-                    mu_c=mu_c,
-                    partition_function=partition_dict,
-                    uploaded_by=user,
-                    approved=approved,
-                )
-            elif var_file:
-                a_const, b_const, c_const = read_varfile(var_file)
-                serializer.save(
-                    a_const=a_const,
-                    b_const=b_const,
-                    c_const=c_const,
-                    partition_function=partition_dict,
-                    uploaded_by=user,
-                    approved=approved,
-                )
-            else:
-                serializer.save(
-                    partition_function=partition_dict,
-                    uploaded_by=user,
-                    approved=approved,
-                )
+
+            # Prepare the data to save
+            data_to_save = {
+                "mu_a": mu_a,
+                "mu_b": mu_b,
+                "mu_c": mu_c,
+                "a_const": a_const,
+                "b_const": b_const,
+                "c_const": c_const,
+                "partition_function": partition_dict,
+                "uploaded_by": self.request.user,
+                "approved": self.request.user.is_superuser,
+            }
+
+            # Remove None values from the dictionary
+            data_to_save = {k: v for k, v in data_to_save.items() if v is not None}
+            serializer.save(**data_to_save)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -474,9 +448,9 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by and approved field."""
-        user = self.request.user
-        approved = user.is_superuser
-        serializer.save(uploaded_by=self.request.user, approved=approved)
+        serializer.save(
+            uploaded_by=self.request.user, approved=self.request.user.is_superuser
+        )
 
     def get_queryset(self):
         """Retrieve meta references."""
@@ -813,28 +787,29 @@ class UploadedDataLengthView(APIView):
 
         total_length_full = self.get_count(user)
         total_length_approved = self.get_count(user, approved=True)
+
         return Response(
             {
-                "total_length_full": total_length_full,
-                "total_length_approved": total_length_approved,
+                "full": total_length_full,
+                "approved": total_length_approved,
             }
         )
 
     def get_count(self, user, approved=None):
 
-        # Initialize an empty Q object
         query = Q(uploaded_by=user)
-
-        # Add 'approved' to the query if it's not None
         if approved is not None:
             query &= Q(approved=approved)
 
         species = Species.objects.filter(query)
         species_metadata = SpeciesMetadata.objects.filter(query)
-        ref_metadata = MetaReference.objects.filter(query)
+
+        reference = Reference.objects.filter(query)
+        meta_reference = MetaReference.objects.filter(query)
 
         return {
             "species": species.count(),
             "species_metadata": species_metadata.count(),
-            "ref_metadata": ref_metadata.count(),
+            "reference": reference.count(),
+            "meta_reference": meta_reference.count(),
         }

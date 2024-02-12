@@ -116,7 +116,7 @@ class Linelist(models.Model):
     """Linelist object."""
 
     linelist_name = models.CharField(max_length=255, unique=True, db_index=True)
-    approved = models.BooleanField(default=True, db_index=True)
+    approved = models.BooleanField(default=False, db_index=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
