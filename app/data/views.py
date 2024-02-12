@@ -34,6 +34,9 @@ from data.parse_metadata import read_intfile, read_varfile, read_qpartfile
 from data.parse_line import parse_cat
 from django_filters import rest_framework as filters
 from drf_multiple_model.views import ObjectMultipleModelAPIView
+from rest_framework.views import APIView
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 
 class LinelistViewSet(viewsets.ModelViewSet):
@@ -802,3 +805,36 @@ class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
             "serializer_class": serializers.SpeciesMetadataSerializer,
         },
     ]
+
+
+class UploadedDataLengthView(APIView):
+    def get(self, request, user_id, format=None):
+        user = get_user_model().objects.get(id=user_id)
+
+        total_length_full = self.get_count(user)
+        total_length_approved = self.get_count(user, approved=True)
+        return Response(
+            {
+                "total_length_full": total_length_full,
+                "total_length_approved": total_length_approved,
+            }
+        )
+
+    def get_count(self, user, approved=None):
+
+        # Initialize an empty Q object
+        query = Q(uploaded_by=user)
+
+        # Add 'approved' to the query if it's not None
+        if approved is not None:
+            query &= Q(approved=approved)
+
+        species = Species.objects.filter(query)
+        species_metadata = SpeciesMetadata.objects.filter(query)
+        ref_metadata = MetaReference.objects.filter(query)
+
+        return {
+            "species": species.count(),
+            "species_metadata": species_metadata.count(),
+            "ref_metadata": ref_metadata.count(),
+        }

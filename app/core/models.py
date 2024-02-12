@@ -64,9 +64,9 @@ class UserManager(BaseUserManager):
         """Create, save and return a new user."""
         if not email or not password or not name or not organization:
             raise ValueError(
-                "User must have an email, \
-                              password, name, and organization"
+                "User must have an email, password, name, and organization"
             )
+
         user = self.model(
             email=self.normalize_email(email),
             name=name,
@@ -115,11 +115,12 @@ register(User)
 class Linelist(models.Model):
     """Linelist object."""
 
-    linelist_name = models.CharField(max_length=255, unique=True)
-    approved = models.BooleanField(default=True)
+    linelist_name = models.CharField(max_length=255, unique=True, db_index=True)
+    approved = models.BooleanField(default=True, db_index=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        db_index=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -136,12 +137,13 @@ class Linelist(models.Model):
 class Reference(models.Model):
     """Reference object."""
 
-    approved = models.BooleanField(default=True)
+    approved = models.BooleanField(default=True, db_index=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        db_index=True,
     )
-    doi = models.CharField(max_length=255, blank=True)
+    doi = models.CharField(max_length=255, blank=True, db_index=True)
     ref_url = models.CharField(max_length=255, unique=True)
     bibtex = models.FileField(
         upload_to=bib_file_path,
@@ -160,17 +162,16 @@ class Species(models.Model):
 
     class Meta:
         verbose_name_plural = "Species"
-        indexes = [
-            GistIndex(fields=["mol_obj"]),
-        ]
+        indexes = [GistIndex(fields=["mol_obj"])]
 
-    approved = models.BooleanField(default=True)
+    approved = models.BooleanField(default=True, db_index=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        db_index=True,
     )
     name = models.JSONField()
-    iupac_name = models.CharField(max_length=255, unique=True)
+    iupac_name = models.CharField(max_length=255, unique=True, db_index=True)
     name_formula = models.CharField(max_length=255)
     name_html = models.CharField(max_length=255)
     molecular_mass = ArbitraryDecimalField()
@@ -210,14 +211,15 @@ class SpeciesMetadata(models.Model):
     class Meta:
         verbose_name_plural = "Species metadata"
 
-    species = models.ForeignKey("Species", on_delete=models.PROTECT)
-    approved = models.BooleanField(default=False)
+    species = models.ForeignKey("Species", on_delete=models.PROTECT, db_index=True)
+    approved = models.BooleanField(default=False, db_index=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        db_index=True,
     )
-    molecule_tag = models.IntegerField(blank=True, null=True)
-    hyperfine = models.BooleanField()
+    molecule_tag = models.IntegerField(blank=True, null=True, db_index=True)
+    hyperfine = models.BooleanField(db_index=True)
     degree_of_freedom = models.IntegerField()
     category = models.CharField(max_length=255)
     partition_function = models.JSONField()
@@ -273,13 +275,14 @@ class SpeciesMetadata(models.Model):
 class MetaReference(models.Model):
     """Metadata reference object relating species metadata with references"""
 
-    approved = models.BooleanField(default=False)
+    approved = models.BooleanField(default=False, db_index=True)
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
+        db_index=True,
     )
-    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT)
-    ref = models.ForeignKey("Reference", on_delete=models.PROTECT)
+    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT, db_index=True)
+    ref = models.ForeignKey("Reference", on_delete=models.PROTECT, db_index=True)
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
     notes = models.TextField(blank=True)
@@ -310,11 +313,6 @@ class Line(models.Model):
     """Line object."""
 
     meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT)
-    # approved = models.BooleanField(default=True)
-    # uploaded_by = models.ForeignKey(
-    #     settings.AUTH_USER_MODEL,
-    #     on_delete=models.PROTECT,
-    # )
     measured = models.BooleanField()
     frequency = ArbitraryDecimalField()
     uncertainty = ArbitraryDecimalField()
@@ -334,12 +332,11 @@ class Line(models.Model):
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
     notes = models.TextField(blank=True)
-    # created_at = models.DateTimeField(auto_now_add=True)
+
     history = HistoricalRecords()
 
     class Meta:
-        indexes = [models.Index(fields=["frequency"])]
-        # unique_together = ["meta", "qn_label_str", "vib_qn"]
+        indexes = [models.Index(fields=["frequency", "meta"])]
 
     def __str__(self):
         return "line of " + self.meta.species.iupac_name

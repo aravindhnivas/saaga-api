@@ -8,7 +8,7 @@ from django.urls import (
 )
 
 from rest_framework.routers import DefaultRouter
-
+from .views import UploadedDataLengthView
 from data import views
 
 router = DefaultRouter()
@@ -27,5 +27,6 @@ urlpatterns = [
         views.MetaRefAndSpeciesViewSet.as_view(),
         name="meta-ref-and-species",
     ),
+    path("data_length/<int:user_id>/", UploadedDataLengthView.as_view()),
     path("", include(router.urls)),
 ]
