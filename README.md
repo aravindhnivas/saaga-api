@@ -19,6 +19,15 @@ The API is under development and the database is yet to be filled with data. The
 
 _Note: the `-p` flag is used to specify the project name, which is used as the prefix of the container name. This is useful when running multiple docker-compose files at the same time._
 
+### Login as a root user in the app container
+
+`docker exec -u 0 -it dev_app_1 /bin/bash`
+- `docker exec`: This is the Docker command to run a command in a running container.
+- `-u 0`: This option specifies that the command should be run as the root user.
+- `-it`: These options make the command interactive (-i) and allocate a pseudo-TTY (-t), which makes it feel like you're directly typing in the container's terminal.
+- `dev_app_1`: This should be replaced with the name or ID of your container.
+- `/bin/bash`: This is the command to run in the container. It starts a Bash shell.
+
 
 ## Create a superuser
 
