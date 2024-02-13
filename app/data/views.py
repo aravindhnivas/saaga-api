@@ -64,7 +64,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve linelists."""
-        return self.queryset.order_by("-id")
+        return self.queryset.order_by("-id").select_related("uploaded_by")
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -123,7 +123,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve references."""
-        return self.queryset.order_by("-id")
+        return self.queryset.order_by("-id").select_related("uploaded_by")
 
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by field."""
@@ -197,14 +197,16 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
         # if protected, cannot be deleted, show error message
         except ProtectedError as exception:
-            message = f"Cannot delete as reference {str(instance)} \
-is being referenced through protected foreign key"
-            response_msg = {
-                "code": "server_error",
-                "message": _("Internal server error."),
-                "error": {"type": str(type(exception)), "message": message},
-            }
-            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+            return self.handle_exception(exception, instance)
+
+    def handle_exception(self, exception, instance):
+        message = f"Cannot delete as reference {str(instance)} is being referenced through protected foreign key"
+        response_msg = {
+            "code": "server_error",
+            "message": _("Internal server error."),
+            "error": {"type": str(type(exception)), "message": message},
+        }
+        return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema_view(
@@ -244,7 +246,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
             ).order_by(
                 "-id"
             )  # noqa: F405
-        return self.queryset.order_by("-id")
+        return self.queryset.order_by("-id").select_related("uploaded_by")
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -319,7 +321,17 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve species metadata."""
-        return self.queryset.order_by("-id")
+        return (
+            self.queryset.order_by("-id")
+            .select_related("species", "linelist", "uploaded_by")
+            .only(
+                "species__id",
+                "species__name_formula",
+                "species__iupac_name",
+                "linelist__linelist_name",
+                "uploaded_by__name",
+            )
+        )
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -454,7 +466,9 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieve meta references."""
-        return self.queryset.order_by("-id")
+        return self.queryset.order_by("-id").select_related(
+            "uploaded_by", "meta", "ref"
+        )
 
     def get_serializer_class(self):
         """Return the serializer class for request."""

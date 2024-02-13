@@ -172,7 +172,7 @@ class Species(models.Model):
     )
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255, unique=True, db_index=True)
-    name_formula = models.CharField(max_length=255)
+    name_formula = models.CharField(max_length=255, db_index=True)
     name_html = models.CharField(max_length=255)
     molecular_mass = ArbitraryDecimalField()
     smiles = models.CharField(max_length=255)
