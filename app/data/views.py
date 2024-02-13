@@ -785,11 +785,21 @@ class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
 
     querylist = [
         {
-            "queryset": MetaReference.objects.all(),
+            "queryset": MetaReference.objects.all().select_related(
+                "uploaded_by", "meta", "ref"
+            ),
             "serializer_class": serializers.MetaReferenceSerializer,
         },
         {
-            "queryset": SpeciesMetadata.objects.all(),
+            "queryset": SpeciesMetadata.objects.all()
+            .select_related("species", "linelist", "uploaded_by")
+            .only(
+                "species__id",
+                "species__name_formula",
+                "species__iupac_name",
+                "linelist__linelist_name",
+                "uploaded_by__name",
+            ),
             "serializer_class": serializers.SpeciesMetadataSerializer,
         },
     ]
