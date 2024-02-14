@@ -60,16 +60,7 @@ def bib_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for users."""
 
-    def create_user(
-        self,
-        email,
-        password,
-        name,
-        organization,
-        approver=None,
-        created_by=None,
-        is_staff=False,
-    ):
+    def create_user(self, email, password, name, organization, **kwargs):
         """Create, save and return a new user."""
         if not email or not password or not name or not organization:
             raise ValueError(
@@ -80,9 +71,7 @@ class UserManager(BaseUserManager):
             email=self.normalize_email(email),
             name=name,
             organization=organization,
-            approver=approver,
-            created_by=created_by,
-            is_staff=is_staff,
+            **kwargs,
         )
 
         user.set_password(password)
