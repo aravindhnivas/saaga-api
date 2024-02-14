@@ -821,19 +821,13 @@ class UploadedDataLengthView(APIView):
 
     def get_count(self, user, approved=None):
 
-        query = Q(uploaded_by=user)
+        query = Q()
         if approved is not None:
             query &= Q(approved=approved)
 
-        species = Species.objects.filter(query)
-        species_metadata = SpeciesMetadata.objects.filter(query)
-
-        reference = Reference.objects.filter(query)
-        meta_reference = MetaReference.objects.filter(query)
-
         return {
-            "species": species.count(),
-            "species_metadata": species_metadata.count(),
-            "reference": reference.count(),
-            "meta_reference": meta_reference.count(),
+            "species": user.species_uploads.filter(query).count(),
+            "species_metadata": user.species_metadata_uploads.filter(query).count(),
+            "reference": user.reference_uploads.filter(query).count(),
+            "meta_reference": user.meta_reference_uploads.filter(query).count(),
         }

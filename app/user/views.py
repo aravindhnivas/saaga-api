@@ -21,7 +21,11 @@ class CreateUserView(generics.CreateAPIView):
 
     serializer_class = UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
+
+    def perform_create(self, serializer):
+        """Create a new user."""
+        serializer.save(created_by=self.request.user)
 
 
 class CreateTokenView(ObtainAuthToken):
@@ -58,10 +62,12 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         "is_staff",
         "is_active",
         "approver",
+        "created_by",
     )
 
     def get_queryset(self):
         """Retrieve meta references."""
+        print(self.request.user.dependent_users.all())
         return self.queryset.order_by("-id")
 
 

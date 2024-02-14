@@ -18,7 +18,7 @@ router.register("species-metadata", views.SpeciesMetadataViewSet)
 router.register("reference", views.ReferenceViewSet)
 router.register("meta-reference", views.MetaReferenceViewSet)
 router.register("line", views.LineViewSet)
-
+# router.register("data-length", UploadedDataLengthView, basename="data-length")
 app_name = "data"
 
 urlpatterns = [

@@ -6,8 +6,30 @@ from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 from .models import SpeciesMetadata, MetaReference
 import textwrap
+from django.contrib.auth import get_user_model
 
 from_email = settings.EMAIL_HOST_USER
+user_model = get_user_model()
+
+
+@receiver(post_save, sender=user_model)
+def send_update_notification(sender, instance, created, **kwargs):
+
+    if created:
+        subject = f"[SaagaDb] {instance.name}: Your account has been created"
+        message = textwrap.dedent(
+            f"""
+            Your account has been created.
+            Please login to SaagaDb to start using the application.
+            http://herzberg.mit.edu/login
+            
+            Your approver is {instance.approver.name} ({instance.approver.email}).
+            The approver will review and approve your data uploads: species- and reference- metadata.
+        """
+        ).strip()
+        recipient_list = [instance.email]
+        send_mail(subject, message, from_email, recipient_list)
+        print(f"Email sent successfully to {instance.email}")
 
 
 @receiver(post_save, sender=MetaReference)

@@ -60,7 +60,9 @@ def bib_file_path(instance, filename):
 class UserManager(BaseUserManager):
     """Manager for users."""
 
-    def create_user(self, email, password, name, organization, approver=None):
+    def create_user(
+        self, email, password, name, organization, approver=None, created_by=None
+    ):
         """Create, save and return a new user."""
         if not email or not password or not name or not organization:
             raise ValueError(
@@ -72,15 +74,17 @@ class UserManager(BaseUserManager):
             name=name,
             organization=organization,
             approver=approver,
+            created_by=created_by,
         )
+
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password, name, organization):
+    def create_superuser(self, *args, **kwargs):
         """Create and return a new superuser."""
-        user = self.create_user(email, password, name, organization)
+        user = self.create_user(*args, **kwargs)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -101,11 +105,20 @@ class User(AbstractBaseUser, PermissionsMixin):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
+        related_name="dependent_users",
+        db_index=True,
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    REQUIRED_FIELDS = ["name", "organization"]
-    objects = UserManager()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="created_users",
+        db_index=True,
+    )
 
+    REQUIRED_FIELDS = ["name", "password", "organization"]
+    objects = UserManager()
     USERNAME_FIELD = "email"
 
 
@@ -121,6 +134,7 @@ class Linelist(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         db_index=True,
+        related_name="linelist_uploads",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -142,6 +156,7 @@ class Reference(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         db_index=True,
+        related_name="reference_uploads",
     )
     doi = models.CharField(max_length=255, blank=True, db_index=True)
     ref_url = models.CharField(max_length=255, unique=True)
@@ -169,6 +184,7 @@ class Species(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         db_index=True,
+        related_name="species_uploads",
     )
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255, unique=True, db_index=True)
@@ -217,6 +233,7 @@ class SpeciesMetadata(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         db_index=True,
+        related_name="species_metadata_uploads",
     )
     molecule_tag = models.IntegerField(blank=True, null=True, db_index=True)
     hyperfine = models.BooleanField(db_index=True)
@@ -280,6 +297,7 @@ class MetaReference(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         db_index=True,
+        related_name="meta_reference_uploads",
     )
     meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT, db_index=True)
     ref = models.ForeignKey("Reference", on_delete=models.PROTECT, db_index=True)
