@@ -15,5 +15,10 @@ urlpatterns = [
     path("create/", views.CreateUserView.as_view(), name="create"),
     path("token/", views.CreateTokenView.as_view(), name="token"),
     path("me/", views.GetUserView.as_view(), name="me"),
+    path(
+        "change_password/<int:id>/",
+        views.ChangePassword.as_view(),
+        name="change_password",
+    ),
     path("", include(router.urls)),
 ]

@@ -56,3 +56,8 @@ class AuthTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code="authorization")
         attrs["user"] = user
         return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)

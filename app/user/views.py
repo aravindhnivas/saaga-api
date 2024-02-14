@@ -2,13 +2,17 @@
 Views for the user API.
 """
 
-from rest_framework import generics, authentication, permissions, viewsets
+from rest_framework import generics, authentication, permissions, viewsets, status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
-from user.serializers import UserSerializer, AuthTokenSerializer
+from user.serializers import (
+    UserSerializer,
+    AuthTokenSerializer,
+    ChangePasswordSerializer,
+)
 from django.contrib.auth import get_user_model
 from .serializers import UserSerializer
-
+from rest_framework.response import Response
 from django_filters import rest_framework as filters
 
 
@@ -40,6 +44,7 @@ class GetUserView(generics.RetrieveAPIView):
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
+
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
@@ -58,3 +63,23 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Retrieve meta references."""
         return self.queryset.order_by("-id")
+
+
+class ChangePassword(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
+
+    def put(self, request, id):
+        current_password = request.data["current_password"]
+        new_password = request.data["new_password"]
+
+        obj = get_user_model().objects.get(pk=id)
+        if not obj.check_password(raw_password=current_password):
+            return Response(
+                {"msg": "password is incorrect"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        else:
+            obj.set_password(new_password)
+            obj.save()
+            return Response(
+                {"msg": "password changed successfully"}, status=status.HTTP_200_OK
+            )
