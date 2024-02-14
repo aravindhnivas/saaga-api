@@ -25,7 +25,7 @@ def send_update_notification(sender, instance, created, **kwargs):
     if not created and instance.approved:
         # print("Metadata updated and approved")
         subject = "[SaagaDb] Reference metadata approved"
-        message = f"Reference metadata ({instance.ref_url}) approved by {user.approver.name} ({user.approver.email})."
+        message = f"Reference metadata ({instance.ref.ref_url}) approved by {user.approver.name} ({user.approver.email})."
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list)
         # print(f"Email sent successfully to {user.email}")
