@@ -14,6 +14,8 @@ services:
       - DB_PASS=${DB_PASS}
       - SECRET_KEY=${DJANGO_SECRET_KEY}
       - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - EMAIL_HOST=${DJANGO_EMAIL_HOST}
+      - EMAIL_PASSWORD=${DJANGO_EMAIL_PASSWORD}
     depends_on:
       - db
 

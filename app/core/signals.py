@@ -65,5 +65,5 @@ def send_email_test():
         print("Email not sent")
 
 
-# print("Signals are working")
+print("Signals are working")
 # send_email_test()
