@@ -63,7 +63,7 @@ def send_update_notification(sender, instance, created, **kwargs):
 
     if message:
         recipient_list = [instance.email]
-        send_mail(subject, message, from_email, recipient_list)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         print(f"Email sent successfully to {instance.email}")
 
 
@@ -80,7 +80,7 @@ def send_update_notification(sender, instance, created, **kwargs):
         """
         ).strip()
         recipient_list = [user.approver.email]
-        send_mail(subject, message, from_email, recipient_list)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         # print(f"Email sent successfully to {user.approver.email}")
 
     if not created and instance.approved:
@@ -88,7 +88,7 @@ def send_update_notification(sender, instance, created, **kwargs):
         subject = f"[SaagaDb] Reference metadata approved"
         message = f"Reference metadata ({instance.ref.ref_url}) approved by {user.approver.name} ({user.approver.email})."
         recipient_list = [user.email]
-        send_mail(subject, message, from_email, recipient_list)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         # print(f"Email sent successfully to {user.email}")
 
 
@@ -106,7 +106,7 @@ def send_update_notification(sender, instance, created, **kwargs):
         """
         ).strip()
         recipient_list = [user.approver.email]
-        send_mail(subject, message, from_email, recipient_list)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         # print(f"Email sent successfully to {user.approver.email}")
 
     if not created and instance.approved:
@@ -114,7 +114,7 @@ def send_update_notification(sender, instance, created, **kwargs):
         subject = "[SaagaDb] Species metadata approved for " + species_name
         message = f"Species metadata for {species_name} approved by {user.approver.name} ({user.approver.email})."
         recipient_list = [user.email]
-        send_mail(subject, message, from_email, recipient_list)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         # print(f"Email sent successfully to {user.email}")
 
 
@@ -125,7 +125,7 @@ def send_email_test():
         message = "This is a test message."
         from_email = settings.EMAIL_HOST_USER
         recipient_list = ["nivasm@mit.edu"]
-        send_mail(subject, message, from_email, recipient_list)
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         print("Email sent successfully")
     except Exception as e:
         print(e)
