@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register("fetch", views.UserViewSet)
-
+# router.register("change-password", views.ChangePassword)
 app_name = "user"
 
 urlpatterns = [
@@ -16,9 +16,9 @@ urlpatterns = [
     path("token/", views.CreateTokenView.as_view(), name="token"),
     path("me/", views.GetUserView.as_view(), name="me"),
     path(
-        "change_password/<int:id>/",
+        "change-password/",
         views.ChangePassword.as_view(),
-        name="change_password",
+        name="change-password",
     ),
     path("", include(router.urls)),
 ]

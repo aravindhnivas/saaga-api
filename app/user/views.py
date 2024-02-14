@@ -67,19 +67,21 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def put(self, request, id):
+    def put(self, request):
         current_password = request.data["current_password"]
         new_password = request.data["new_password"]
 
-        obj = get_user_model().objects.get(pk=id)
-        if not obj.check_password(raw_password=current_password):
+        user = request.user
+        if not user.check_password(raw_password=current_password):
             return Response(
                 {"msg": "password is incorrect"}, status=status.HTTP_400_BAD_REQUEST
             )
         else:
-            obj.set_password(new_password)
-            obj.save()
+            user.set_password(new_password)
+            user.save()
             return Response(
                 {"msg": "password changed successfully"}, status=status.HTTP_200_OK
             )
