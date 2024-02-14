@@ -77,11 +77,11 @@ class ChangePassword(generics.GenericAPIView):
         user = request.user
         if not user.check_password(raw_password=current_password):
             return Response(
-                {"msg": "password is incorrect"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "password is incorrect"}, status=status.HTTP_400_BAD_REQUEST
             )
         else:
             user.set_password(new_password)
             user.save()
             return Response(
-                {"msg": "password changed successfully"}, status=status.HTTP_200_OK
+                {"detail": "password changed successfully"}, status=status.HTTP_200_OK
             )
