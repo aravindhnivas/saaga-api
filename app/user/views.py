@@ -67,7 +67,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Retrieve meta references."""
-        print(self.request.user.dependent_users.all())
         return self.queryset.order_by("-id")
 
 
