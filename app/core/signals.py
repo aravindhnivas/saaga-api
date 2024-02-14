@@ -19,7 +19,7 @@ def send_update_notification(sender, instance, created, **kwargs):
         subject = f"[SaagaDb] {instance.name}: Your account has been created"
         message = textwrap.dedent(
             f"""
-            Your account has been created.
+            Your account has been created{' (with admin privilege)' if instance.is_staff else ''}.
             Please login to SaagaDb to start using the application.
             http://herzberg.mit.edu/login
             

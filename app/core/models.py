@@ -61,7 +61,14 @@ class UserManager(BaseUserManager):
     """Manager for users."""
 
     def create_user(
-        self, email, password, name, organization, approver=None, created_by=None
+        self,
+        email,
+        password,
+        name,
+        organization,
+        approver=None,
+        created_by=None,
+        is_staff=False,
     ):
         """Create, save and return a new user."""
         if not email or not password or not name or not organization:
@@ -75,6 +82,7 @@ class UserManager(BaseUserManager):
             organization=organization,
             approver=approver,
             created_by=created_by,
+            is_staff=is_staff,
         )
 
         user.set_password(password)
