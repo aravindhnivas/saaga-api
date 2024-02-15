@@ -50,6 +50,9 @@ def send_update_notification(sender, instance, created, **kwargs):
     message = ""
 
     if created:
+        if not instance.approver:
+            return
+
         token, expires_at = generate_verification_token()  # Generate the token here
         EmailVerificationToken.objects.create(
             user=instance, token=token, expires_at=expires_at
