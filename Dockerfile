@@ -3,7 +3,7 @@
 FROM python:3.9-bullseye
 
 # Maintainer of the software for now.
-LABEL maintainer="jsycheung"
+LABEL maintainer="aravindhnivas"
 
 # Tells Python not to buffer the output, prevent any delay in message from python to the screen so that we can see the logs immediately as they are running.
 ENV PYTHONUNBUFFERED 1

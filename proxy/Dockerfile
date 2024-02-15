@@ -1,5 +1,5 @@
 FROM nginxinc/nginx-unprivileged:1-bullseye
-LABEL maintainer="jsycheung"
+LABEL maintainer="aravindhnivas"
 
 COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
 COPY ./uwsgi_params /etc/nginx/uwsgi_params
