@@ -65,6 +65,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         "is_superuser",
         "is_staff",
         "is_active",
+        "is_verified",
         "approver",
         "created_by",
     )
@@ -104,8 +105,6 @@ class VerifyEmailView(APIView):
         try:
             verification_token = EmailVerificationToken.objects.get(token=token)
 
-            print(verification_token.expires_at)
-            print(datetime.datetime.now())
             if (
                 verification_token.expires_at.replace(tzinfo=None)
                 < datetime.datetime.now()
@@ -115,8 +114,8 @@ class VerifyEmailView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            if not verification_token.user.is_active:
-                verification_token.user.is_active = True
+            if not verification_token.user.is_verified:
+                verification_token.user.is_verified = True
                 verification_token.user.save()
                 return Response(
                     {"detail": "Email successfully verified"}, status=status.HTTP_200_OK
@@ -145,6 +144,7 @@ class ResendVerificationEmailView(APIView):
             verification_token_model: EmailVerificationToken = (
                 user.email_verification_token
             )
+            # print(verification_token_model)
 
             new_token, expires_at = generate_verification_token()
             verification_token_model.token = new_token
