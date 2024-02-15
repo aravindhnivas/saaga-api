@@ -53,6 +53,7 @@ def send_update_notification(sender, instance, created, **kwargs):
         if not instance.approver:
             print("Approver not set")
             return
+
         if instance.is_superuser:
             print("Superuser created")
             return

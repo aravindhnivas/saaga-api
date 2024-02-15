@@ -44,7 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["approver_name"] = instance.approver.name
+        if instance.approver:
+            representation["approver_name"] = instance.approver.name
         return representation
 
 
