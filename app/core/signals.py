@@ -51,6 +51,14 @@ def send_update_notification(sender, instance, created, **kwargs):
 
     if created:
         if not instance.approver:
+            print("Approver not set")
+            return
+        if instance.is_superuser:
+            print("Superuser created")
+            return
+
+        if instance.is_verified:
+            print("User is already verified")
             return
 
         token, expires_at = generate_verification_token()  # Generate the token here
