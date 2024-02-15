@@ -37,6 +37,11 @@ class UserSerializer(serializers.ModelSerializer):
         """
         return get_user_model().objects.create_user(**validated_data)
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["approver_name"] = instance.approver.name
+        return representation
+
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""
