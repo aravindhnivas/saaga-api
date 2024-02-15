@@ -183,3 +183,8 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 # print(SECRET_KEY, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+
+FRONTEND_URL = "http://localhost:5173" if DEBUG else "http://herzberg.mit.edu"
+# PORT 5173 is the frontend port (sveltekit project - saagadb-ui)
+# This is only valid when the frontend is running in development mode on a user computer.
+# So this is only for development purposes.

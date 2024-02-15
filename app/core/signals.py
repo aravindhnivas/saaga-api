@@ -1,17 +1,41 @@
+import datetime
+import textwrap
+import secrets
+
 from django.conf import settings
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.dispatch import receiver
-from .models import SpeciesMetadata, MetaReference
-import textwrap
+from .models import SpeciesMetadata, MetaReference, EmailVerificationToken
 from django.contrib.auth import get_user_model
 
+
+def generate_verification_token():
+    """Generates a unique, random token"""
+    token = secrets.token_urlsafe(32)  # Adjust token length as needed
+    expires_at = datetime.datetime.now() + datetime.timedelta(minutes=30)
+    return token, expires_at
+
+
 from_email = settings.EMAIL_HOST_USER
-user_model = get_user_model()
+User = get_user_model()
 
 
-@receiver(pre_save, sender=get_user_model())
+@receiver(post_save, sender=EmailVerificationToken)
+def send_verification_email(sender, instance, created, **kwargs):
+
+    user = instance.user
+    token = instance.token
+
+    if not created:
+        subject = f"[SaagaDb] Verify your email"
+        message = f"Click the link below to verify your email: \n{settings.FRONTEND_URL}/api/user/verify-email/?token={token}"
+        recipient_list = [user.email]
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+
+
+@receiver(pre_save, sender=User)
 def set_original_is_staff(sender, instance, **kwargs):
     try:
         original = sender.objects.get(pk=instance.pk)
@@ -21,11 +45,15 @@ def set_original_is_staff(sender, instance, **kwargs):
         instance._original_is_staff = None
 
 
-@receiver(post_save, sender=user_model)
+@receiver(post_save, sender=User)
 def send_update_notification(sender, instance, created, **kwargs):
     message = ""
 
     if created:
+        token, expires_at = generate_verification_token()  # Generate the token here
+        EmailVerificationToken.objects.create(
+            user=instance, token=token, expires_at=expires_at
+        )
         subject = f"[SaagaDb] {instance.name}: Your account has been created"
         message = textwrap.dedent(
             f"""
@@ -35,9 +63,13 @@ def send_update_notification(sender, instance, created, **kwargs):
             
             Your approver is {instance.approver.name} ({instance.approver.email}).
             The approver will review and approve your data uploads: species- and reference- metadata.
+            
+            To start using the application, please verify your email by clicking the link below:
+            {settings.FRONTEND_URL}/api/user/verify-email/?token={token}
         """
         ).strip()
     else:
+
         if instance.is_staff and instance.is_staff != instance._original_is_staff:
             subject = (
                 f"[SaagaDb] {instance.name}: Your account has been promoted to admin"

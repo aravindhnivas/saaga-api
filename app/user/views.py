@@ -2,6 +2,7 @@
 Views for the user API.
 """
 
+import datetime
 from rest_framework import generics, authentication, permissions, viewsets, status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
@@ -14,6 +15,9 @@ from django.contrib.auth import get_user_model
 from .serializers import UserSerializer
 from rest_framework.response import Response
 from django_filters import rest_framework as filters
+from rest_framework.views import APIView
+from core.models import EmailVerificationToken
+from core.signals import generate_verification_token
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -89,4 +93,70 @@ class ChangePassword(generics.GenericAPIView):
             user.save()
             return Response(
                 {"detail": "password changed successfully"}, status=status.HTTP_200_OK
+            )
+
+
+class VerifyEmailView(APIView):
+
+    def get(self, request):
+        token = request.GET.get("token")
+
+        try:
+            verification_token = EmailVerificationToken.objects.get(token=token)
+
+            print(verification_token.expires_at)
+            print(datetime.datetime.now())
+            if (
+                verification_token.expires_at.replace(tzinfo=None)
+                < datetime.datetime.now()
+            ):
+                return Response(
+                    {"detail": "Token expired"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not verification_token.user.is_active:
+                verification_token.user.is_active = True
+                verification_token.user.save()
+                return Response(
+                    {"detail": "Email successfully verified"}, status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"detail": "Email already verified"},
+                    status=status.HTTP_200_OK,
+                )
+
+        except EmailVerificationToken.DoesNotExist:
+            return Response(
+                {"detail": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ResendVerificationEmailView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        try:
+
+            verification_token_model: EmailVerificationToken = (
+                user.email_verification_token
+            )
+
+            new_token, expires_at = generate_verification_token()
+            verification_token_model.token = new_token
+            verification_token_model.expires_at = expires_at
+            verification_token_model.save()
+
+            return Response(
+                {"detail": "Verification email resent"}, status=status.HTTP_200_OK
+            )
+
+        except EmailVerificationToken.DoesNotExist:
+            return Response(
+                {"detail": "Error while attempting to resend"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
