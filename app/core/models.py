@@ -4,6 +4,7 @@ Database models.
 
 import os
 import uuid
+from django.dispatch import Signal
 from django_rdkit import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -57,16 +58,20 @@ def bib_file_path(instance, filename):
     return os.path.join("uploads", "bib", filename)
 
 
+user_saved_with_approvers = Signal(providing_args=["instance", "created"])
+
+
 class UserManager(BaseUserManager):
     """Manager for users."""
 
-    def create_user(self, email, password, name, organization, **kwargs):
+    def create_user(self, email, password, name, organization, approver=None, **kwargs):
         """Create, save and return a new user."""
         if not email or not password or not name or not organization:
             raise ValueError(
                 "User must have an email, password, name, and organization"
             )
 
+        # print(f"{kwargs=}\n{approver=}\n")
         user = self.model(
             email=self.normalize_email(email),
             name=name,
@@ -77,6 +82,12 @@ class UserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
 
+        if approver is not None:
+            user.approver.set(approver)  # Then set the many-to-many field
+
+        user_saved_with_approvers.send(
+            sender=self.__class__, instance=user, created=True
+        )
         return user
 
     def create_superuser(self, *args, **kwargs):
@@ -85,7 +96,7 @@ class UserManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         user.is_verified = True
-        user.approver = user
+        # user.approver.set([user])
         user.save(using=self._db)
 
         return user
@@ -102,10 +113,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
 
-    approver = models.ForeignKey(
+    approver = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        null=True,
         related_name="dependent_users",
         db_index=True,
     )

@@ -2,12 +2,14 @@ import datetime
 import textwrap
 import secrets
 
+# from django.dispatch import Signal
 from django.conf import settings
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.dispatch import receiver
 from .models import SpeciesMetadata, MetaReference, EmailVerificationToken
+from .models import user_saved_with_approvers
 from django.contrib.auth import get_user_model
 
 
@@ -45,43 +47,48 @@ def set_original_is_staff(sender, instance, **kwargs):
         instance._original_is_staff = None
 
 
-@receiver(post_save, sender=User)
-def send_update_notification(sender, instance, created, **kwargs):
+# @receiver(post_save, sender=User)
+@receiver(user_saved_with_approvers)
+def user_created_signal(sender, instance, created, **kwargs):
     message = ""
+    if not instance.approver:
+        print("Approver not set")
+        return
 
-    if created:
-        if not instance.approver:
-            print("Approver not set")
-            return
+    approvers_info = []
+    for approver in instance.approver.all():
+        approvers_info.append(f"{approver.name} ({approver.email})")
 
-        if instance.is_superuser:
-            print("Superuser created")
-            return
+    approvers_string = ", ".join(approvers_info)
+    token, expires_at = generate_verification_token()  # Generate the token here
+    EmailVerificationToken.objects.create(
+        user=instance, token=token, expires_at=expires_at
+    )
 
-        if instance.is_verified:
-            print("User is already verified")
-            return
+    subject = f"[SaagaDb] {instance.name}: Your account has been created"
+    message = textwrap.dedent(
+        f"""
+        Your account has been created{' (with admin privilege)' if instance.is_staff else ''}.
+        Please login to SaagaDb to start using the application.
+        http://herzberg.mit.edu/login
+        
+        Your approver(s) is {approvers_string if approvers_string else 'None'}.
+        The approver will review and approve your data uploads: species- and reference- metadata.'
+        
+        To start using the application, please verify your email by clicking the link below:
+        {settings.FRONTEND_URL}/api/user/verify-email/?token={token}"""
+    ).strip()
 
-        token, expires_at = generate_verification_token()  # Generate the token here
-        EmailVerificationToken.objects.create(
-            user=instance, token=token, expires_at=expires_at
-        )
-        subject = f"[SaagaDb] {instance.name}: Your account has been created"
-        message = textwrap.dedent(
-            f"""
-            Your account has been created{' (with admin privilege)' if instance.is_staff else ''}.
-            Please login to SaagaDb to start using the application.
-            http://herzberg.mit.edu/login
-            
-            Your approver is {instance.approver.name} ({instance.approver.email}).
-            The approver will review and approve your data uploads: species- and reference- metadata.
-            
-            To start using the application, please verify your email by clicking the link below:
-            {settings.FRONTEND_URL}/api/user/verify-email/?token={token}
-        """
-        ).strip()
-    else:
+    if message:
+        recipient_list = [instance.email]
+        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+        print(f"Email sent successfully to {instance.email}")
 
+
+@receiver(post_save, sender=User)
+def user_updated_signal(sender, instance, created, **kwargs):
+    message = ""
+    if not created:
         if instance.is_staff and instance.is_staff != instance._original_is_staff:
             subject = (
                 f"[SaagaDb] {instance.name}: Your account has been promoted to admin"
@@ -112,7 +119,7 @@ def send_update_notification(sender, instance, created, **kwargs):
 
 
 @receiver(post_save, sender=MetaReference)
-def send_update_notification(sender, instance, created, **kwargs):
+def send_meta_ref_update_notification(sender, instance, created, **kwargs):
     user = instance.uploaded_by
     if created and not instance.approved and user.approver:
         subject = f"[SaagaDb] {user.name}: New reference metadata uploaded for approval"
@@ -123,21 +130,20 @@ def send_update_notification(sender, instance, created, **kwargs):
             http://herzberg.mit.edu/admin/dashboard/approve-data/{user.id}
         """
         ).strip()
-        recipient_list = [user.approver.email]
+        recipient_list = user.approver.values_list("email", flat=True)
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
-        # print(f"Email sent successfully to {user.approver.email}")
+        print(f"Email sent successfully to {', '.join(recipient_list)}")
 
     if not created and instance.approved:
-        # print("Metadata updated and approved")
         subject = f"[SaagaDb] Reference metadata approved"
         message = f"Reference metadata ({instance.ref.ref_url}) approved by {user.approver.name} ({user.approver.email})."
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
-        # print(f"Email sent successfully to {user.email}")
+        print(f"Email sent successfully to {user.email}")
 
 
 @receiver(post_save, sender=SpeciesMetadata)
-def send_update_notification(sender, instance, created, **kwargs):
+def send_meta_species_update_notification(sender, instance, created, **kwargs):
     user = instance.uploaded_by
     species_name = instance.species.iupac_name
     if created and not instance.approved and user.approver:
@@ -149,17 +155,16 @@ def send_update_notification(sender, instance, created, **kwargs):
             http://herzberg.mit.edu/admin/dashboard/approve-data/{user.id}
         """
         ).strip()
-        recipient_list = [user.approver.email]
+        recipient_list = user.approver.values_list("email", flat=True)
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
-        # print(f"Email sent successfully to {user.approver.email}")
+        print(f"Email sent successfully to {', '.join(recipient_list)}")
 
     if not created and instance.approved:
-        # print("Metadata updated and approved")
         subject = "[SaagaDb] Species metadata approved for " + species_name
         message = f"Species metadata for {species_name} approved by {user.approver.name} ({user.approver.email})."
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
-        # print(f"Email sent successfully to {user.email}")
+        print(f"Email sent successfully to {user.email}")
 
 
 def send_email_test():

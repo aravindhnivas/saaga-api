@@ -40,12 +40,14 @@ class UserSerializer(serializers.ModelSerializer):
         """Create and return a user with encrypted password.
         This will only be called after the data is validated.
         """
+        # print(f"validated_data: {validated_data}\n")
         return get_user_model().objects.create_user(**validated_data)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if instance.approver:
-            representation["approver_name"] = instance.approver.name
+        if instance.approver.all():
+            approver_names = instance.approver.values_list("name", flat=True)
+            representation["approver_name"] = approver_names
         return representation
 
 
