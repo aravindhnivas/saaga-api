@@ -118,7 +118,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_index=True,
     )
 
-    REQUIRED_FIELDS = ["name", "password", "organization"]
+    REQUIRED_FIELDS = ["name", "organization"]
     objects = UserManager()
     USERNAME_FIELD = "email"
 
