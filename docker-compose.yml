@@ -7,7 +7,7 @@ services:
       args:
         - DEV=true
     ports:
-      - "5175:8000"
+      - "8001:8000"
     volumes:
       - ./app:/app
       - dev-static-data-herzberg:/vol/web
@@ -32,7 +32,7 @@ services:
     volumes:
       - dev-db-data-herzberg:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5431:5432"
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -44,7 +44,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
-      - 5050:80
+      - 5051:80
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 volumes:
