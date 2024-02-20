@@ -27,7 +27,7 @@ urlpatterns = [
         name="resend-verify-email",
     ),
     path(
-        "request-password-reset",
+        "request-password-reset/",
         views.PasswordReset.as_view(),
         name="request-password-reset",
     ),

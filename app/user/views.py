@@ -195,7 +195,7 @@ class PasswordReset(generics.GenericAPIView):
                 "user:reset-password",
                 kwargs={"encoded_pk": encoded_pk, "token": token},
             )
-            reset_link = f"{settings.FRONTEND_URL}{reset_url}"
+            reset_link = f"{settings.FRONTEND_URL}/password-reset/{encoded_pk}/{token}/"
             print(reset_link)
             # send the rest_link as mail to the user.
 
