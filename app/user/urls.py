@@ -26,5 +26,15 @@ urlpatterns = [
         views.ResendVerificationEmailView.as_view(),
         name="resend-verify-email",
     ),
+    path(
+        "request-password-reset",
+        views.PasswordReset.as_view(),
+        name="request-password-reset",
+    ),
+    path(
+        "password-reset/<str:encoded_pk>/<str:token>/",
+        views.ResetPasswordAPI.as_view(),
+        name="reset-password",
+    ),
     path("", include(router.urls)),
 ]
