@@ -96,8 +96,8 @@ class UserManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         # user.is_verified = False
-        # user.approver.set([user])
         user.save(using=self._db)
+        user.approver.set([user])
 
         return user
 
