@@ -528,24 +528,24 @@ class LineViewSet(viewsets.ModelViewSet):
             return serializers.LineChangeSerializerList
         return self.serializer_class
 
-    def _get_qn_str_list(self, qn_str):
-        """Convert a list of strings to integers."""
-        return qn_str.split(",")
-
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
         """Create a line from .cat file."""
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         measured = False  # default measured to false right now
-        qn_label_list = self._get_qn_str_list(request.data["qn_label_str"])
-        contains_rovibrational = request.data["contains_rovibrational"]
-        vib_qn = request.data["vib_qn"]
-        if eval(contains_rovibrational.capitalize()):
+        qn_label_list = serializer.data["qn_label_str"].split(",")
+        contains_rovibrational = serializer.data["contains_rovibrational"]
+        vib_qn = serializer.data["vib_qn"]
+        notes = serializer.data["notes"]
+
+        if contains_rovibrational:
             """Check if the .cat file contains rovibrational lines,
             If so, check that the vibrational quantum number label
             is provided."""
+
+            print(f"ROVIBRATIONAL TRANSITION: {vib_qn=}")
+
             if not vib_qn:
                 response_msg = {
                     "code": "server_error",
@@ -583,8 +583,6 @@ class LineViewSet(viewsets.ModelViewSet):
                 }
                 return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
-        notes = request.data["notes"]
-
         cat_file = request.FILES.get("cat_file")
         if cat_file.name.split(".")[-1] != "cat":
             response_msg = {
@@ -596,9 +594,10 @@ class LineViewSet(viewsets.ModelViewSet):
                     "is not a .cat file. Please upload a .cat file.",
                 },
             }
+
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
-        meta_id = request.data["meta"]
+        meta_id = serializer.data["meta"]
         meta_obj = SpeciesMetadata.objects.get(id=meta_id)
 
         qpart_file = None
@@ -617,6 +616,10 @@ class LineViewSet(viewsets.ModelViewSet):
                 },
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+
+        # test response
+        # return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
         # Extract info from the .cat file.
         try:
             (
@@ -649,7 +652,7 @@ class LineViewSet(viewsets.ModelViewSet):
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
         input_dict_list = []
-        if eval(contains_rovibrational.capitalize()):
+        if contains_rovibrational:
             """Check if the .cat file contains rovibrational lines,
             If so, determines which particular line contains
             rovibrational transition."""
@@ -670,8 +673,8 @@ class LineViewSet(viewsets.ModelViewSet):
                         "upper_state_degeneracy": upper_state_degeneracy[i],
                         "lower_state_qn": lower_state_qn_dict_list[i],
                         "upper_state_qn": upper_state_qn_dict_list[i],
-                        "rovibrational": not lower_state_qn_dict_list[i][vib_qn]
-                        == upper_state_qn_dict_list[i][vib_qn],
+                        "rovibrational": lower_state_qn_dict_list[i][vib_qn]
+                        != upper_state_qn_dict_list[i][vib_qn],
                         "vib_qn": vib_qn,
                         "pickett_qn_code": pickett_qn_code[i],
                         "pickett_lower_state_qn": pickett_lower_state_qn[i],
@@ -711,10 +714,12 @@ class LineViewSet(viewsets.ModelViewSet):
             # saving the cat_file to species_metadata
             meta_obj.cat_file = cat_file
             meta_obj.save()
-            # and finally saving the lines
             serializer.save()
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                {"detail": "cat file parsed and added to the database"},
+                status=status.HTTP_200_OK,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(

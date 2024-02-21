@@ -1,4 +1,4 @@
-import datetime
+# import datetime
 import textwrap
 import secrets
 from django.conf import settings
@@ -9,12 +9,14 @@ from django.dispatch import receiver
 from .models import SpeciesMetadata, MetaReference, EmailVerificationToken
 from .models import user_saved_with_approvers
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 
 def generate_verification_token():
     """Generates a unique, random token"""
     token = secrets.token_urlsafe(32)  # Adjust token length as needed
-    expires_at = datetime.datetime.now() + datetime.timedelta(minutes=30)
+    # expires_at = datetime.datetime.now() + datetime.timedelta(minutes=30)
+    expires_at = timezone.now() + timezone.timedelta(minutes=30)
     return token, expires_at
 
 
@@ -143,7 +145,13 @@ def send_meta_ref_update_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SpeciesMetadata)
 def send_meta_species_update_notification(sender, instance, created, **kwargs):
     user = instance.uploaded_by
+
+    if not user or not user.approver:
+        print("User or approver not set for the metadata. Skipping email notification.")
+        return
+
     species_name = instance.species.iupac_name
+
     if created and not instance.approved and user.approver:
         subject = f"[SaagaDb] {user.name}: New species metadata uploaded for approval"
         message = textwrap.dedent(
@@ -155,11 +163,12 @@ def send_meta_species_update_notification(sender, instance, created, **kwargs):
         ).strip()
         recipient_list = user.approver.values_list("email", flat=True)
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+
         print(f"Email sent successfully to {', '.join(recipient_list)}")
 
     if not created and instance.approved:
         subject = "[SaagaDb] Species metadata approved for " + species_name
-        message = f"Species metadata for {species_name} approved by {user.approver.name} ({user.approver.email})."
+        message = f"Species metadata for {species_name} approved."
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         print(f"Email sent successfully to {user.email}")

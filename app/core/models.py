@@ -95,7 +95,7 @@ class UserManager(BaseUserManager):
         user = self.create_user(*args, **kwargs)
         user.is_staff = True
         user.is_superuser = True
-        user.is_verified = True
+        # user.is_verified = False
         # user.approver.set([user])
         user.save(using=self._db)
 
@@ -369,10 +369,12 @@ class Line(models.Model):
     lower_state_qn = models.JSONField()
     upper_state_qn = models.JSONField()
     rovibrational = models.BooleanField()
-    vib_qn = models.CharField(max_length=255, blank=True)
     pickett_qn_code = models.IntegerField()
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
+    vib_qn = models.CharField(max_length=255, blank=True)
+    # contains_rovibrational = models.BooleanField(default=False)
+    # qn_label_str = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
 
     history = HistoricalRecords()
