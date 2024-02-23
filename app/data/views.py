@@ -534,10 +534,12 @@ class LineViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         measured = False  # default measured to false right now
-        qn_label_list = serializer.data["qn_label_str"].split(",")
-        contains_rovibrational = serializer.data["contains_rovibrational"]
-        vib_qn = serializer.data["vib_qn"]
-        notes = serializer.data["notes"]
+        qn_label_str: str = serializer.data["qn_label_str"]
+        contains_rovibrational: bool = serializer.data["contains_rovibrational"]
+        vib_qn: str = serializer.data["vib_qn"]
+        notes: str = serializer.data["notes"]
+
+        qn_label_list = [x.strip() for x in qn_label_str.split(",")]
 
         if contains_rovibrational:
             """Check if the .cat file contains rovibrational lines,
