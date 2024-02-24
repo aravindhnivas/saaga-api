@@ -182,9 +182,14 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
-# print(SECRET_KEY, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
-
 FRONTEND_URL = "http://localhost:5173" if DEBUG else "http://herzberg.mit.edu"
 # PORT 5173 is the frontend port (sveltekit project - saagadb-ui)
 # This is only valid when the frontend is running in development mode on a user computer.
 # So this is only for development purposes.
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100 MB
+# The maximum size (in bytes) that a request's body may be before a
+# SuspiciousOperation (RequestDataTooBig) is raised.
+# Default: 2621440 (i.e. 2.5 MB).
+# set this to None to disable the check.
