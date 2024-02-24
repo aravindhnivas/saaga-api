@@ -5,50 +5,53 @@ and partition function) from .int, .var, and .qpart files, respectively.
 
 from decimal import Decimal
 import re
+from io import BufferedReader
 
 
-def read_intfile(filein):
+def read_intfile(filein: BufferedReader):
     """Reads in .int file and returns diple moments"""
-    file = filein.read().splitlines()
+
+    file = [ln.decode().strip() for ln in filein.readlines()]
     mu_a, mu_b, mu_c = None, None, None
     for line in file[2:]:
         split_line = line.split()
-        if split_line[0] == b"001":
-            mu_a = split_line[1].decode()
-        elif split_line[0] == b"002":
-            mu_b = split_line[1].decode()
-        elif split_line[0] == b"003":
-            mu_c = split_line[1].decode()
+        label, value = split_line[0], split_line[1]
+        if "1" in label:
+            mu_a = value
+        elif "2" in label:
+            mu_b = value
+        elif "3" in label:
+            mu_c = value
+    print(f"Read dipole moments: {mu_a=}, {mu_b=}, {mu_c=}\n")
     return mu_a, mu_b, mu_c
 
 
-def read_varfile(filein):
+def read_varfile(filein: BufferedReader):
     """Reads in .var file and returns rotational constants"""
-    file = filein.read().splitlines()
-    # a_const is third line second column
-    a_const = Decimal(file[3].split()[1].decode())
-    # b_const is fourth line second column
-    b_const = Decimal(file[4].split()[1].decode())
-    # c_const is fifth line second column
-    c_const = Decimal(file[5].split()[1].decode())
+    filein = [ln.decode().strip() for ln in filein.readlines()]
+    a_const, b_const, c_const = None, None, None
+    for line in filein:
+        if "/A" in line:
+            a_const = float(line.split()[1])
+        if "/B" in line:
+            b_const = float(line.split()[1])
+        if "/C" in line:
+            c_const = float(line.split()[1])
+    print(f"a_const: {a_const}\nb_const: {b_const}\nc_const: {c_const}")
     return a_const, b_const, c_const
 
 
-def read_qpartfile(filein):
+def read_qpartfile(filein: BufferedReader):
     """Reads in .qpart file and returns partition function"""
-    file = filein.read().splitlines()
-    # print(file)
+    file = filein.readlines()
     partition_dict = {}
     for line in file:
         if "#" in line.decode():
             continue
         split_line = line.split()
         partition_dict[split_line[0].decode()] = split_line[1].decode()
-    # print(partition_dict)
-    # if '300.000' not in partition_dict:
-    #     raise ValueError('Partition function does not contain 300.000 K')
-    pattern = re.compile(r"300\.0*")
-    # Check each key in the dictionary
+
+    pattern = re.compile(r"300\.?0*")
     if not any(pattern.fullmatch(key) for key in partition_dict):
         raise ValueError("Partition function does not contain 300.000 K")
     return partition_dict

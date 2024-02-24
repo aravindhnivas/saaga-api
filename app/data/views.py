@@ -371,37 +371,32 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-
-            # Initialize variables
-            mu_a = mu_b = mu_c = a_const = b_const = c_const = None
-
-            # Read from .int and .var files if they are uploaded.
-            if int_file:
-                mu_a, mu_b, mu_c = read_intfile(int_file)
-            if var_file:
-                a_const, b_const, c_const = read_varfile(var_file)
-
-            # Prepare the data to save
-            data_to_save = {
-                "mu_a": mu_a,
-                "mu_b": mu_b,
-                "mu_c": mu_c,
-                "a_const": a_const,
-                "b_const": b_const,
-                "c_const": c_const,
-                "partition_function": partition_dict,
-                "uploaded_by": self.request.user,
-                "approved": self.request.user.is_superuser,
-            }
-
-            # Remove None values from the dictionary
-            data_to_save = {k: v for k, v in data_to_save.items() if v is not None}
-            serializer.save(**data_to_save)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
+        if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        mu_a = mu_b = mu_c = a_const = b_const = c_const = None
+        if int_file:
+            mu_a, mu_b, mu_c = read_intfile(int_file)
+        if var_file:
+            a_const, b_const, c_const = read_varfile(var_file)
+
+        data_to_save = {
+            "mu_a": mu_a,
+            "mu_b": mu_b,
+            "mu_c": mu_c,
+            "a_const": a_const,
+            "b_const": b_const,
+            "c_const": c_const,
+            "partition_function": partition_dict,
+            "uploaded_by": self.request.user,
+            "approved": self.request.user.is_superuser,
+        }
+
+        # Remove None values from the dictionary
+        data_to_save = {k: v for k, v in data_to_save.items() if v is not None}
+        serializer.save(**data_to_save)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         parameters=[
@@ -540,6 +535,7 @@ class LineViewSet(viewsets.ModelViewSet):
         notes: str = serializer.data["notes"]
 
         qn_label_list = [x.strip() for x in qn_label_str.split(",")]
+        print(f"{serializer.data=}")
 
         if contains_rovibrational:
             """Check if the .cat file contains rovibrational lines,
@@ -717,6 +713,7 @@ class LineViewSet(viewsets.ModelViewSet):
             meta_obj.cat_file = cat_file
             meta_obj.save()
             serializer.save()
+            print("")
             # return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(
                 {"detail": "cat file parsed and added to the database"},
