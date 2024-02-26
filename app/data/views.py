@@ -127,6 +127,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by field."""
+        print(self.request.data)
         serializer.save(uploaded_by=self.request.user)
 
     def get_serializer_class(self):
@@ -197,16 +198,13 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
         # if protected, cannot be deleted, show error message
         except ProtectedError as exception:
-            return self.handle_exception(exception, instance)
-
-    def handle_exception(self, exception, instance):
-        message = f"Cannot delete as reference {str(instance)} is being referenced through protected foreign key"
-        response_msg = {
-            "code": "server_error",
-            "message": _("Internal server error."),
-            "error": {"type": str(type(exception)), "message": message},
-        }
-        return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+            message = f"Cannot delete as reference {str(instance)} is being referenced through protected foreign key"
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {"type": str(type(exception)), "message": message},
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema_view(
