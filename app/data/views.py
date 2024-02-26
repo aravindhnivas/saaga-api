@@ -127,8 +127,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by field."""
-        print(self.request.data)
-        serializer.save(uploaded_by=self.request.user)
+        serializer.save(uploaded_by=self.request.user, approved=True)
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -267,6 +266,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
             selfies=selfies_string,
             molecular_mass=molecular_mass,
             uploaded_by=self.request.user,
+            approved=True,
         )
 
     @extend_schema(
