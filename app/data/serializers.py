@@ -212,6 +212,7 @@ class MetaReferenceSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation["species_formula"] = instance.meta.species.name_formula
         representation["species_name"] = instance.meta.species.iupac_name
+        representation["molecule_tag"] = instance.meta.molecule_tag
         representation["linelist_name"] = instance.meta.linelist.linelist_name
         representation["doi"] = instance.ref.doi
         representation["ref_url"] = instance.ref.ref_url
