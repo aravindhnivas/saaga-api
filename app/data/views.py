@@ -37,6 +37,7 @@ from drf_multiple_model.views import ObjectMultipleModelAPIView
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from simple_history.models import HistoricalRecords
 
 
 class LinelistViewSet(viewsets.ModelViewSet):
@@ -413,6 +414,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             instance._change_reason = self.request.query_params["delete_reason"]
+            instance.save()
             self.perform_destroy(instance)
             return Response(status=status.HTTP_204_NO_CONTENT)
 
