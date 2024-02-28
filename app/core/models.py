@@ -323,8 +323,8 @@ class MetaReference(models.Model):
         db_index=True,
         related_name="meta_reference_uploads",
     )
-    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT, db_index=True)
-    ref = models.ForeignKey("Reference", on_delete=models.PROTECT, db_index=True)
+    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.CASCADE, db_index=True)
+    ref = models.ForeignKey("Reference", on_delete=models.CASCADE, db_index=True)
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
     notes = models.TextField(blank=True)
@@ -354,7 +354,7 @@ class MetaReference(models.Model):
 class Line(models.Model):
     """Line object."""
 
-    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.PROTECT)
+    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.CASCADE)
     measured = models.BooleanField()
     frequency = ArbitraryDecimalField()
     uncertainty = ArbitraryDecimalField()
