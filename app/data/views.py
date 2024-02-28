@@ -37,7 +37,10 @@ from drf_multiple_model.views import ObjectMultipleModelAPIView
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from simple_history.models import HistoricalRecords
+from django.core.mail import send_mail
+from django.conf import settings
+
+from_email = settings.EMAIL_HOST_USER
 
 
 class LinelistViewSet(viewsets.ModelViewSet):
@@ -415,7 +418,32 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             instance._change_reason = self.request.query_params["delete_reason"]
             instance.save()
+
+            # Get the historical instance before deletion
+            historical_instance = None
+            try:
+                historical_instance = instance.history.latest()
+            except Exception as e:
+                print(f"Error getting historical instance: {e}")
+                historical_instance = None
+
             self.perform_destroy(instance)
+
+            if historical_instance:
+                print(historical_instance)
+                uploaded_by_user = get_user_model().objects.get(
+                    id=historical_instance.uploaded_by_id
+                )
+                rejected_approver = get_user_model().objects.get(
+                    id=historical_instance.history_user_id
+                )
+
+                send_mail(
+                    subject=f"[SaagaDb] Species metadata ({historical_instance.species.iupac_name}) rejected",
+                    message=f"Species metadata (({historical_instance.species.iupac_name})) rejected by {rejected_approver.name} ({rejected_approver.email}) and deleted from database.\nNOTE: All the related meta-references and uploaded cat file data also has been deleted.\nReason for deletion: {historical_instance.history_change_reason}.",
+                    from_email=from_email,
+                    recipient_list=[uploaded_by_user.email],
+                )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         # if protected, cannot be deleted, show error message
