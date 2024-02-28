@@ -8,7 +8,6 @@ from django.urls import (
 )
 
 from rest_framework.routers import DefaultRouter
-from .views import UploadedDataLengthView
 from data import views
 
 router = DefaultRouter()
@@ -18,7 +17,6 @@ router.register("species-metadata", views.SpeciesMetadataViewSet)
 router.register("reference", views.ReferenceViewSet)
 router.register("meta-reference", views.MetaReferenceViewSet)
 router.register("line", views.LineViewSet)
-# router.register("data-length", UploadedDataLengthView, basename="data-length")
 app_name = "data"
 
 urlpatterns = [
@@ -27,6 +25,6 @@ urlpatterns = [
         views.MetaRefAndSpeciesViewSet.as_view(),
         name="meta-ref-and-species",
     ),
-    path("data_length/<int:user_id>/", UploadedDataLengthView.as_view()),
+    path("data_length/<int:user_id>/", views.UploadedDataLengthView.as_view()),
     path("", include(router.urls)),
 ]
