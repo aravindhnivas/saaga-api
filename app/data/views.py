@@ -653,6 +653,16 @@ class LineViewSet(viewsets.ModelViewSet):
 
         meta_id = serializer.data["meta"]
         meta_obj = SpeciesMetadata.objects.get(id=meta_id)
+        if meta_obj.cat_file:
+            response_msg = {
+                "code": "server_error",
+                "message": _("Internal server error."),
+                "error": {
+                    "type": "ValidationError",
+                    "message": "The species metadata you selected already have a cat file.",
+                },
+            }
+            return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
         qpart_file = None
         # Check if the corresponding species metadata has a qpart file.
@@ -766,10 +776,10 @@ class LineViewSet(viewsets.ModelViewSet):
         serializer = serializers.LineSerializerList(data=input_dict_list, many=True)
         if serializer.is_valid():
             # saving the cat_file to species_metadata
+            print(f"{meta_obj.cat_file=}, {cat_file=}")
             meta_obj.cat_file = cat_file
             meta_obj.save()
             serializer.save()
-            print("")
             # return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(
                 {"detail": "cat file parsed and added to the database"},
