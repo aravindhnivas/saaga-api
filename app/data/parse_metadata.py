@@ -17,12 +17,9 @@ def read_intfile(filein: BufferedReader):
     for line in file[2:]:
 
         if not line:
-            continue
+            break
 
         split_line = line.split()
-        if len(split_line) != 2:
-            continue
-
         label, value = split_line[0], split_line[1]
 
         if "1" in label:
