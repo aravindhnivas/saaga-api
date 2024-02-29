@@ -13,9 +13,18 @@ def read_intfile(filein: BufferedReader):
 
     file = [ln.decode().strip() for ln in filein.readlines()]
     mu_a, mu_b, mu_c = None, None, None
+
     for line in file[2:]:
+
+        if not line:
+            continue
+
         split_line = line.split()
+        if len(split_line) != 2:
+            continue
+
         label, value = split_line[0], split_line[1]
+
         if "1" in label:
             mu_a = value
         elif "2" in label:
@@ -28,15 +37,23 @@ def read_intfile(filein: BufferedReader):
 
 def read_varfile(filein: BufferedReader):
     """Reads in .var file and returns rotational constants"""
+
     filein = [ln.decode().strip() for ln in filein.readlines()]
+
     a_const, b_const, c_const = None, None, None
+
     for line in filein:
+
+        if not line:
+            continue
+
         if "/A" in line:
             a_const = float(line.split()[1])
         if "/B" in line:
             b_const = float(line.split()[1])
         if "/C" in line:
             c_const = float(line.split()[1])
+
     print(f"a_const: {a_const}\nb_const: {b_const}\nc_const: {c_const}")
     return a_const, b_const, c_const
 
