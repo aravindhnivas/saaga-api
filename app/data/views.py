@@ -440,7 +440,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
 
                 send_mail(
                     subject=f"[SaagaDb] Species metadata ({historical_instance.species.iupac_name}) rejected",
-                    message=f"Species metadata (({historical_instance.species.iupac_name})) rejected by {rejected_approver.name} ({rejected_approver.email}) and deleted from database.\nNOTE: All the related meta-references and uploaded cat file data also has been deleted.\nReason for deletion: {historical_instance.history_change_reason}.",
+                    message=f"Species metadata ({historical_instance.species.iupac_name}) rejected by {rejected_approver.name} ({rejected_approver.email}) and deleted from database.\nNOTE: All the related meta-references and uploaded cat file data also has been deleted.\nReason for deletion: {historical_instance.history_change_reason}.",
                     from_email=from_email,
                     recipient_list=[uploaded_by_user.email],
                 )
@@ -508,6 +508,7 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
     )
     def destroy(self, request, *args, **kwargs):
         """query param delete_reason must be present for DELETE requests."""
+
         if "delete_reason" not in self.request.query_params:
             return Response(
                 status=status.HTTP_400_BAD_REQUEST,
@@ -516,7 +517,34 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
 
         instance = self.get_object()
         instance._change_reason = self.request.query_params["delete_reason"]
+        instance.save()
+        # self.perform_destroy(instance)
+
+        # Get the historical instance before deletion
+        historical_instance = None
+        try:
+            historical_instance = instance.history.latest()
+        except Exception as e:
+            print(f"Error getting historical instance: {e}")
+            historical_instance = None
+
         self.perform_destroy(instance)
+
+        if historical_instance:
+            print(historical_instance)
+            uploaded_by_user = get_user_model().objects.get(
+                id=historical_instance.uploaded_by_id
+            )
+            rejected_approver = get_user_model().objects.get(
+                id=historical_instance.history_user_id
+            )
+
+            send_mail(
+                subject=f"[SaagaDb] Meta reference ({historical_instance.meta.species.iupac_name}) rejected",
+                message=f"Meta reference ({historical_instance.meta.species.iupac_name}) rejected by {rejected_approver.name} ({rejected_approver.email}) and deleted from database.\nReason for deletion: {historical_instance.history_change_reason}.",
+                from_email=from_email,
+                recipient_list=[uploaded_by_user.email],
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
