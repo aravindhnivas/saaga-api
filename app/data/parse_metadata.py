@@ -12,6 +12,8 @@ def read_intfile(filein: BufferedReader):
     """Reads in .int file and returns diple moments"""
 
     file = [ln.decode().strip() for ln in filein.readlines()]
+    # print(f"Reading dipole moments from .int file: {file[0]}\n")
+
     mu_a, mu_b, mu_c = None, None, None
 
     for line in file[2:]:
@@ -28,7 +30,7 @@ def read_intfile(filein: BufferedReader):
             mu_b = value
         elif "3" in label:
             mu_c = value
-    print(f"Read dipole moments: {mu_a=}, {mu_b=}, {mu_c=}\n")
+    print(f"Read dipole moments: {mu_a=}\n{mu_b=}\n{mu_c=}\n")
     return mu_a, mu_b, mu_c
 
 
@@ -36,7 +38,7 @@ def read_varfile(filein: BufferedReader):
     """Reads in .var file and returns rotational constants"""
 
     filein = [ln.decode().strip() for ln in filein.readlines()]
-
+    # print(f"Reading rotational constants from .var file: {filein[0]}\n")
     a_const, b_const, c_const = None, None, None
 
     for line in filein:
@@ -51,7 +53,9 @@ def read_varfile(filein: BufferedReader):
         if "/C" in line:
             c_const = float(line.split()[1])
 
-    print(f"a_const: {a_const}\nb_const: {b_const}\nc_const: {c_const}")
+    print(
+        f"Read rotaional constants: a_const: {a_const}\nb_const: {b_const}\nc_const: {c_const}"
+    )
     return a_const, b_const, c_const
 
 

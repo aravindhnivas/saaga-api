@@ -341,12 +341,11 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             return serializers.SpeciesMetadataChangeSerializer
         return self.serializer_class
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request):
         """Create a new species metadata."""
+
         serializer = self.get_serializer(data=request.data)
 
-        int_file = request.FILES.get("int_file")
-        var_file = request.FILES.get("var_file")
         qpart_file = request.FILES.get("qpart_file")
         if qpart_file.name.split(".")[-1] != "qpart":
             response_msg = {
@@ -377,10 +376,15 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         mu_a = mu_b = mu_c = a_const = b_const = c_const = None
-        if int_file:
-            mu_a, mu_b, mu_c = read_intfile(int_file)
-        if var_file:
-            a_const, b_const, c_const = read_varfile(var_file)
+
+        # Commented reading int and var files for now
+        # Read the int and var files
+        # int_file = request.FILES.get("int_file")
+        # var_file = request.FILES.get("var_file")
+        # if int_file:
+        #     mu_a, mu_b, mu_c = read_intfile(int_file)
+        # if var_file:
+        #     a_const, b_const, c_const = read_varfile(var_file)
 
         data_to_save = {
             "mu_a": mu_a,
