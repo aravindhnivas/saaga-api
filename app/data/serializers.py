@@ -96,6 +96,11 @@ class SpeciesSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["uploaded_by_name"] = instance.uploaded_by.name
+        return representation
+
 
 class SpeciesChangeSerializer(SpeciesSerializer):
     """Serializer for put and patch species."""

@@ -247,7 +247,11 @@ class SpeciesViewSet(viewsets.ModelViewSet):
             ).order_by(
                 "-id"
             )  # noqa: F405
-        return self.queryset.order_by("-id").select_related("uploaded_by")
+        return (
+            self.queryset.order_by("-id")
+            .select_related("uploaded_by")
+            .only("uploaded_by__name")
+        )
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
