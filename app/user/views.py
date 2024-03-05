@@ -59,12 +59,12 @@ class GetUserView(generics.RetrieveAPIView):
         return self.request.user
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
 
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
         "email",
@@ -78,9 +78,23 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         "created_by",
     )
 
+    http_method_names = ["get", "patch", "head"]
+
+    def get_permissions(self):
+        """Return appropriate permissions based on action."""
+        if self.request.method in ["PATCH"]:
+            permission_classes = [permissions.IsAdminUser]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
     def get_queryset(self):
         """Retrieve meta references."""
         return self.queryset.order_by("-id")
+
+    def perform_update(self, serializer):
+        """Update an existing user."""
+        serializer.save()
 
 
 class ChangePassword(generics.GenericAPIView):
