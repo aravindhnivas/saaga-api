@@ -26,6 +26,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from rest_framework.exceptions import PermissionDenied
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -94,6 +95,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         """Update an existing user."""
+        if not self.request.user.is_superuser:
+            raise PermissionDenied("You are not authorized to perform this action.")
         serializer.save()
 
 
