@@ -51,6 +51,11 @@ class ReferenceSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "uploaded_by", "created_at"]
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["uploaded_by_name"] = instance.uploaded_by.name
+        return representation
+
 
 class ReferenceChangeSerializer(ReferenceSerializer):
     """Serializer for put and patch references."""
