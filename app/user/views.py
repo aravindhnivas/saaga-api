@@ -66,6 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     authentication_classes = [authentication.TokenAuthentication]
     # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
         "email",
@@ -81,13 +82,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
     http_method_names = ["get", "patch", "head"]
 
-    def get_permissions(self):
-        """Return appropriate permissions based on action."""
-        if self.request.method in ["PATCH"]:
-            permission_classes = [permissions.IsAdminUser]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
+    # def get_permissions(self):
+    #     """Return appropriate permissions based on action."""
+    #     if self.request.method in ["PATCH"]:
+    #         permission_classes = [permissions.IsAdminUser]
+    #     else:
+    #         permission_classes = [permissions.IsAuthenticated]
+    #     return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         """Retrieve meta references."""
