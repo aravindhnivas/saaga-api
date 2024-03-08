@@ -332,7 +332,7 @@ class MetaReference(models.Model):
     history = HistoricalRecords()
 
     class Meta:
-        unique_together = ["meta", "ref", "dipole_moment", "spectrum"]
+        unique_together = ["meta", "ref"]
 
     def __str__(self):
         if self.dipole_moment and self.spectrum:
