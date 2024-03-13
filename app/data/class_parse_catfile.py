@@ -12,7 +12,7 @@ k = scipy.constants.k  # Boltzmann's constant in J/K
 
 
 def _read_txt(filein):
-    '''Reads in any .txt file and returns a line by line array'''
+    """Reads in any .txt file and returns a line by line array"""
 
     return_arr = []
     file = filein.read().splitlines()
@@ -26,10 +26,9 @@ def _read_txt(filein):
 
 
 class Catalog(object):
-
-    '''
+    """
     The catalog class holds all the spectroscopic data for a single molecule.
-    '''
+    """
 
     def __init__(
         self,
@@ -134,121 +133,146 @@ class Catalog(object):
         return
 
     def _unpack_catdict(self):
-        '''
+        """
         If a dictionary of data was provided,
         go ahead and use that to unpack things.
-        '''
+        """
 
         if self.catdict is not None:
-            if all(['catid' in self.catdict, self.catid is None]):
-                self.catid = self.catdict['catid']
-            if all(['molecule' in self.catdict, self.molecule is None]):
-                self.molecule = self.catdict['molecule']
-            if all(['frequency' in self.catdict, self.frequency is None]):
-                self.frequency = self.catdict['frequency']
-            if all(['freq_err' in self.catdict, self.freq_err is None]):
-                self.freq_err = self.catdict['freq_err']
-            if all(['measured' in self.catdict, self.measured is None]):
-                self.measured = self.catdict['measured']
-            if all(['logint' in self.catdict, self.logint is None]):
-                self.logint = self.catdict['logint']
-            if all(['sijmu' in self.catdict, self.sijmu is None]):
-                self.sijmu = self.catdict['sijmu']
-            if all(['sij' in self.catdict, self.sij is None]):
-                self.sij = self.catdict['sij']
-            if all(['aij' in self.catdict, self.aij is None]):
-                self.aij = self.catdict['aij']
-            if all(['man_int' in self.catdict, self.man_int is None]):
-                self.man_int = self.catdict['man_int']
-            if all(['types' in self.catdict, self.types is None]):
-                self.types = self.catdict['types']
-            if all(['dof' in self.catdict, self.dof is None]):
-                self.dof = self.catdict['dof']
-            if all(['elow' in self.catdict, self.elow is None]):
-                self.elow = self.catdict['elow']
-            if all(['eup' in self.catdict, self.eup is None]):
-                self.eup = self.catdict['eup']
-            if all(['glow' in self.catdict, self.glow is None]):
-                self.glow = self.catdict['glow']
-            if all(['gup' in self.catdict, self.gup is None]):
-                self.gup = self.catdict['gup']
-            if all(['tag' in self.catdict, self.tag is None]):
-                self.tag = self.catdict['tag']
-            if all(['qnformat' in self.catdict, self.qnformat is None]):
-                self.qnformat = self.catdict['qnformat']
-            if all(['qn1up' in self.catdict, self.qn1up is None]):
-                self.qn1up = self.catdict['qn1up']
-            if all(['qn2up' in self.catdict, self.qn2up is None]):
-                self.qn2up = self.catdict['qn2up']
-            if all(['qn3up' in self.catdict, self.qn3up is None]):
-                self.qn3up = self.catdict['qn3up']
-            if all(['qn4up' in self.catdict, self.qn4up is None]):
-                self.qn4up = self.catdict['qn4up']
-            if all(['qn5up' in self.catdict, self.qn5up is None]):
-                self.qn5up = self.catdict['qn5up']
-            if all(['qn6up' in self.catdict, self.qn6up is None]):
-                self.qn6up = self.catdict['qn6up']
-            if all(['qn7up' in self.catdict, self.qn7up is None]):
-                self.qn7up = self.catdict['qn7up']
-            if all(['qn8up' in self.catdict, self.qn8up is None]):
-                self.qn8up = self.catdict['qn8up']
-            if all(['qnup_str' in self.catdict, self.qnup_str is None]):
-                self.qnup_str = self.catdict['qnup_str']
-            if all(['qn1low' in self.catdict, self.qn1low is None]):
-                self.qn1low = self.catdict['qn1low']
-            if all(['qn2low' in self.catdict, self.qn2low is None]):
-                self.qn2low = self.catdict['qn2low']
-            if all(['qn3low' in self.catdict, self.qn3low is None]):
-                self.qn3low = self.catdict['qn3low']
-            if all(['qn4low' in self.catdict, self.qn4low is None]):
-                self.qn4low = self.catdict['qn4low']
-            if all(['qn5low' in self.catdict, self.qn5low is None]):
-                self.qn5low = self.catdict['qn5low']
-            if all(['qn6low' in self.catdict, self.qn6low is None]):
-                self.qn6low = self.catdict['qn6low']
-            if all(['qn7low' in self.catdict, self.qn7low is None]):
-                self.qn7low = self.catdict['qn7low']
-            if all(['qn8low' in self.catdict, self.qn8low is None]):
-                self.qn8low = self.catdict['qn8low']
-            if all(['qnlow_str' in self.catdict, self.qnlow_str is None]):
-                self.qnlow_str = self.catdict['qnlow_str']
-            if all(['qnstr_fmt' in self.catdict, self.qnstr_fmt is None]):
-                self.qnstr_fmt = self.catdict['qnstr_fmt']
-            if all(['version' in self.catdict, self.version is None]):
-                self.version = self.catdict['version']
-            if all(['source' in self.catdict, self.source is None]):
-                self.source = self.catdict['source']
-            if all(['last_update' in self.catdict,
-                    self.last_update is None]):
-                self.last_update = self.catdict['last_update']
-            if all(['contributor_name' in self.catdict,
-                    self.contributor_name is None]):
-                self.contributor_name = self.catdict['contributor_name']
-            if all(['contributor_email' in self.catdict,
-                    self.contributor_email is None]):
-                self.contributor_email = self.catdict['contributor_email']
-            if all(['notes' in self.catdict,
-                    self.notes is None]):
-                self.notes = self.catdict['notes']
-            if all(['refs' in self.catdict,
-                    self.refs is None]):
-                self.refs = self.catdict['refs']
+            if all(["catid" in self.catdict, self.catid is None]):
+                self.catid = self.catdict["catid"]
+            if all(["molecule" in self.catdict, self.molecule is None]):
+                self.molecule = self.catdict["molecule"]
+            if all(["frequency" in self.catdict, self.frequency is None]):
+                self.frequency = self.catdict["frequency"]
+            if all(["freq_err" in self.catdict, self.freq_err is None]):
+                self.freq_err = self.catdict["freq_err"]
+            if all(["measured" in self.catdict, self.measured is None]):
+                self.measured = self.catdict["measured"]
+            if all(["logint" in self.catdict, self.logint is None]):
+                self.logint = self.catdict["logint"]
+            if all(["sijmu" in self.catdict, self.sijmu is None]):
+                self.sijmu = self.catdict["sijmu"]
+            if all(["sij" in self.catdict, self.sij is None]):
+                self.sij = self.catdict["sij"]
+            if all(["aij" in self.catdict, self.aij is None]):
+                self.aij = self.catdict["aij"]
+            if all(["man_int" in self.catdict, self.man_int is None]):
+                self.man_int = self.catdict["man_int"]
+            if all(["types" in self.catdict, self.types is None]):
+                self.types = self.catdict["types"]
+            if all(["dof" in self.catdict, self.dof is None]):
+                self.dof = self.catdict["dof"]
+            if all(["elow" in self.catdict, self.elow is None]):
+                self.elow = self.catdict["elow"]
+            if all(["eup" in self.catdict, self.eup is None]):
+                self.eup = self.catdict["eup"]
+            if all(["glow" in self.catdict, self.glow is None]):
+                self.glow = self.catdict["glow"]
+            if all(["gup" in self.catdict, self.gup is None]):
+                self.gup = self.catdict["gup"]
+            if all(["tag" in self.catdict, self.tag is None]):
+                self.tag = self.catdict["tag"]
+            if all(["qnformat" in self.catdict, self.qnformat is None]):
+                self.qnformat = self.catdict["qnformat"]
+            if all(["qn1up" in self.catdict, self.qn1up is None]):
+                self.qn1up = self.catdict["qn1up"]
+            if all(["qn2up" in self.catdict, self.qn2up is None]):
+                self.qn2up = self.catdict["qn2up"]
+            if all(["qn3up" in self.catdict, self.qn3up is None]):
+                self.qn3up = self.catdict["qn3up"]
+            if all(["qn4up" in self.catdict, self.qn4up is None]):
+                self.qn4up = self.catdict["qn4up"]
+            if all(["qn5up" in self.catdict, self.qn5up is None]):
+                self.qn5up = self.catdict["qn5up"]
+            if all(["qn6up" in self.catdict, self.qn6up is None]):
+                self.qn6up = self.catdict["qn6up"]
+            if all(["qn7up" in self.catdict, self.qn7up is None]):
+                self.qn7up = self.catdict["qn7up"]
+            if all(["qn8up" in self.catdict, self.qn8up is None]):
+                self.qn8up = self.catdict["qn8up"]
+            if all(["qnup_str" in self.catdict, self.qnup_str is None]):
+                self.qnup_str = self.catdict["qnup_str"]
+            if all(["qn1low" in self.catdict, self.qn1low is None]):
+                self.qn1low = self.catdict["qn1low"]
+            if all(["qn2low" in self.catdict, self.qn2low is None]):
+                self.qn2low = self.catdict["qn2low"]
+            if all(["qn3low" in self.catdict, self.qn3low is None]):
+                self.qn3low = self.catdict["qn3low"]
+            if all(["qn4low" in self.catdict, self.qn4low is None]):
+                self.qn4low = self.catdict["qn4low"]
+            if all(["qn5low" in self.catdict, self.qn5low is None]):
+                self.qn5low = self.catdict["qn5low"]
+            if all(["qn6low" in self.catdict, self.qn6low is None]):
+                self.qn6low = self.catdict["qn6low"]
+            if all(["qn7low" in self.catdict, self.qn7low is None]):
+                self.qn7low = self.catdict["qn7low"]
+            if all(["qn8low" in self.catdict, self.qn8low is None]):
+                self.qn8low = self.catdict["qn8low"]
+            if all(["qnlow_str" in self.catdict, self.qnlow_str is None]):
+                self.qnlow_str = self.catdict["qnlow_str"]
+            if all(["qnstr_fmt" in self.catdict, self.qnstr_fmt is None]):
+                self.qnstr_fmt = self.catdict["qnstr_fmt"]
+            if all(["version" in self.catdict, self.version is None]):
+                self.version = self.catdict["version"]
+            if all(["source" in self.catdict, self.source is None]):
+                self.source = self.catdict["source"]
+            if all(["last_update" in self.catdict, self.last_update is None]):
+                self.last_update = self.catdict["last_update"]
+            if all(["contributor_name" in self.catdict, self.contributor_name is None]):
+                self.contributor_name = self.catdict["contributor_name"]
+            if all(
+                ["contributor_email" in self.catdict, self.contributor_email is None]
+            ):
+                self.contributor_email = self.catdict["contributor_email"]
+            if all(["notes" in self.catdict, self.notes is None]):
+                self.notes = self.catdict["notes"]
+            if all(["refs" in self.catdict, self.refs is None]):
+                self.refs = self.catdict["refs"]
 
         return
 
     def _set_sijmu_aij(self, Q):
-        eq1 = 2.40251E4 * 10**(self.logint) * \
-            Q.qrot(300) * self.frequency ** -1
-        eq2 = np.exp(-self.elow/300) - np.exp(-self.eup/300)
-        self.sijmu = eq1/eq2
-        self.aij = 1.16395E-20*self.frequency**3*self.sijmu/self.gup
+        try:
+            print("Setting sijmu and aij")
+
+            eq1 = 2.40251e4 * 10 ** (self.logint) * Q.qrot(300) * self.frequency**-1
+            eq2 = np.exp(-self.elow / 300) - np.exp(-self.eup / 300)
+
+            # # Replace zeros in eq2 with a small constant to avoid division by zero
+            # eq2 = np.where(eq2 == 0, 1e-25, eq2)
+
+            print(f"{self.elow=}, {self.eup=}, {self.frequency=}")
+            print(f"{eq1=}, {eq2=}")
+
+            # Calculate sijmu and aij normally, but avoid division by zero by using np.where
+            # self.sijmu = np.where(eq2 != 0, eq1 / eq2, np.nan)
+
+            # Ensure eq1 and eq2 are of type float64
+            # eq1 = eq1.astype(np.float64)
+            # eq2 = eq2.astype(np.float64)
+            # Use np.divide to avoid division by zero
+            # self.sijmu = np.divide(
+            #     eq1, eq2, out=np.full_like(eq1, np.nan), where=eq2 != 0
+            # )
+            self.sijmu = np.divide(eq1, eq2, where=eq2 != 0)
+            self.aij = 1.16395e-20 * self.frequency**3 * self.sijmu / self.gup
+            # self.aij = np.where(
+            #     eq2 != 0,
+            #     1.16395e-20 * self.frequency**3 * self.sijmu / self.gup,
+            #     np.nan,
+            # )
+            print(f"{self.sijmu=}, {self.aij=}")
+            # self.sijmu = eq1 / eq2
+            # self.aij = 1.16395e-20 * self.frequency**3 * self.sijmu / self.gup
+        except:
+            print("Error in setting sijmu and aij")
 
 
 class Level(object):
-
-    '''
+    """
     The level class holds all the information for an energy level.
-    '''
+    """
 
     def __init__(
         self,
@@ -301,8 +325,7 @@ class Level(object):
 
 
 class PartitionFunction(object):
-
-    '''
+    """
     The partitionfunction class holds all of the
       info necessary to calculate a partion
     function for a molecule.  The calculation
@@ -440,7 +463,7 @@ class PartitionFunction(object):
 
     notes :	str
             Any notes for this partition function.
-    '''
+    """
 
     def __init__(
         self,
@@ -484,173 +507,184 @@ class PartitionFunction(object):
         vibs_line = None
         qpart_raw = _read_txt(self.qpart_file)
         for i in range(len(qpart_raw)):
-            if '#' in qpart_raw[i]:
-                linesplit = qpart_raw[i].split(':')
-                if 'form' in linesplit[0]:
+            if "#" in qpart_raw[i]:
+                linesplit = qpart_raw[i].split(":")
+                if "form" in linesplit[0]:
                     self.form = linesplit[1].strip()
-                    if self.form in ['poly', 'polynomial',
-                                     'power', 'pow', 'rotcons']:
-                        self.flag = 'functional'
+                    if self.form in ["poly", "polynomial", "power", "pow", "rotcons"]:
+                        self.flag = "functional"
                     else:
                         self.flag = linesplit[1].strip()
-                    form_line = i+1
-                if 'vibs' in linesplit[0]:
+                    form_line = i + 1
+                if "vibs" in linesplit[0]:
                     vibs_read = True
-                    vibs_line = i+1
-        if self.form == 'interpolation':
+                    vibs_line = i + 1
+        if self.form == "interpolation":
             t_arr = []
             q_arr = []
             for line in qpart_raw:
-                if '#' not in line:
+                if "#" not in line:
                     t_arr.append(float(line.split()[0]))
                     q_arr.append(float(line.split()[1].strip()))
             self.temps = np.array(t_arr)
             self.vals = np.array(q_arr)
-        if self.form in ['pow', 'power']:
-            self.params = [float(qpart_raw[form_line].split(',')[0].strip()),
-                           float(qpart_raw[form_line].split(',')[1].strip()),
-                           float(qpart_raw[form_line].split(',')[2].strip())]
-        if self.form in ['poly', 'polynomial']:
+        if self.form in ["pow", "power"]:
+            self.params = [
+                float(qpart_raw[form_line].split(",")[0].strip()),
+                float(qpart_raw[form_line].split(",")[1].strip()),
+                float(qpart_raw[form_line].split(",")[2].strip()),
+            ]
+        if self.form in ["poly", "polynomial"]:
             self.params = []
-            for x in qpart_raw[form_line].split(','):
+            for x in qpart_raw[form_line].split(","):
                 self.params.append(float(x.strip()))
         if vibs_read is True:
             vibs = []
-            for x in qpart_raw[vibs_line].split(','):
+            for x in qpart_raw[vibs_line].split(","):
                 vibs.append(float(x.strip()))
             self.vib_states = np.asarray(vibs)
 
     def _check_functional(self):
-        '''
+        """
         Checks to make sure the user specified the type of functional
         form and that it is on the list of ones the program can handle.
-        '''
+        """
 
-        if self.flag != 'functional':
+        if self.flag != "functional":
             return
 
-        functionals = ['poly', 'polynomial', 'power', 'pow', 'rotcons']
+        functionals = ["poly", "polynomial", "power", "pow", "rotcons"]
 
-        if self.flag == 'functional' and self.form not in functionals:
-            print('ERROR: The partition function has been specified \
-                to be calculated '
-                  'analytically using a functional form.  \
-                  The form specified is either '
-                  'not currently supported, or is unrecognized.  \
-                  The form string that '
-                  'was entered was: "{}". Please choose from \
+        if self.flag == "functional" and self.form not in functionals:
+            print(
+                "ERROR: The partition function has been specified \
+                to be calculated "
+                "analytically using a functional form.  \
+                  The form specified is either "
+                "not currently supported, or is unrecognized.  \
+                  The form string that "
+                'was entered was: "{}". Please choose from \
                   this list of options:\n'
-                  '\t-- "poly" or "polynomial" for any order \
+                '\t-- "poly" or "polynomial" for any order \
                   polynmial function\n'
-                  '\t-- "pow" or "power" for a power law function\n'
-                  '\t-- "rotcons" to estimate from Gordy & Cook \
+                '\t-- "pow" or "power" for a power law function\n'
+                '\t-- "rotcons" to estimate from Gordy & Cook \
                 rotational constants '
-                  'formalism.\n Qrot is set to 1 until this is corrected.'
-                  )
+                "formalism.\n Qrot is set to 1 until this is corrected."
+            )
             return False
         else:
             return True
 
     def qrot(self, T):
-        '''
+        """
         Calculate and return the rotational partition function at temperature T
-        '''
+        """
 
         # if the user specified one of the allowed functional forms
-        if self.flag == 'functional':
+        if self.flag == "functional":
 
             # if a correct functional form hasn't been specified, return 1
             if self._check_functional() is False:
-                return 1.
+                return 1.0
 
             # if it's a polynomial...
-            if self.form in ['poly', 'polynomial']:
+            if self.form in ["poly", "polynomial"]:
                 norder = len(self.params)  # get the order of the polynomial
-                qrot = 0.
+                qrot = 0.0
                 for i in reversed(range(norder)):
-                    qrot += self.params[i]*T**i
+                    qrot += self.params[i] * T**i
                 return qrot
 
             # if it's a power law...
-            if self.form in ['pow', 'power']:
-                return self.params[0]*T**self.params[2] + self.params[1]
+            if self.form in ["pow", "power"]:
+                return self.params[0] * T ** self.params[2] + self.params[1]
 
             # if it's rotational constants
-            if self.form == 'rotcons':
+            if self.form == "rotcons":
                 # sort out if there's sigma specified or not
                 if list not in [type(x) for x in self.params]:
                     # no sigma, use defaults
                     if len(self.params) == 1:
-                        return k*T/(h * self.params[0]*1E6)
+                        return k * T / (h * self.params[0] * 1e6)
                     if len(self.params) == 2:
-                        return (5.34E6/1)*np.sqrt((
-                            T**3/(self.params[1]**2 * self.params[0])))
+                        return (5.34e6 / 1) * np.sqrt(
+                            (T**3 / (self.params[1] ** 2 * self.params[0]))
+                        )
                     if len(self.params) == 3:
-                        return (5.34E6/1)*np.sqrt((
-                            T**3/(self.params[2] * self.params[1]
-                                  * self.params[0])))
+                        return (5.34e6 / 1) * np.sqrt(
+                            (T**3 / (self.params[2] * self.params[1] * self.params[0]))
+                        )
 
                 if list in [type(x) for x in self.params]:  # use a sigma
                     if len(self.params) == 3:
-                        return (5.34E6/self.params[2][0])*np.sqrt((
-                            T**3/(self.params[1]**2 * self.params[0])))
+                        return (5.34e6 / self.params[2][0]) * np.sqrt(
+                            (T**3 / (self.params[1] ** 2 * self.params[0]))
+                        )
                     if len(self.params) == 4:
-                        return (5.34E6/self.params[3][0])*np.sqrt((
-                            T**3/(self.params[2] * self.params[1] *
-                                  self.params[0])))
+                        return (5.34e6 / self.params[3][0]) * np.sqrt(
+                            (T**3 / (self.params[2] * self.params[1] * self.params[0]))
+                        )
 
         # if the user provided arrays for interpolation
-        if self.flag == 'interpolation':
-            f = interp1d(self.temps, self.vals, fill_value='extrapolate')
+        if self.flag == "interpolation":
+            f = interp1d(self.temps, self.vals, fill_value="extrapolate")
             return f(T).tolist()
 
         # if the user provided a catalog or gs and energies
-        if self.flag == 'counting':
+        if self.flag == "counting":
             # if a catalog:
             if self.mol is not None:
                 gs = np.array([level.g for level in self.mol.levels])
-                energies = np.array(
-                    [level.energy for level in self.mol.levels])
+                energies = np.array([level.energy for level in self.mol.levels])
             else:
                 gs = self.gs
                 energies = self.energies
-            return (1/self.sigma)*np.sum(gs*np.exp(-energies/T))
+            return (1 / self.sigma) * np.sum(gs * np.exp(-energies / T))
 
     def qvib(self, T):
-        '''
+        """
         Calculate and return the vibrational partition
         function at temperature T
-        '''
+        """
 
         # if there's no states specified, return 1.
         if self.vib_states is None:
-            return 1.
+            return 1.0
 
         # otherwise do the calculation and return based on the units
         if self.vib_is_K is True:
-            return np.prod(np.sum(np.exp((
-                -self.vib_states[:, np.newaxis]*np.arange(100))/(T)), axis=1))
+            return np.prod(
+                np.sum(
+                    np.exp((-self.vib_states[:, np.newaxis] * np.arange(100)) / (T)),
+                    axis=1,
+                )
+            )
         else:
-            return np.prod(np.sum(np.exp((
-                -self.vib_states[:, np.newaxis] *
-                np.arange(100))/(0.695*T)), axis=1))
+            return np.prod(
+                np.sum(
+                    np.exp(
+                        (-self.vib_states[:, np.newaxis] * np.arange(100)) / (0.695 * T)
+                    ),
+                    axis=1,
+                )
+            )
 
     def q(self, T):
-        '''
+        """
         Calculate and return the total partition function at a temperature T
-        '''
+        """
 
-        return self.qrot(T)*self.qvib(T)
+        return self.qrot(T) * self.qvib(T)
 
 
 class Molecule(object):
-
-    '''
+    """
     The molecule class holds all the information for a single molecule.
     Note that this does not include anything about an observed population
     of this molecule.  It is only the physical properties of a molecule.
     Things like column density and temp are part of the <classname> class.
-    '''
+    """
 
     def __init__(
         self,
