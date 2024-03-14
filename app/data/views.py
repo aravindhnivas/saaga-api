@@ -36,7 +36,7 @@ from django_filters import rest_framework as filters
 from drf_multiple_model.views import ObjectMultipleModelAPIView
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -897,26 +897,18 @@ class UploadedDataLengthView(APIView):
         if current_approver.is_staff:
             # get all the user whose approver is current approver
             dependent_users = get_user_model().objects.filter(approver=current_approver)
-
-            # get all unapproved SpeciesMetadata and MetaReference for all the dependent users
-            for user in dependent_users:
-                unapproved_species_metadata = SpeciesMetadata.objects.filter(
-                    uploaded_by=user, approved=False
-                ).count()
-                unapproved_meta_reference = MetaReference.objects.filter(
-                    uploaded_by=user, approved=False
-                ).count()
-
-                # Add the counts to the dictionary
-                obj = {
-                    "user": user.id,
-                    "user_name": user.name,
-                    "species_metadata": unapproved_species_metadata,
-                    "meta_reference": unapproved_meta_reference,
-                }
-                unapproved_counts.append(obj)
-
-            # print(f"{unapproved_counts=}")
+            unapproved_counts = dependent_users.values("id", "name").annotate(
+                species_metadata=Count(
+                    "species_metadata_uploads",
+                    filter=Q(species_metadata_uploads__approved=False),
+                    distinct=True,
+                ),
+                meta_reference=Count(
+                    "meta_reference_uploads",
+                    filter=Q(meta_reference_uploads__approved=False),
+                    distinct=True,
+                ),
+            )
 
         total_length_full = self.get_count()
         total_length_approved = self.get_count(approved=True)
@@ -925,7 +917,7 @@ class UploadedDataLengthView(APIView):
             {
                 "full": total_length_full,
                 "approved": total_length_approved,
-                "unapproved_counts": unapproved_counts,
+                "unapproved_counts": list(unapproved_counts),
             }
         )
 
