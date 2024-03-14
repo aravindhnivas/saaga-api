@@ -884,21 +884,58 @@ class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
 
 
 class UploadedDataLengthView(APIView):
-    def get(self, request, user_id, format=None):
-        user = get_user_model().objects.get(id=user_id)
+    def get(self, request, user_id: int, format=None):
 
-        total_length_full = self.get_count(user)
-        total_length_approved = self.get_count(user, approved=True)
+        self.user = get_user_model().objects.filter(id=user_id)
+
+        # Get the current approver
+        current_approver = self.user.first()
+
+        # Initialize an empty dictionary to hold the unapproved counts for each user
+        unapproved_counts = []
+
+        if current_approver.is_staff:
+            # get all the user whose approver is current approver
+            dependent_users = get_user_model().objects.filter(approver=current_approver)
+
+            # get all unapproved SpeciesMetadata and MetaReference for all the dependent users
+            for user in dependent_users:
+                unapproved_species_metadata = SpeciesMetadata.objects.filter(
+                    uploaded_by=user, approved=False
+                ).count()
+                unapproved_meta_reference = MetaReference.objects.filter(
+                    uploaded_by=user, approved=False
+                ).count()
+
+                # Add the counts to the dictionary
+                obj = {
+                    "user": user.id,
+                    "user_name": user.name,
+                    "species_metadata": unapproved_species_metadata,
+                    "meta_reference": unapproved_meta_reference,
+                }
+                unapproved_counts.append(obj)
+
+            # print(f"{unapproved_counts=}")
+
+        total_length_full = self.get_count()
+        total_length_approved = self.get_count(approved=True)
 
         return Response(
             {
                 "full": total_length_full,
                 "approved": total_length_approved,
+                "unapproved_counts": unapproved_counts,
             }
         )
 
-    def get_count(self, user, approved=None):
-
+    def get_count(self, approved=None):
+        user = self.user.prefetch_related(
+            "species_uploads",
+            "species_metadata_uploads",
+            "reference_uploads",
+            "meta_reference_uploads",
+        ).first()
         query = Q()
         if approved is not None:
             query &= Q(approved=approved)
