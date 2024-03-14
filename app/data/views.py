@@ -886,17 +886,31 @@ class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
 class UploadedDataLengthView(APIView):
     def get(self, request, user_id: int, format=None):
 
-        self.user = get_user_model().objects.filter(id=user_id)
+        user = (
+            get_user_model()
+            .objects.filter(id=user_id)
+            .prefetch_related(
+                "species_uploads",
+                "species_metadata_uploads",
+                "reference_uploads",
+                "meta_reference_uploads",
+            )
+            .first()
+        )
 
-        # Get the current approver
-        current_approver = self.user.first()
+        # Get the current user as approver (just in case the user is an approver for other users)
 
+        if not user:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        # current_approver = self.user.first()
         # Initialize an empty dictionary to hold the unapproved counts for each user
         unapproved_counts = []
 
-        if current_approver.is_staff:
+        if user.is_staff:
             # get all the user whose approver is current approver
-            dependent_users = get_user_model().objects.filter(approver=current_approver)
+            dependent_users = user.dependent_users.all()
+
             unapproved_counts = dependent_users.values("id", "name").annotate(
                 species_metadata=Count(
                     "species_metadata_uploads",
@@ -910,8 +924,21 @@ class UploadedDataLengthView(APIView):
                 ),
             )
 
-        total_length_full = self.get_count()
-        total_length_approved = self.get_count(approved=True)
+        total_length_full = {
+            "species": user.species_uploads.count(),
+            "species_metadata": user.species_metadata_uploads.count(),
+            "reference": user.reference_uploads.count(),
+            "meta_reference": user.meta_reference_uploads.count(),
+        }
+
+        total_length_approved = {
+            "species": user.species_uploads.filter(approved=True).count(),
+            "species_metadata": user.species_metadata_uploads.filter(
+                approved=True
+            ).count(),
+            "reference": user.reference_uploads.filter(approved=True).count(),
+            "meta_reference": user.meta_reference_uploads.filter(approved=True).count(),
+        }
 
         return Response(
             {
@@ -920,21 +947,3 @@ class UploadedDataLengthView(APIView):
                 "unapproved_counts": list(unapproved_counts),
             }
         )
-
-    def get_count(self, approved=None):
-        user = self.user.prefetch_related(
-            "species_uploads",
-            "species_metadata_uploads",
-            "reference_uploads",
-            "meta_reference_uploads",
-        ).first()
-        query = Q()
-        if approved is not None:
-            query &= Q(approved=approved)
-
-        return {
-            "species": user.species_uploads.filter(query).count(),
-            "species_metadata": user.species_metadata_uploads.filter(query).count(),
-            "reference": user.reference_uploads.filter(query).count(),
-            "meta_reference": user.meta_reference_uploads.filter(query).count(),
-        }
