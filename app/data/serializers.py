@@ -166,10 +166,14 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "fit_file",
             "lin_file",
             "cat_file",
+            "vib_qn",
+            "contains_rovibrational",
+            "qn_label_str",
             "notes",
             "approved",
             "uploaded_by",
             "created_at",
+            'cat_file_added'
         ]
         read_only_fields = [
             "id",
@@ -177,6 +181,10 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "uploaded_by",
             "created_at",
             "cat_file",
+            "vib_qn",
+            "contains_rovibrational",
+            "qn_label_str",
+            "cat_file_added",
         ]
 
     def to_representation(self, instance):
@@ -256,92 +264,6 @@ class LineSerializer(serializers.ModelSerializer):
             "contains_rovibrational",
             "notes",
         ]
-
-
-# class LineSerializer(serializers.ModelSerializer):
-#     """Serializer for creating lines with POST request."""
-
-#     frequency = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     uncertainty = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     intensity = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     s_ij = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     s_ij_mu2 = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     a_ij = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     lower_state_energy = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     upper_state_energy = serializers.DecimalField(
-#         max_digits=None, decimal_places=None, read_only=True
-#     )
-#     cat_file = serializers.FileField(write_only=True)
-#     qn_label_str = serializers.CharField(write_only=True)
-#     contains_rovibrational = serializers.BooleanField(write_only=True)
-
-#     class Meta:
-#         model = Line
-#         fields = [
-#             "id",
-#             "meta",
-#             "measured",
-#             "cat_file",
-#             "qn_label_str",
-#             "frequency",
-#             "uncertainty",
-#             "intensity",
-#             "s_ij",
-#             "s_ij_mu2",
-#             "a_ij",
-#             "upper_state_energy",
-#             "lower_state_energy",
-#             "upper_state_degeneracy",
-#             "lower_state_degeneracy",
-#             "upper_state_qn",
-#             "lower_state_qn",
-#             "contains_rovibrational",
-#             "rovibrational",
-#             "vib_qn",
-#             "pickett_qn_code",
-#             "pickett_upper_state_qn",
-#             "pickett_lower_state_qn",
-#             "notes",
-#             # "uploaded_by",
-#             # "approved",
-#             # "created_at",
-#         ]
-#         read_only_fields = [
-#             "id",
-#             "measured",
-#             "frequency",
-#             "uncertainty",
-#             "intensity",
-#             "s_ij",
-#             "s_ij_mu2",
-#             "a_ij",
-#             "lower_state_energy",
-#             "upper_state_energy",
-#             "lower_state_degeneracy",
-#             "upper_state_degeneracy",
-#             "upper_state_qn",
-#             "lower_state_qn",
-#             "rovibrational",
-#             "pickett_qn_code",
-#             "pickett_upper_state_qn",
-#             "pickett_lower_state_qn",
-#             # "uploaded_by",
-#             # "created_at",
-#         ]
 
 
 class LineSerializerList(serializers.ModelSerializer):

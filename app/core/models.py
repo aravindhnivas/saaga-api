@@ -302,8 +302,12 @@ class SpeciesMetadata(models.Model):
         upload_to=sp_file_path,
         validators=[FileExtensionValidator(allowed_extensions=["cat"])],
     )
+    vib_qn = models.CharField(max_length=255, blank=True)
+    contains_rovibrational = models.BooleanField(null=True)
+    qn_label_str = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    cat_file_added = models.BooleanField(default=False)
     history = HistoricalRecords()
 
     class Meta:
@@ -373,8 +377,8 @@ class Line(models.Model):
     pickett_lower_state_qn = models.CharField(max_length=255)
     pickett_upper_state_qn = models.CharField(max_length=255)
     vib_qn = models.CharField(max_length=255, blank=True)
-    # contains_rovibrational = models.BooleanField(default=False)
-    # qn_label_str = models.CharField(max_length=255, blank=True)
+    contains_rovibrational = models.BooleanField(default=False)
+    qn_label_str = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
 
     history = HistoricalRecords()

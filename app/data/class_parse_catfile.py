@@ -262,7 +262,7 @@ class Catalog(object):
             #     1.16395e-20 * self.frequency**3 * self.sijmu / self.gup,
             #     np.nan,
             # )
-            print(f"{self.sijmu=}, {self.aij=}")
+            # print(f"{self.sijmu=}, {self.aij=}")
             # self.sijmu = eq1 / eq2
             # self.aij = 1.16395e-20 * self.frequency**3 * self.sijmu / self.gup
         except:

@@ -2,6 +2,7 @@
 Views for data APIs.
 """
 
+import textwrap
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -315,7 +316,14 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     queryset = SpeciesMetadata.objects.all()
     authentication_classes = [TokenAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ("approved", "uploaded_by", "species", "linelist", "hyperfine")
+    filterset_fields = (
+        "approved",
+        "uploaded_by",
+        "species",
+        "linelist",
+        "hyperfine",
+        "cat_file_added",
+    )
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -786,9 +794,25 @@ class LineViewSet(viewsets.ModelViewSet):
             # saving the cat_file to species_metadata
             print(f"{meta_obj.cat_file=}, {cat_file=}")
             meta_obj.cat_file = cat_file
+            meta_obj.vib_qn = vib_qn
+            meta_obj.qn_label_str = qn_label_str
+            meta_obj.contains_rovibrational = contains_rovibrational
+            meta_obj.cat_file_added = True
             meta_obj.save()
             serializer.save()
-            # return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # send email to approvers
+            subject = f"[SaagaDb] {self.request.user.name}: New species metadata uploaded for approval"
+            message = textwrap.dedent(
+                f"""
+                New metadata for {meta_obj.species.iupac_name} has been uploaded by {self.request.user.name} ({self.request.user.email}).
+                Please review and approve it.
+                http://herzberg.mit.edu/admin/dashboard/approve-data/{self.request.user.id}
+            """
+            ).strip()
+            recipient_list = self.request.user.approver.values_list("email", flat=True)
+            send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+
             return Response(
                 {"detail": "cat file parsed and added to the database"},
                 status=status.HTTP_200_OK,
@@ -914,7 +938,10 @@ class UploadedDataLengthView(APIView):
             unapproved_counts = dependent_users.values("id", "name").annotate(
                 species_metadata=Count(
                     "species_metadata_uploads",
-                    filter=Q(species_metadata_uploads__approved=False),
+                    filter=Q(
+                        species_metadata_uploads__approved=False,
+                        species_metadata_uploads__cat_file_added=True,
+                    ),
                     distinct=True,
                 ),
                 meta_reference=Count(

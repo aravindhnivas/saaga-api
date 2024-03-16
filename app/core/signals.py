@@ -152,19 +152,19 @@ def send_meta_species_update_notification(sender, instance, created, **kwargs):
 
     species_name = instance.species.iupac_name
 
-    if created and not instance.approved and user.approver:
-        subject = f"[SaagaDb] {user.name}: New species metadata uploaded for approval"
-        message = textwrap.dedent(
-            f"""
-            New metadata for {species_name} has been uploaded by {user.name} ({user.email}).
-            Please review and approve it.
-            http://herzberg.mit.edu/admin/dashboard/approve-data/{user.id}
-        """
-        ).strip()
-        recipient_list = user.approver.values_list("email", flat=True)
-        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+    # if created and not instance.approved and user.approver:
+    # subject = f"[SaagaDb] {user.name}: New species metadata uploaded for approval"
+    # message = textwrap.dedent(
+    #     f"""
+    #     New metadata for {species_name} has been uploaded by {user.name} ({user.email}).
+    #     Please review and approve it.
+    #     http://herzberg.mit.edu/admin/dashboard/approve-data/{user.id}
+    # """
+    # ).strip()
+    # recipient_list = user.approver.values_list("email", flat=True)
+    # send_mail(subject, message, from_email, recipient_list, fail_silently=True)
 
-        print(f"Email sent successfully to {', '.join(recipient_list)}")
+    # print(f"Email sent successfully to {', '.join(recipient_list)}")
 
     if not created and instance.approved:
         subject = "[SaagaDb] Species metadata approved for " + species_name
