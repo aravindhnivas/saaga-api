@@ -799,9 +799,7 @@ class LineViewSet(viewsets.ModelViewSet):
             meta_obj.qn_label_str = qn_label_str
             meta_obj.contains_rovibrational = contains_rovibrational
             meta_obj.cat_file_added = True
-            meta_obj.save(
-                uploaded_by=self.request.user, approved=self.request.user.is_superuser
-            )
+            meta_obj.save()
             serializer.save()
 
             # send email to approvers
