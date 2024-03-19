@@ -342,6 +342,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             .only(
                 "species__id",
                 "species__name_formula",
+                "species__smiles",
                 "species__iupac_name",
                 "linelist__linelist_name",
                 "uploaded_by__name",

@@ -173,7 +173,7 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "approved",
             "uploaded_by",
             "created_at",
-            'cat_file_added'
+            "cat_file_added",
         ]
         read_only_fields = [
             "id",
@@ -189,6 +189,7 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation["species_smiles"] = instance.species.smiles
         representation["species_formula"] = instance.species.name_formula
         representation["species_name"] = instance.species.iupac_name
         representation["linelist_name"] = instance.linelist.linelist_name
