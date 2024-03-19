@@ -3,7 +3,8 @@ Views for the user API.
 """
 
 import datetime
-from rest_framework import generics, authentication, permissions, viewsets, status
+from rest_framework import generics, permissions, viewsets, status
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from user.serializers import (
@@ -23,17 +24,18 @@ from rest_framework.views import APIView
 from core.models import EmailVerificationToken
 from core.signals import generate_verification_token
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.urls import reverse
+# from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.exceptions import PermissionDenied
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
 
     serializer_class = UserSerializer
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAdminUser]
 
     def perform_create(self, serializer):
@@ -52,7 +54,7 @@ class GetUserView(generics.RetrieveAPIView):
     """Get the details of the authenciated user."""
 
     serializer_class = UserSerializer
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
@@ -64,7 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     # permission_classes = [permissions.IsAuthenticated]
     permission_classes = [permissions.IsAdminUser]
     filter_backends = (filters.DjangoFilterBackend,)
@@ -103,7 +105,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ChangePassword(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def put(self, request):
@@ -159,7 +161,7 @@ class VerifyEmailView(APIView):
 
 
 class ResendVerificationEmailView(APIView):
-    authentication_classes = [authentication.TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -209,10 +211,10 @@ class PasswordReset(generics.GenericAPIView):
             token = PasswordResetTokenGenerator().make_token(user)
 
             print(f"{user=}, {encoded_pk=}, {token=}")
-            reset_url = reverse(
-                "user:reset-password",
-                kwargs={"encoded_pk": encoded_pk, "token": token},
-            )
+            # reset_url = reverse(
+            #     "user:reset-password",
+            #     kwargs={"encoded_pk": encoded_pk, "token": token},
+            # )
             reset_link = f"{settings.FRONTEND_URL}/password-reset/{encoded_pk}/{token}/"
             print(reset_link)
             # send the rest_link as mail to the user.

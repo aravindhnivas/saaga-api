@@ -40,6 +40,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q, Count
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from_email = settings.EMAIL_HOST_USER
 
@@ -49,7 +50,7 @@ class LinelistViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.LinelistSerializer
     queryset = Linelist.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("approved", "uploaded_by", "linelist_name")
 
@@ -114,7 +115,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.ReferenceSerializer
     queryset = Reference.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("approved", "uploaded_by", "doi", "ref_url")
 
@@ -227,7 +228,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.SpeciesSerializer
     queryset = Species.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("approved", "uploaded_by", "selfies", "smiles")
 
@@ -314,7 +315,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.SpeciesMetadataSerializer
     queryset = SpeciesMetadata.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
         "approved",
@@ -478,7 +479,7 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.MetaReferenceSerializer
     queryset = MetaReference.objects.all()
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
         "approved",
@@ -569,7 +570,7 @@ class LineViewSet(viewsets.ModelViewSet):
 
     queryset = Line.objects.all()
     serializer_class = serializers.LineSerializer
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
         """No authentication required for GET requests."""
