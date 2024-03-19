@@ -810,7 +810,7 @@ class LineViewSet(viewsets.ModelViewSet):
                 f"""
                 New metadata for {meta_obj.species.iupac_name} has been uploaded by {self.request.user.name} ({self.request.user.email}).
                 Please review and approve it.
-                http://herzberg.mit.edu/admin/dashboard/approve-data/{self.request.user.id}
+                {settings.FRONTEND_URL}/admin/dashboard/approve-data/{self.request.user.id}
             """
             ).strip()
             recipient_list = self.request.user.approver.values_list("email", flat=True)

@@ -70,7 +70,7 @@ def user_created_signal(sender, instance, created, **kwargs):
         f"""
         Your account has been created{' (with admin privilege)' if instance.is_staff else ''}.
         Please login to SaagaDb to start using the application.
-        http://herzberg.mit.edu/login
+        {settings.FRONTEND_URL}/login
         
         Your approver(s) is {approvers_string if approvers_string else 'None'}.
         The approver will review and approve your data uploads: species- and reference- metadata.'
@@ -127,7 +127,7 @@ def send_meta_ref_update_notification(sender, instance, created, **kwargs):
             f"""
             New metadata has been uploaded by {user.name} ({user.email}).
             Please review and approve it.
-            http://herzberg.mit.edu/admin/dashboard/approve-data/{user.id}
+            {settings.FRONTEND_URL}/admin/dashboard/approve-data/{user.id}
         """
         ).strip()
         recipient_list = user.approver.values_list("email", flat=True)
@@ -158,7 +158,7 @@ def send_meta_species_update_notification(sender, instance, created, **kwargs):
     #     f"""
     #     New metadata for {species_name} has been uploaded by {user.name} ({user.email}).
     #     Please review and approve it.
-    #     http://herzberg.mit.edu/admin/dashboard/approve-data/{user.id}
+    #     {settings.FRONTEND_URL}/admin/dashboard/approve-data/{user.id}
     # """
     # ).strip()
     # recipient_list = user.approver.values_list("email", flat=True)
