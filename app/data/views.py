@@ -111,13 +111,15 @@ class LinelistViewSet(viewsets.ModelViewSet):
 
 class ReferenceFilter(filters.FilterSet):
     doi = filters.CharFilter(method='filter_doi')
+    approved = filters.BooleanFilter()
+    uploaded_by = filters.NumberFilter()
+    ref_url = filters.CharFilter(lookup_expr='icontains')
 
     class Meta:
         model = Reference
-        fields = ['doi']
+        fields = ['doi', 'approved', 'uploaded_by', 'ref_url']
 
     def filter_doi(self, queryset, name, value):
-        # print(value)
         if 'doi.org/' in value:
             value = value.split('doi.org/')[1]
         return queryset.filter(Q(doi__icontains=value) | Q(doi__iexact=value))
@@ -130,7 +132,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
     queryset = Reference.objects.all()
     authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ("approved", "uploaded_by", "doi", "ref_url")
+    # filterset_fields = ("approved", "uploaded_by", "doi", "ref_url")
     filterset_class = ReferenceFilter
 
     def get_permissions(self):
