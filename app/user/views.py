@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 from core.models import EmailVerificationToken
 from core.signals import generate_verification_token
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
 # from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -67,8 +68,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
         "email",
@@ -84,23 +84,30 @@ class UserViewSet(viewsets.ModelViewSet):
 
     http_method_names = ["get", "patch", "head"]
 
-    # def get_permissions(self):
-    #     """Return appropriate permissions based on action."""
-    #     if self.request.method in ["PATCH"]:
-    #         permission_classes = [permissions.IsAdminUser]
-    #     else:
-    #         permission_classes = [permissions.IsAuthenticated]
-    #     return [permission() for permission in permission_classes]
-
     def get_queryset(self):
         """Retrieve meta references."""
         return self.queryset.order_by("-id")
 
     def perform_update(self, serializer):
         """Update an existing user."""
+        
+        user_id = int(self.kwargs["pk"])
+        
         if not self.request.user.is_superuser:
-            raise PermissionDenied("You are not authorized to perform this action.")
-        serializer.save()
+            if self.request.user.id != user_id:
+                raise PermissionDenied("You are not authorized to perform this action.")
+            
+        current_user_from_db = get_user_model().objects.get(id=user_id)
+        email = self.request.data.get("email")
+        # print(email)
+        
+        if not email:
+            raise PermissionDenied("Email is required.")
+        
+        if current_user_from_db.email != email:
+            serializer.save(is_verified=False)
+        else:
+            serializer.save()
 
 
 class ChangePassword(generics.GenericAPIView):
