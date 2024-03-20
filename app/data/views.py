@@ -132,7 +132,6 @@ class ReferenceViewSet(viewsets.ModelViewSet):
     queryset = Reference.objects.all()
     authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    # filterset_fields = ("approved", "uploaded_by", "doi", "ref_url")
     filterset_class = ReferenceFilter
 
     def get_permissions(self):
