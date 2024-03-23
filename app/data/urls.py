@@ -26,5 +26,8 @@ urlpatterns = [
         name="meta-ref-and-species",
     ),
     path("data_length/<int:user_id>/", views.UploadedDataLengthView.as_view()),
+    path(
+        "direct-reference/", views.DirectReferenceAPI.as_view(), name="direct-reference"
+    ),
     path("", include(router.urls)),
 ]

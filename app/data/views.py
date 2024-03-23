@@ -6,7 +6,8 @@ import textwrap
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.authentication import TokenAuthentication
+
+# from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django_rdkit.models import QMOL, Value  # noqa: F403
 from core.models import (
@@ -109,22 +110,23 @@ class LinelistViewSet(viewsets.ModelViewSet):
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ReferenceFilter(filters.FilterSet):
-    doi = filters.CharFilter(method='filter_doi')
+    doi = filters.CharFilter(method="filter_doi")
     approved = filters.BooleanFilter()
     uploaded_by = filters.NumberFilter()
-    ref_url = filters.CharFilter(lookup_expr='icontains')
+    ref_url = filters.CharFilter(lookup_expr="icontains")
 
     class Meta:
         model = Reference
-        fields = ['doi', 'approved', 'uploaded_by', 'ref_url']
+        fields = ["doi", "approved", "uploaded_by", "ref_url"]
 
     def filter_doi(self, queryset, name, value):
-        if 'doi.org/' in value:
-            value = value.split('doi.org/')[1]
+        if "doi.org/" in value:
+            value = value.split("doi.org/")[1]
         return queryset.filter(Q(doi__icontains=value) | Q(doi__iexact=value))
 
-        
+
 class ReferenceViewSet(viewsets.ModelViewSet):
     """View for reference APIs."""
 
@@ -579,6 +581,55 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
                 recipient_list=[uploaded_by_user.email],
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DirectReferenceAPI(APIView):
+    """View for meta reference APIs."""
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        ref_url = request.data.get("ref_url")
+        ref_obj = Reference.objects.filter(ref_url=ref_url).first()
+
+        # reference_serializer = serializers.ReferenceSerializer(data=request.data)
+        if not ref_obj:
+            reference_serializer = serializers.ReferenceSerializer(data=request.data)
+            reference_serializer.is_valid(raise_exception=True)
+            print(f"Saving new reference. {ref_url=}")
+            reference_serializer.save(uploaded_by=request.user, approved=True)
+            ref_obj = reference_serializer.instance
+            print(f"{reference_serializer.validated_data=}")
+
+        ref_id = ref_obj.id
+        # print(f"{ref_id=}")
+
+        data = request.data.copy()  # Make a mutable copy of the QueryDict
+        data["ref"] = ref_id  # Append ref_id value to 'ref'
+
+        metareference_serializer = serializers.MetaReferenceSerializer(data=data)
+        metareference_serializer.is_valid(raise_exception=True)
+
+        metareference_serializer.save(
+            uploaded_by=request.user,
+            approved=request.user.is_superuser,
+        )
+
+        meta_ref_obj = metareference_serializer.instance
+
+        # print(f"{metareference_serializer.validated_data=}")
+
+        return Response(
+            {
+                "id": meta_ref_obj.id,
+                "ref": ref_id,
+                "meta": meta_ref_obj.meta.id,
+                "doi": ref_obj.doi,
+                "ref_url": ref_obj.ref_url,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class LineViewSet(viewsets.ModelViewSet):
