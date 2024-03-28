@@ -627,6 +627,8 @@ class DirectReferenceAPI(APIView):
                 "meta": meta_ref_obj.meta.id,
                 "doi": ref_obj.doi,
                 "ref_url": ref_obj.ref_url,
+                "dipole_moment": meta_ref_obj.dipole_moment,
+                "spectrum": meta_ref_obj.spectrum,
             },
             status=status.HTTP_201_CREATED,
         )
