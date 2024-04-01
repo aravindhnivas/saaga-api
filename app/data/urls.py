@@ -17,6 +17,8 @@ router.register("species-metadata", views.SpeciesMetadataViewSet)
 router.register("reference", views.ReferenceViewSet)
 router.register("meta-reference", views.MetaReferenceViewSet)
 router.register("line", views.LineViewSet)
+router.register("misc-files-upload", views.SpeciesMetadataMiscFileUploadView)
+
 app_name = "data"
 
 urlpatterns = [
@@ -29,10 +31,10 @@ urlpatterns = [
     path(
         "direct-reference/", views.DirectReferenceAPI.as_view(), name="direct-reference"
     ),
-    path(
-        "misc-files-upload/",
-        views.SpeciesMetadataMiscFileUploadView.as_view(),
-        name="misc-files-upload",
-    ),
+    # path(
+    #     "misc-files-upload/",
+    #     views.SpeciesMetadataMiscFileUploadView.as_view(),
+    #     name="misc-files-upload",
+    # ),
     path("", include(router.urls)),
 ]

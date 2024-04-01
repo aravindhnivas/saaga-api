@@ -6,6 +6,7 @@ import textwrap
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 
 # from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -495,25 +496,33 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SpeciesMetadataMiscFileUploadView(APIView):
+class SpeciesMetadataMiscFileUploadView(viewsets.ModelViewSet):
 
-    parser_classes = [MultiPartParser]
+    queryset = SpeciesMetadataMiscFileUpload.objects.all()
+    serializer_class = serializers.SpeciesMetadataMiscFileUploadSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request, format=None):
+    def get_permissions(self):
+        """No authentication required for GET requests."""
+        if self.request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = []
+        return [permission() for permission in permission_classes]
 
-        print(f"{request.data=}\n{request.user=}")
+    def get_queryset(self):
+        """Retrieve species metadata misc files"""
+        return self.queryset.order_by("-id").select_related("uploaded_by", "meta")
+
+    def create(self, request):
+        """Create a new species metadata misc file."""
+
         meta = request.data.get("meta")
-        # name = request.data.get("name")
         notes = request.data.get("notes")
         misc_file = request.FILES.getlist("misc_file")
-        print(f"{misc_file=}")
         data_dict = []
 
         for file in misc_file:
-            # name = file.name
-            # print(f"{name=}")
             data_dict.append(
                 {
                     "meta": meta,
@@ -522,15 +531,9 @@ class SpeciesMetadataMiscFileUploadView(APIView):
                     "misc_file": file,
                 }
             )
-
-        print(f"{data_dict=}")
-        serializer = serializers.SpeciesMetadataMiscFileUploadSerializer(
-            data=data_dict, many=True
-        )
-
+        serializer = self.serializer_class(data=data_dict, many=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(uploaded_by=request.user)
-        print(f"{serializer.validated_data=}")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
