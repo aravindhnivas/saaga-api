@@ -29,5 +29,10 @@ urlpatterns = [
     path(
         "direct-reference/", views.DirectReferenceAPI.as_view(), name="direct-reference"
     ),
+    path(
+        "misc-files-upload/",
+        views.SpeciesMetadataMiscFileUploadView.as_view(),
+        name="misc-files-upload",
+    ),
     path("", include(router.urls)),
 ]

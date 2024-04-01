@@ -8,6 +8,7 @@ from core.models import (
     Species,
     Linelist,
     SpeciesMetadata,
+    SpeciesMetadataMiscFileUpload,
     Reference,
     MetaReference,
     Line,
@@ -207,6 +208,22 @@ class SpeciesMetadataChangeSerializer(SpeciesMetadataSerializer):
     class Meta(SpeciesMetadataSerializer.Meta):
         fields = SpeciesMetadataSerializer.Meta.fields + ["_change_reason"]
         read_only_fields = ["id"]
+
+
+class SpeciesMetadataMiscFileUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpeciesMetadataMiscFileUpload
+        fields = (
+            "id",
+            "meta",
+            "misc_file",
+            "name",
+            "notes",
+            "approved",
+            "uploaded_by",
+            "created_at",
+        )
+        read_only_fields = ["id", "uploaded_by", "created_at"]
 
 
 class MetaReferenceSerializer(serializers.ModelSerializer):

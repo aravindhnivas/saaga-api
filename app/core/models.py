@@ -318,6 +318,30 @@ class SpeciesMetadata(models.Model):
         return "species metadata of " + self.species.iupac_name
 
 
+class SpeciesMetadataMiscFileUpload(models.Model):
+    """Species metadata misc files object."""
+
+    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.CASCADE, db_index=True)
+    approved = models.BooleanField(default=True)
+    misc_file = models.FileField(upload_to=sp_file_path)
+    name = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        db_index=True,
+        related_name="sp_misc_files",
+    )
+    history = HistoricalRecords()
+
+    # class Meta:
+    #     unique_together = ["meta", "name"]
+
+    def __str__(self):
+        return "misc file of " + self.meta.species.iupac_name
+
+
 class MetaReference(models.Model):
     """Metadata reference object relating species metadata with references"""
 

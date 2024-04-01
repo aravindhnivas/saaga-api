@@ -14,6 +14,7 @@ from core.models import (
     Species,
     Linelist,
     SpeciesMetadata,
+    SpeciesMetadataMiscFileUpload,
     Reference,
     MetaReference,
     Line,
@@ -42,6 +43,8 @@ from django.db.models import Q, Count
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.parsers import MultiPartParser
+
 
 from_email = settings.EMAIL_HOST_USER
 
@@ -490,6 +493,45 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
                 "error": {"type": str(type(exception)), "message": message},
             }
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SpeciesMetadataMiscFileUploadView(APIView):
+
+    parser_classes = [MultiPartParser]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+
+        print(f"{request.data=}\n{request.user=}")
+        meta = request.data.get("meta")
+        # name = request.data.get("name")
+        notes = request.data.get("notes")
+        misc_file = request.FILES.getlist("misc_file")
+        print(f"{misc_file=}")
+        data_dict = []
+
+        for file in misc_file:
+            # name = file.name
+            # print(f"{name=}")
+            data_dict.append(
+                {
+                    "meta": meta,
+                    "name": file.name,
+                    "notes": notes,
+                    "misc_file": file,
+                }
+            )
+
+        print(f"{data_dict=}")
+        serializer = serializers.SpeciesMetadataMiscFileUploadSerializer(
+            data=data_dict, many=True
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save(uploaded_by=request.user)
+        print(f"{serializer.validated_data=}")
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MetaReferenceViewSet(viewsets.ModelViewSet):
