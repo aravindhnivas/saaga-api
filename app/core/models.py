@@ -321,7 +321,12 @@ class SpeciesMetadata(models.Model):
 class SpeciesMetadataMiscFileUpload(models.Model):
     """Species metadata misc files object."""
 
-    meta = models.ForeignKey("SpeciesMetadata", on_delete=models.CASCADE, db_index=True)
+    meta = models.ForeignKey(
+        "SpeciesMetadata",
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="misc_files",
+    )
     approved = models.BooleanField(default=True)
     misc_file = models.FileField(upload_to=sp_file_path)
     name = models.CharField(max_length=255, blank=True)

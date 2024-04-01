@@ -195,6 +195,10 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
         representation["species_name"] = instance.species.iupac_name
         representation["linelist_name"] = instance.linelist.linelist_name
         representation["uploaded_by_name"] = instance.uploaded_by.name
+        representation["misc_files"] = [
+            {"url": file.misc_file.url.replace("/static/media", ""), "name": file.name}
+            for file in instance.misc_files.all()
+        ]
         return representation
 
 
