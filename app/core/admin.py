@@ -61,7 +61,8 @@ class SpeciesAdmin(admin.ModelAdmin):
         ),
         (_("Records"), {"fields": ("notes",)}),
     )
-    readonly_fields = ["selfies", "display_mol"]
+    # readonly_fields = ["selfies", "display_mol"]
+    readonly_fields = ["selfies"]
     add_fieldsets = (
         (
             None,

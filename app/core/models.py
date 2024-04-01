@@ -11,10 +11,11 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
-from django.utils.functional import cached_property
-from django.utils.html import format_html
-from rdkit.Chem import Draw
-import base64
+
+# from django.utils.functional import cached_property
+# from django.utils.html import format_html
+# from rdkit.Chem import Draw
+# import base64
 from django.core.validators import FileExtensionValidator
 from simple_history.models import HistoricalRecords
 from simple_history import register
@@ -227,22 +228,22 @@ class Species(models.Model):
     def __str__(self):
         return self.iupac_name
 
-    @cached_property
-    def display_mol(self):
-        """function for displaying the rdkit mol object in the
-        form of image in django admin."""
-        if self.mol_obj:
-            dm = Draw.PrepareMolForDrawing(self.mol_obj)
-            d2d = Draw.MolDraw2DCairo(400, 400)
-            d2d.DrawMolecule(dm)
-            d2d.FinishDrawing()
-            text = d2d.GetDrawingText()
-            imtext = base64.b64encode(text).decode("utf8")
-            html = '<img src="data:image/png;base64, {img}" alt="rdkit image">'
-            return format_html(html, img=imtext)
-        return format_html("<strong>There is no image for this entry.<strong>")
+    # @cached_property
+    # def display_mol(self):
+    #     """function for displaying the rdkit mol object in the
+    #     form of image in django admin."""
+    #     if self.mol_obj:
+    #         dm = Draw.PrepareMolForDrawing(self.mol_obj)
+    #         d2d = Draw.MolDraw2DCairo(400, 400)
+    #         d2d.DrawMolecule(dm)
+    #         d2d.FinishDrawing()
+    #         text = d2d.GetDrawingText()
+    #         imtext = base64.b64encode(text).decode("utf8")
+    #         html = '<img src="data:image/png;base64, {img}" alt="rdkit image">'
+    #         return format_html(html, img=imtext)
+    #     return format_html("<strong>There is no image for this entry.<strong>")
 
-    display_mol.short_description = "Display rdkit image"
+    # display_mol.short_description = "Display rdkit image"
 
 
 class SpeciesMetadata(models.Model):
