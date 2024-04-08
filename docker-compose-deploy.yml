@@ -20,7 +20,8 @@ services:
       - db
 
   db:
-    image: mcs07/postgres-rdkit
+    # image: mcs07/postgres-rdkit
+    image: joellduerksen/postgres-rdkit:Release_2022_03_4
     restart: always
     ports:
       - "5430:5432"

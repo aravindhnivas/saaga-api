@@ -28,7 +28,8 @@ services:
     depends_on:
       - db
   db:
-    image: mcs07/postgres-rdkit
+    # image: mcs07/postgres-rdkit
+    image: joellduerksen/postgres-rdkit:Release_2022_03_4
     volumes:
       - dev-db-data-herzberg:/var/lib/postgresql/data
     ports:
