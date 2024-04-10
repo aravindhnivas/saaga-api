@@ -640,12 +640,17 @@ class DirectReferenceAPI(APIView):
 
         # reference_serializer = serializers.ReferenceSerializer(data=request.data)
         if not ref_obj:
-            reference_serializer = serializers.ReferenceSerializer(data=request.data)
+
+            request_data = request.data.copy()
+            request_data.pop("notes", None)  # Remove 'notes' key
+            reference_serializer = serializers.ReferenceSerializer(data=request_data)
+
+            # reference_serializer = serializers.ReferenceSerializer(data=request.data)
             reference_serializer.is_valid(raise_exception=True)
-            print(f"Saving new reference. {ref_url=}")
+            # print(f"Saving new reference. {ref_url=}")
             reference_serializer.save(uploaded_by=request.user, approved=True)
             ref_obj = reference_serializer.instance
-            print(f"{reference_serializer.validated_data=}")
+            # print(f"{reference_serializer.validated_data=}")
 
         ref_id = ref_obj.id
         # print(f"{ref_id=}")
