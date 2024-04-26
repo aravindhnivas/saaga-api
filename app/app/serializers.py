@@ -21,6 +21,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
                 "is_staff",
                 "is_superuser",
                 "is_active",
+                "is_verified",
             ],
         )
 
