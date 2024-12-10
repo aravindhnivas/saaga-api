@@ -10,7 +10,8 @@ requests==2.31.0
 numpy==1.20
 scipy==1.7.3
 django-simple-history==3.4.0
-uwsgi>=2.0.19<2.1
+# uwsgi>=2.0.19<2.1
+uwsgi>=2.0.19,<2.1
 django-cors-headers==4.3.1
 django-filter==23.5
 django-rest-multiple-models==2.1.3
