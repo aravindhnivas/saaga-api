@@ -22,12 +22,12 @@ _Note: the `-p` flag is used to specify the project name, which is used as the p
 ### Login as a root user in the app container
 
 `docker exec -u 0 -it dev_app_1 /bin/bash`
+
 - `docker exec`: This is the Docker command to run a command in a running container.
 - `-u 0`: This option specifies that the command should be run as the root user.
 - `-it`: These options make the command interactive (-i) and allocate a pseudo-TTY (-t), which makes it feel like you're directly typing in the container's terminal.
 - `dev_app_1`: This should be replaced with the name or ID of your container.
 - `/bin/bash`: This is the command to run in the container. It starts a Bash shell.
-
 
 ## Create a superuser
 
@@ -39,16 +39,15 @@ Now navigate to <http://localhost:8000/api/user/token> and login with the superu
 Authenticate with the token in the header of the request
 `Token <token>`
 
-
 ## Logging in as a root user in docker teminal
 
 `docker exec -u 0 -it container_name /bin/bash`
 
- - `docker exec`: This is the Docker command to run a command in a running container.
- - `-u 0`: This option specifies that the command should be run as the root user.
- - `-it`: These options make the command interactive (-i) and allocate a pseudo-TTY (-t), which makes it feel like you're directly typing in the container's terminal.
+- `docker exec`: This is the Docker command to run a command in a running container.
+- `-u 0`: This option specifies that the command should be run as the root user.
+- `-it`: These options make the command interactive (-i) and allocate a pseudo-TTY (-t), which makes it feel like you're directly typing in the container's terminal.
 container_name`: This should be replaced with the name or ID of your container.
- - `/bin/bash`: This is the command to run in the container. It starts a Bash shell.
+- `/bin/bash`: This is the command to run in the container. It starts a Bash shell.
 
 After running this command, you'll be logged into the container as the root user and can run any commands you need.
 
@@ -59,11 +58,11 @@ This is usefull to run commands like `python manage.py makemigrations`, `python 
 `docker-compose -p prod -f docker-compose-deploy.yml run db psql postgresql://rootuser:saagadb@db:5432/dbname`
 
 if needed replace (as defined in the docker-compose file) or .env file:
+
 - `rootuser` with the username
 - `saagadb` with the password
 - `5432` with the port
 - `dbname` with the database name
-
 
 ## Reset the database
 
@@ -74,3 +73,9 @@ CREATE SCHEMA public; # To create the schema
 ```
 
 restart the docker container
+
+<!-- PGADMIN web interface -->
+Host name/address: host.docker.internal
+Port: 5430
+
+Using `host.docker.internal` is the proper way for containers to connect to services running on the host machine.
