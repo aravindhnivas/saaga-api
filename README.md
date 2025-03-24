@@ -46,7 +46,7 @@ Authenticate with the token in the header of the request
 - `docker exec`: This is the Docker command to run a command in a running container.
 - `-u 0`: This option specifies that the command should be run as the root user.
 - `-it`: These options make the command interactive (-i) and allocate a pseudo-TTY (-t), which makes it feel like you're directly typing in the container's terminal.
-container_name`: This should be replaced with the name or ID of your container.
+- `container_name`: This should be replaced with the name or ID of your container.
 - `/bin/bash`: This is the command to run in the container. It starts a Bash shell.
 
 After running this command, you'll be logged into the container as the root user and can run any commands you need.
