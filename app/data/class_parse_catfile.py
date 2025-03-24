@@ -242,8 +242,8 @@ class Catalog(object):
             # # Replace zeros in eq2 with a small constant to avoid division by zero
             # eq2 = np.where(eq2 == 0, 1e-25, eq2)
 
-            print(f"{self.elow=}, {self.eup=}, {self.frequency=}")
-            print(f"{eq1=}, {eq2=}")
+            # print(f"{self.elow=}, {self.eup=}, {self.frequency=}")
+            # print(f"{eq1=}, {eq2=}")
 
             # Calculate sijmu and aij normally, but avoid division by zero by using np.where
             # self.sijmu = np.where(eq2 != 0, eq1 / eq2, np.nan)
