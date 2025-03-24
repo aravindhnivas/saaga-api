@@ -260,6 +260,7 @@ class SpeciesMetadata(models.Model):
         db_index=True,
         related_name="species_metadata_uploads",
     )
+    request_immediate_approval = models.BooleanField(default=False, db_index=True)
     molecule_tag = models.IntegerField(blank=True, null=True, db_index=True)
     hyperfine = models.BooleanField(db_index=True)
     degree_of_freedom = models.IntegerField()

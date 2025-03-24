@@ -925,6 +925,7 @@ class LineViewSet(viewsets.ModelViewSet):
             subject = f"[SaagaDb] {self.request.user.name}: New species metadata uploaded for approval"
             message = textwrap.dedent(
                 f"""
+                {'REQUESTED URGENT APPROVAL' if meta_obj.request_immediate_approval else ''}
                 New metadata for {meta_obj.species.iupac_name} has been uploaded by {self.request.user.name} ({self.request.user.email}).
                 Please review and approve it.
                 {settings.FRONTEND_URL}/admin/dashboard/approve-data/{self.request.user.id}

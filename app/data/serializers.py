@@ -175,6 +175,7 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "uploaded_by",
             "created_at",
             "cat_file_added",
+            "request_immediate_approval"
         ]
         read_only_fields = [
             "id",
