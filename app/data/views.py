@@ -7,7 +7,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-
+from core.models import BaseModel
 # from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django_rdkit.models import QMOL, Value  # noqa: F403
@@ -49,15 +49,53 @@ from rest_framework.parsers import MultiPartParser
 
 from_email = settings.EMAIL_HOST_USER
 
+class BaseApprovalViewSet(viewsets.ModelViewSet):
+    """
+    Base ViewSet for models inheriting from BaseModel, handling automatic
+    setting of 'processed_by' on status change during updates.
+    """
 
-class LinelistViewSet(viewsets.ModelViewSet):
+    def perform_update(self, serializer):
+        """Set processed_by user on status change to approved/rejected."""
+        
+        # Get the instance *before* potentially popping data
+        instance = serializer.instance 
+        original_status = instance.status # Get current status from the instance
+        
+        # Get the incoming status from validated data, if present
+        new_status = serializer.validated_data.get('status', original_status) # Default to original if not provided
+        
+        save_kwargs = {} # Arguments to pass to serializer.save()
+
+        # --- Handle History Change Reason ---
+        change_reason = serializer.validated_data.pop('_change_reason', None)
+        if change_reason:
+             # Set _change_reason on the instance for simple-history
+             instance._change_reason = change_reason 
+        elif new_status != original_status:
+             # Optionally, set a default reason if status changes but no reason given
+             instance._change_reason = f"Status changed to {new_status} via API" 
+
+        # --- Handle processed_by ---
+        # Set 'processed_by' if the status is *changing* to approved or rejected
+        if new_status != original_status and new_status in [BaseModel.STATUS_APPROVED, BaseModel.STATUS_REJECTED]:
+            save_kwargs['processed_by'] = self.request.user
+        # Optional: Clear 'processed_by' if changing *away* from approved/rejected back to pending
+        elif new_status != original_status and new_status == BaseModel.STATUS_PENDING:
+             save_kwargs['processed_by'] = None # Explicitly clear
+
+        # Save the serializer, passing any extra kwargs
+        serializer.save(**save_kwargs)
+
+
+class LinelistViewSet(BaseApprovalViewSet):
     """View for linelist APIs."""
 
     serializer_class = serializers.LinelistSerializer
     queryset = Linelist.objects.all()
     authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ("approved", "uploaded_by", "linelist_name")
+    filterset_fields = ("status", "uploaded_by", "linelist_name")
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -70,8 +108,9 @@ class LinelistViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new linelist and autopopulate uploaded_by and approved field."""
         user = self.request.user
-        approved = user.is_superuser
-        serializer.save(uploaded_by=self.request.user, approved=approved)
+        status = "pending" if not user.is_superuser else "approved"
+        processed_by = user if status == "approved" else None
+        serializer.save(uploaded_by=user, status=status, processed_by=processed_by)
 
     def get_queryset(self):
         """Retrieve linelists."""
@@ -117,13 +156,14 @@ class LinelistViewSet(viewsets.ModelViewSet):
 
 class ReferenceFilter(filters.FilterSet):
     doi = filters.CharFilter(method="filter_doi")
-    approved = filters.BooleanFilter()
+    # approved = filters.BooleanFilter()
+    status = filters.CharFilter()
     uploaded_by = filters.NumberFilter()
     ref_url = filters.CharFilter(lookup_expr="icontains")
 
     class Meta:
         model = Reference
-        fields = ["doi", "approved", "uploaded_by", "ref_url"]
+        fields = ["doi", "status", "uploaded_by", "ref_url"]
 
     def filter_doi(self, queryset, name, value):
         if "doi.org/" in value:
@@ -131,7 +171,7 @@ class ReferenceFilter(filters.FilterSet):
         return queryset.filter(Q(doi__icontains=value) | Q(doi__iexact=value))
 
 
-class ReferenceViewSet(viewsets.ModelViewSet):
+class ReferenceViewSet(BaseApprovalViewSet):
     """View for reference APIs."""
 
     serializer_class = serializers.ReferenceSerializer
@@ -154,7 +194,7 @@ class ReferenceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by field."""
-        serializer.save(uploaded_by=self.request.user, approved=True)
+        serializer.save(uploaded_by=self.request.user, status="approved", processed_by=self.request.user)
 
     def get_serializer_class(self):
         """Return the serializer class for request."""
@@ -244,14 +284,14 @@ class ReferenceViewSet(viewsets.ModelViewSet):
         ]
     )
 )
-class SpeciesViewSet(viewsets.ModelViewSet):
+class SpeciesViewSet(BaseApprovalViewSet):
     """View for species APIs."""
 
     serializer_class = serializers.SpeciesSerializer
     queryset = Species.objects.all()
     authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ("approved", "uploaded_by", "selfies", "smiles")
+    filterset_fields = ("status", "uploaded_by", "selfies", "smiles")
 
     def get_permissions(self):
         """No authentication required for GET requests."""
@@ -297,7 +337,8 @@ class SpeciesViewSet(viewsets.ModelViewSet):
             selfies=selfies_string,
             molecular_mass=molecular_mass,
             uploaded_by=self.request.user,
-            approved=True,
+            status="approved",
+            processed_by=self.request.user,
         )
 
     @extend_schema(
@@ -331,7 +372,7 @@ class SpeciesViewSet(viewsets.ModelViewSet):
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SpeciesMetadataViewSet(viewsets.ModelViewSet):
+class SpeciesMetadataViewSet(BaseApprovalViewSet):
     """View for species metadata APIs."""
 
     serializer_class = serializers.SpeciesMetadataSerializer
@@ -339,7 +380,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
-        "approved",
+        "status",
         "uploaded_by",
         "species",
         "linelist",
@@ -421,6 +462,8 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
         # if var_file:
         #     a_const, b_const, c_const = read_varfile(var_file)
 
+        status = "pending" if not self.request.user.is_superuser else "approved"
+        processed_by = self.request.user if status == "approved" else None
         data_to_save = {
             "mu_a": mu_a,
             "mu_b": mu_b,
@@ -430,7 +473,8 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             "c_const": c_const,
             "partition_function": partition_dict,
             "uploaded_by": self.request.user,
-            "approved": self.request.user.is_superuser,
+            "status": status,
+            "processed_by": processed_by,
         }
 
         # Remove None values from the dictionary
@@ -496,7 +540,7 @@ class SpeciesMetadataViewSet(viewsets.ModelViewSet):
             return Response(response_msg, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SpeciesMetadataMiscFileUploadView(viewsets.ModelViewSet):
+class SpeciesMetadataMiscFileUploadView(BaseApprovalViewSet):
 
     queryset = SpeciesMetadataMiscFileUpload.objects.all()
     serializer_class = serializers.SpeciesMetadataMiscFileUploadSerializer
@@ -537,7 +581,7 @@ class SpeciesMetadataMiscFileUploadView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class MetaReferenceViewSet(viewsets.ModelViewSet):
+class MetaReferenceViewSet(BaseApprovalViewSet):
     """View for meta reference APIs."""
 
     serializer_class = serializers.MetaReferenceSerializer
@@ -545,7 +589,7 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = (
-        "approved",
+        "status",
         "uploaded_by",
         "meta",
         "ref",
@@ -563,9 +607,10 @@ class MetaReferenceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by and approved field."""
-        serializer.save(
-            uploaded_by=self.request.user, approved=self.request.user.is_superuser
-        )
+        
+        status = "pending" if not self.request.user.is_superuser else "approved"
+        processed_by = self.request.user if status == "approved" else None
+        serializer.save(uploaded_by=self.request.user, status=status, processed_by=processed_by)
 
     def get_queryset(self):
         """Retrieve meta references."""
@@ -648,7 +693,7 @@ class DirectReferenceAPI(APIView):
             # reference_serializer = serializers.ReferenceSerializer(data=request.data)
             reference_serializer.is_valid(raise_exception=True)
             # print(f"Saving new reference. {ref_url=}")
-            reference_serializer.save(uploaded_by=request.user, approved=True)
+            reference_serializer.save(uploaded_by=request.user, status="approved")
             ref_obj = reference_serializer.instance
             # print(f"{reference_serializer.validated_data=}")
 
@@ -661,10 +706,9 @@ class DirectReferenceAPI(APIView):
         metareference_serializer = serializers.MetaReferenceSerializer(data=data)
         metareference_serializer.is_valid(raise_exception=True)
 
-        metareference_serializer.save(
-            uploaded_by=request.user,
-            approved=request.user.is_superuser,
-        )
+        status = "pending" if not request.user.is_superuser else "approved"
+        processed_by = request.user if status == "approved" else None
+        metareference_serializer.save(uploaded_by=request.user, status=status, processed_by=processed_by)
 
         meta_ref_obj = metareference_serializer.instance
 
@@ -1004,7 +1048,7 @@ class LineViewSet(viewsets.ModelViewSet):
 class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
     # permission_classes = [IsAdminUser]
     filter_backends = (filters.DjangoFilterBackend,)
-    filterset_fields = ("approved", "uploaded_by")
+    filterset_fields = ("status", "uploaded_by")
 
     querylist = [
         {
@@ -1028,70 +1072,149 @@ class MetaRefAndSpeciesViewSet(ObjectMultipleModelAPIView):
     ]
 
 
+# class UploadedDataLengthView(APIView):
+#     def get(self, request, user_id: int, format=None):
+
+#         user = (
+#             get_user_model()
+#             .objects.filter(id=user_id)
+#             .prefetch_related(
+#                 "species_uploads",
+#                 "species_metadata_uploads",
+#                 "reference_uploads",
+#                 "meta_reference_uploads",
+#             )
+#             .first()
+#         )
+
+#         # Get the current user as approver (just in case the user is an approver for other users)
+
+#         if not user:
+#             return Response(status=status.HTTP_404_NOT_FOUND)
+
+#         # current_approver = self.user.first()
+#         # Initialize an empty dictionary to hold the unapproved counts for each user
+#         unapproved_counts = []
+
+#         if user.is_staff:
+#             # get all the user whose approver is current approver
+#             dependent_users = user.dependent_users.all()
+
+#             unapproved_counts = dependent_users.values("id", "name").annotate(
+#                 species_metadata=Count(
+#                     "species_metadata_uploads",
+#                     filter=Q(
+#                         species_metadata_uploads__approved=False,
+#                         species_metadata_uploads__cat_file_added=True,
+#                     ),
+#                     distinct=True,
+#                 ),
+#                 meta_reference=Count(
+#                     "meta_reference_uploads",
+#                     filter=Q(meta_reference_uploads__approved=False),
+#                     distinct=True,
+#                 ),
+#             )
+
+#         total_length_full = {
+#             "species": user.species_uploads.count(),
+#             "species_metadata": user.species_metadata_uploads.count(),
+#             "reference": user.reference_uploads.count(),
+#             "meta_reference": user.meta_reference_uploads.count(),
+#         }
+
+#         total_length_approved = {
+#             "species": user.species_uploads.filter(status="approved").count(),
+#             "species_metadata": user.species_metadata_uploads.filter(
+#                 status="approved"
+#             ).count(),
+#             "reference": user.reference_uploads.filter(status="approved").count(),
+#             "meta_reference": user.meta_reference_uploads.filter(status="approved").count(),
+#         }
+
+#         return Response(
+#             {
+#                 "full": total_length_full,
+#                 "approved": total_length_approved,
+#                 "unapproved_counts": list(unapproved_counts),
+#             }
+#         )
 class UploadedDataLengthView(APIView):
+    # Assuming authentication and permissions are handled appropriately
+    
     def get(self, request, user_id: int, format=None):
 
+        # Use the actual related names generated by %(class)s_uploads
         user = (
             get_user_model()
             .objects.filter(id=user_id)
             .prefetch_related(
-                "species_uploads",
-                "species_metadata_uploads",
-                "reference_uploads",
-                "meta_reference_uploads",
+                "species_uploads",      # Correct for Species
+                "speciesmetadata_uploads", # Correct for SpeciesMetadata (lowercase)
+                "reference_uploads",    # Correct for Reference
+                "metareference_uploads", # Correct for MetaReference (lowercase)
             )
             .first()
         )
 
-        # Get the current user as approver (just in case the user is an approver for other users)
-
         if not user:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # current_approver = self.user.first()
-        # Initialize an empty dictionary to hold the unapproved counts for each user
         unapproved_counts = []
 
-        if user.is_staff:
-            # get all the user whose approver is current approver
-            dependent_users = user.dependent_users.all()
+        # Note: Checking request.user.is_staff might be more appropriate
+        # if this view requires the *requesting* user to be staff
+        # rather than the user being looked up (user_id). Adjust if needed.
+        if request.user.is_staff and request.user.id == user_id: # Example check: only staff can see their own dependents
+             # Or maybe: user.is_staff (if the user being looked up needs to be staff)
+            dependent_users = user.dependent_users.all() # Get users this user approves
 
             unapproved_counts = dependent_users.values("id", "name").annotate(
+                # Use correct related_names in annotations
                 species_metadata=Count(
-                    "species_metadata_uploads",
+                    "speciesmetadata_uploads", # Correct name
                     filter=Q(
-                        species_metadata_uploads__approved=False,
-                        species_metadata_uploads__cat_file_added=True,
+                        # Use correct relation name in Q object path
+                        speciesmetadata_uploads__status=BaseModel.STATUS_PENDING,
+                        speciesmetadata_uploads__cat_file_added=True, # Keep this filter if needed
                     ),
                     distinct=True,
                 ),
                 meta_reference=Count(
-                    "meta_reference_uploads",
-                    filter=Q(meta_reference_uploads__approved=False),
+                    "metareference_uploads", # Correct name
+                    # Use correct relation name in Q object path
+                    filter=Q(metareference_uploads__status=BaseModel.STATUS_PENDING),
                     distinct=True,
                 ),
             )
+        elif not request.user.is_staff and request.user.id != user_id:
+             # Non-staff users cannot view other users' data
+             return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+        # If it's a non-staff user viewing their own data, unapproved_counts remains empty []
 
+
+        # Use correct related_names to get counts
         total_length_full = {
             "species": user.species_uploads.count(),
-            "species_metadata": user.species_metadata_uploads.count(),
+            "species_metadata": user.speciesmetadata_uploads.count(), # Correct name
             "reference": user.reference_uploads.count(),
-            "meta_reference": user.meta_reference_uploads.count(),
+            "meta_reference": user.metareference_uploads.count(), # Correct name
         }
 
-        total_length_approved = {
-            "species": user.species_uploads.filter(approved=True).count(),
-            "species_metadata": user.species_metadata_uploads.filter(
-                approved=True
-            ).count(),
-            "reference": user.reference_uploads.filter(approved=True).count(),
-            "meta_reference": user.meta_reference_uploads.filter(approved=True).count(),
+        total_length_pending = { # Changed name from approved to pending for clarity
+            "species": user.species_uploads.filter(status=BaseModel.STATUS_PENDING).count(),
+            "species_metadata": user.speciesmetadata_uploads.filter(
+                status=BaseModel.STATUS_PENDING
+            ).count(), # Correct name
+            "reference": user.reference_uploads.filter(status=BaseModel.STATUS_PENDING).count(),
+            "meta_reference": user.metareference_uploads.filter(status=BaseModel.STATUS_PENDING).count(), # Correct name
         }
 
         return Response(
             {
                 "full": total_length_full,
-                "approved": total_length_approved,
+                "pending": total_length_pending, # Changed key name
+                # This key name might be confusing if it only applies to staff viewing dependents
                 "unapproved_counts": list(unapproved_counts),
             }
         )

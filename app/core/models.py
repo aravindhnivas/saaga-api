@@ -21,7 +21,7 @@ from simple_history.models import HistoricalRecords
 from simple_history import register
 from django.contrib.postgres.indexes import GistIndex
 from django.conf import settings
-
+from django.utils import timezone
 
 class ArbitraryDecimalField(models.DecimalField):
     """
@@ -150,39 +150,115 @@ class EmailVerificationToken(models.Model):
         return self.user.name + " verification token"
 
 
-class Linelist(models.Model):
-    """Linelist object."""
+class BaseModel(models.Model):
+    """Base model for all models in the database."""
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
 
-    linelist_name = models.CharField(max_length=255, unique=True, db_index=True)
-    approved = models.BooleanField(default=False, db_index=True)
+    status = models.CharField(
+        max_length=10, # Length accommodates 'pending', 'approved', 'rejected'
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        db_index=True,
+        help_text="Approval status of the record"
+    )
+    
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         db_index=True,
-        related_name="linelist_uploads",
+        related_name="%(class)s_uploads",
     )
+    
+    # User who performed the final approval or rejection
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_%(class)s",
+        verbose_name="Processed by",
+        help_text="User who approved or rejected this record"
+    )
+    # Timestamps for approval or rejection
+    processed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when the record was approved or rejected"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
+    history = HistoricalRecords(inherit=True)
+    
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        original_status = None
+
+        if not is_new:
+            try:
+                original = self.__class__.objects.get(pk=self.pk)
+                original_status = original.status
+            except self.__class__.DoesNotExist:
+                pass # Treat as new if original not found
+
+        now = timezone.now()
+        status_changed = original_status != self.status
+
+        # --- Handle Timestamp and User ---
+        # Set timestamp and user only if status changes TO approved or rejected
+        if status_changed and self.status in [self.STATUS_APPROVED, self.STATUS_REJECTED]:
+            self.processed_at = now
+            # Note: 'processed_by' should ideally be set *before* calling save()
+            # in the view/logic layer that performs the status change.
+            # If not set externally, it will remain unchanged here or be None.
+        # Clear timestamp and user if status changes AWAY FROM approved/rejected (e.g., back to pending)
+        elif status_changed and self.status == self.STATUS_PENDING:
+            self.processed_at = None
+            self.processed_by = None # Clear the user as well
+
+        # Handle initial creation with a non-pending status
+        if is_new and self.status in [self.STATUS_APPROVED, self.STATUS_REJECTED]:
+             if not self.processed_at: # Set timestamp if not already set
+                 self.processed_at = now
+             # Again, 'processed_by' should be set externally if known at creation
+        
+        # Call the parent save method
+        super().save(*args, **kwargs)
+
+    class Meta:
+        abstract = True
+        
+class Linelist(BaseModel):
+    """Linelist object."""
+
+    linelist_name = models.CharField(max_length=255, unique=True, db_index=True)
 
     def save(self, *args, **kwargs):
         self.linelist_name = self.linelist_name.lower()
-        return super(Linelist, self).save(*args, **kwargs)
-
+        # return super(Linelist, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return self.linelist_name
 
 
-class Reference(models.Model):
+class Reference(BaseModel):
     """Reference object."""
 
-    approved = models.BooleanField(default=True, db_index=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+    status = models.CharField(
+        max_length=10,
+        choices=BaseModel.STATUS_CHOICES,
+        default=BaseModel.STATUS_APPROVED, # <<< Set default to approved
         db_index=True,
-        related_name="reference_uploads",
+        help_text="Approval status of the record"
     )
+    
     doi = models.CharField(max_length=255, blank=True, db_index=True)
     ref_url = models.CharField(max_length=255, unique=True)
     bibtex = models.FileField(
@@ -190,26 +266,24 @@ class Reference(models.Model):
         validators=[FileExtensionValidator(allowed_extensions=["bib"])],
     )
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
 
     def __str__(self):
         return self.ref_url
+    
 
-
-class Species(models.Model):
+class Species(BaseModel):
     """Species object."""
 
     class Meta:
         verbose_name_plural = "Species"
         indexes = [GistIndex(fields=["mol_obj"])]
 
-    approved = models.BooleanField(default=True, db_index=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+    status = models.CharField(
+        max_length=10,
+        choices=BaseModel.STATUS_CHOICES,
+        default=BaseModel.STATUS_APPROVED, # <<< Set default to approved
         db_index=True,
-        related_name="species_uploads",
+        help_text="Approval status of the record"
     )
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255, unique=True, db_index=True)
@@ -222,44 +296,17 @@ class Species(models.Model):
     selfies = models.CharField(max_length=255)
     mol_obj = models.MolField()
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
 
     def __str__(self):
         return self.iupac_name
 
-    # @cached_property
-    # def display_mol(self):
-    #     """function for displaying the rdkit mol object in the
-    #     form of image in django admin."""
-    #     if self.mol_obj:
-    #         dm = Draw.PrepareMolForDrawing(self.mol_obj)
-    #         d2d = Draw.MolDraw2DCairo(400, 400)
-    #         d2d.DrawMolecule(dm)
-    #         d2d.FinishDrawing()
-    #         text = d2d.GetDrawingText()
-    #         imtext = base64.b64encode(text).decode("utf8")
-    #         html = '<img src="data:image/png;base64, {img}" alt="rdkit image">'
-    #         return format_html(html, img=imtext)
-    #     return format_html("<strong>There is no image for this entry.<strong>")
-
-    # display_mol.short_description = "Display rdkit image"
-
-
-class SpeciesMetadata(models.Model):
+class SpeciesMetadata(BaseModel):
     """Species metadata object."""
 
     class Meta:
         verbose_name_plural = "Species metadata"
 
     species = models.ForeignKey("Species", on_delete=models.PROTECT, db_index=True)
-    approved = models.BooleanField(default=False, db_index=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        db_index=True,
-        related_name="species_metadata_uploads",
-    )
     request_immediate_approval = models.BooleanField(default=False, db_index=True)
     molecule_tag = models.IntegerField(blank=True, null=True, db_index=True)
     hyperfine = models.BooleanField(db_index=True)
@@ -308,9 +355,7 @@ class SpeciesMetadata(models.Model):
     contains_rovibrational = models.BooleanField(null=True)
     qn_label_str = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     cat_file_added = models.BooleanField(default=False)
-    history = HistoricalRecords()
 
     class Meta:
         unique_together = ["species", "linelist", "molecule_tag", "hyperfine"]
@@ -319,7 +364,7 @@ class SpeciesMetadata(models.Model):
         return "species metadata of " + self.species.iupac_name
 
 
-class SpeciesMetadataMiscFileUpload(models.Model):
+class SpeciesMetadataMiscFileUpload(BaseModel):
     """Species metadata misc files object."""
 
     meta = models.ForeignKey(
@@ -328,43 +373,31 @@ class SpeciesMetadataMiscFileUpload(models.Model):
         db_index=True,
         related_name="misc_files",
     )
-    approved = models.BooleanField(default=True)
+    # approved = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=10,
+        choices=BaseModel.STATUS_CHOICES,
+        default=BaseModel.STATUS_APPROVED, # <<< Set default to approved
+        db_index=True,
+        help_text="Approval status of the record"
+    )
+    # rejected = models.BooleanField(default=False, db_index=True)
     misc_file = models.FileField(upload_to=sp_file_path)
     name = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        db_index=True,
-        related_name="sp_misc_files",
-    )
-    history = HistoricalRecords()
-
-    # class Meta:
-    #     unique_together = ["meta", "name"]
 
     def __str__(self):
         return "misc file of " + self.meta.species.iupac_name
 
 
-class MetaReference(models.Model):
+class MetaReference(BaseModel):
     """Metadata reference object relating species metadata with references"""
 
-    approved = models.BooleanField(default=False, db_index=True)
-    uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        db_index=True,
-        related_name="meta_reference_uploads",
-    )
     meta = models.ForeignKey("SpeciesMetadata", on_delete=models.CASCADE, db_index=True)
     ref = models.ForeignKey("Reference", on_delete=models.CASCADE, db_index=True)
     dipole_moment = models.BooleanField()
     spectrum = models.BooleanField()
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    history = HistoricalRecords()
 
     class Meta:
         unique_together = ["meta", "ref"]
@@ -411,7 +444,6 @@ class Line(models.Model):
     contains_rovibrational = models.BooleanField(default=False)
     qn_label_str = models.CharField(max_length=255, blank=True)
     notes = models.TextField(blank=True)
-
     history = HistoricalRecords()
 
     class Meta:
