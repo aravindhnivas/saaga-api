@@ -11,6 +11,13 @@ from .models import user_saved_with_approvers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+print("Signals are working")
+# print(settings.DEBUG)
+
+# DISABLE_EMAILS = False
+DISABLE_EMAILS = True
+print(f"DISABLE_EMAILS: {DISABLE_EMAILS}")
+
 
 def generate_verification_token():
     """Generates a unique, random token"""
@@ -26,7 +33,10 @@ User = get_user_model()
 
 @receiver(post_save, sender=EmailVerificationToken)
 def send_verification_email(sender, instance, created, **kwargs):
-
+    if DISABLE_EMAILS:
+        print("Emails disabled. Skipping email notification.")
+        return
+    
     user = instance.user
     token = instance.token
 
@@ -35,6 +45,7 @@ def send_verification_email(sender, instance, created, **kwargs):
         message = f"Click the link below to verify your email: \n{settings.FRONTEND_URL}/api/user/verify-email/?token={token}"
         recipient_list = [user.email]
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+        print(f"Email sent successfully to {user.email}")
 
 
 @receiver(pre_save, sender=User)
@@ -47,9 +58,12 @@ def set_original_is_staff(sender, instance, **kwargs):
         instance._original_is_staff = None
 
 
-# @receiver(post_save, sender=User)
 @receiver(user_saved_with_approvers)
 def user_created_signal(sender, instance, created, **kwargs):
+    if DISABLE_EMAILS:
+        print("Emails disabled. Skipping email notification.")
+        return
+    
     message = ""
     if not instance.approver:
         print("Approver not set")
@@ -80,13 +94,17 @@ def user_created_signal(sender, instance, created, **kwargs):
     ).strip()
 
     if message:
-        recipient_list = [instance.email]
+        recipient_list = [instance.email] 
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         print(f"Email sent successfully to {instance.email}")
 
 
 @receiver(post_save, sender=User)
 def user_updated_signal(sender, instance, created, **kwargs):
+    if DISABLE_EMAILS:
+        print("Emails disabled. Skipping email notification.")
+        return
+    
     message = ""
     if not created:
         if instance.is_staff and instance.is_staff != instance._original_is_staff:
@@ -120,6 +138,10 @@ def user_updated_signal(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=MetaReference)
 def send_meta_ref_update_notification(sender, instance, created, **kwargs):
+    if DISABLE_EMAILS:
+        print("Emails disabled. Skipping email notification.")
+        return
+        
     user = instance.uploaded_by
     if created and not instance.approved and user.approver:
         subject = f"[SaagaDb] {user.name}: New reference metadata uploaded for approval"
@@ -145,6 +167,9 @@ def send_meta_ref_update_notification(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=SpeciesMetadata)
 def send_meta_species_update_notification(sender, instance, created, **kwargs):
+    if DISABLE_EMAILS:
+        print("Emails disabled. Skipping email notification.")
+        return
     user = instance.uploaded_by
 
     if not user or not user.approver:
@@ -170,8 +195,9 @@ def send_email_test():
         message = "This is a test message."
         from_email = settings.EMAIL_HOST_USER
         recipient_list = ["nivasm@mit.edu"]
-        send_mail(subject, message, from_email, recipient_list, fail_silently=True)
-        print("Email sent successfully")
+        if not DISABLE_EMAILS: 
+            send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+            print("Email sent successfully")
     except Exception as e:
         print(e)
         print("Email not sent")

@@ -1036,9 +1036,9 @@ class UploadedDataLengthView(APIView):
             .objects.filter(id=user_id)
             .prefetch_related(
                 "species_uploads",
-                "species_metadata_uploads",
+                "speciesmetadata_uploads",
                 "reference_uploads",
-                "meta_reference_uploads",
+                "metareference_uploads",
             )
             .first()
         )
@@ -1058,34 +1058,34 @@ class UploadedDataLengthView(APIView):
 
             unapproved_counts = dependent_users.values("id", "name").annotate(
                 species_metadata=Count(
-                    "species_metadata_uploads",
+                    "speciesmetadata_uploads",
                     filter=Q(
-                        species_metadata_uploads__approved=False,
-                        species_metadata_uploads__cat_file_added=True,
+                        speciesmetadata_uploads__approved=False,
+                        speciesmetadata_uploads__cat_file_added=True,
                     ),
                     distinct=True,
                 ),
                 meta_reference=Count(
-                    "meta_reference_uploads",
-                    filter=Q(meta_reference_uploads__approved=False),
+                    "metareference_uploads",
+                    filter=Q(metareference_uploads__approved=False),
                     distinct=True,
                 ),
             )
 
         total_length_full = {
             "species": user.species_uploads.count(),
-            "species_metadata": user.species_metadata_uploads.count(),
+            "species_metadata": user.speciesmetadata_uploads.count(),
             "reference": user.reference_uploads.count(),
-            "meta_reference": user.meta_reference_uploads.count(),
+            "meta_reference": user.metareference_uploads.count(),
         }
 
         total_length_approved = {
             "species": user.species_uploads.filter(approved=True).count(),
-            "species_metadata": user.species_metadata_uploads.filter(
+            "species_metadata": user.speciesmetadata_uploads.filter(
                 approved=True
             ).count(),
             "reference": user.reference_uploads.filter(approved=True).count(),
-            "meta_reference": user.meta_reference_uploads.filter(approved=True).count(),
+            "meta_reference": user.metareference_uploads.filter(approved=True).count(),
         }
 
         return Response(
