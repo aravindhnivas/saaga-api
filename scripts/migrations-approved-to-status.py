@@ -20,7 +20,7 @@ for model in apps.get_models():
                 instance.status = (
                     model.STATUS_APPROVED if instance.approved else model.STATUS_PENDING
                 )
-                if not instance.processed_by and default_user:
+                if instance.approved and not instance.processed_by and default_user:
                     instance.processed_by = default_user
                 instance.save(update_fields=["status", "processed_by"])
 

@@ -12,74 +12,113 @@ from core.models import (
     Reference,
     MetaReference,
     Line,
+    BaseModel
 )
 
+# --- Base Serializers ---
 
-class LinelistSerializer(serializers.ModelSerializer):
-    """Serialzer for linelists."""
+class BaseSerializer(serializers.ModelSerializer):
+    """
+    Base serializer for models inheriting from BaseModel.
+    Includes common status and tracking fields.
+    """
+    status = serializers.ChoiceField(choices=BaseModel.STATUS_CHOICES, required=False)
+    uploaded_by_name = serializers.CharField(source='uploaded_by.name', read_only=True)
+    processed_by_name = serializers.CharField(source='processed_by.name', read_only=True, allow_null=True)
 
     class Meta:
+        # No model defined here, subclasses will specify it
+        fields = [
+            "id",
+            "status",
+            "uploaded_by",
+            "uploaded_by_name",
+            "processed_by",
+            "processed_by_name",
+            "processed_at",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "uploaded_by",
+            "uploaded_by_name",
+            "processed_by",
+            "processed_by_name",
+            "processed_at",
+            "created_at",
+        ]
+
+# Change inheritance from serializers.ModelSerializer to BaseSerializer
+class LinelistSerializer(BaseSerializer):
+    """Serializer for linelists."""
+
+    class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = Linelist
-        fields = ["id", "linelist_name", "uploaded_by", "approved", "created_at"]
-        read_only_fields = ["id", "uploaded_by", "created_at"]
+        # Add model-specific fields to the base fields
+        fields = BaseSerializer.Meta.fields + ["linelist_name"]
+        # Inherit read_only_fields from BaseSerializer
+        # read_only_fields are inherited, no need to redefine unless adding more
+        
 
-
+# Change inheritance to LinelistSerializer
 class LinelistChangeSerializer(LinelistSerializer):
     """Serializer for put and patch linelists."""
-
+    # Add change reason directly
     _change_reason = serializers.CharField(
         max_length=255, write_only=True, required=True
     )
 
-    class Meta(LinelistSerializer.Meta):
+    class Meta(LinelistSerializer.Meta): # Inherit Meta from LinelistSerializer
+        # Add _change_reason to the fields inherited from LinelistSerializer
         fields = LinelistSerializer.Meta.fields + ["_change_reason"]
-
-
-class ReferenceSerializer(serializers.ModelSerializer):
+        # Define read_only_fields specifically for the update context.
+        # Usually, only system/base fields that should never change are read-only here.
+        # Fields like 'linelist_name' should NOT be read-only during an update.
+        read_only_fields = BaseSerializer.Meta.read_only_fields # Start with base system read-only fields
+        
+# Change inheritance from serializers.ModelSerializer to BaseSerializer
+class ReferenceSerializer(BaseSerializer):
     """Serializer for references."""
 
-    class Meta:
+    class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = Reference
-        fields = [
-            "id",
+        # Update fields list: remove approved/rejected, base fields are inherited
+        fields = BaseSerializer.Meta.fields + [
             "doi",
             "ref_url",
             "bibtex",
             "notes",
-            "uploaded_by",
-            "approved",
-            "created_at",
         ]
-        read_only_fields = ["id", "uploaded_by", "created_at"]
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["uploaded_by_name"] = instance.uploaded_by.name
-        return representation
-
-
+# Change inheritance to ReferenceSerializer
 class ReferenceChangeSerializer(ReferenceSerializer):
     """Serializer for put and patch references."""
-
+    # Add change reason directly
     _change_reason = serializers.CharField(
         max_length=255, write_only=True, required=True
     )
+    # Override bibtex if it needs to be writable here but was read-only in ReferenceSerializer
+    bibtex = serializers.FileField(required=False, allow_null=True)
 
-    class Meta(ReferenceSerializer.Meta):
+    class Meta(ReferenceSerializer.Meta): # Inherit Meta from ReferenceSerializer
+        # Add _change_reason to the fields inherited from ReferenceSerializer
         fields = ReferenceSerializer.Meta.fields + ["_change_reason"]
-
-
-class SpeciesSerializer(serializers.ModelSerializer):
+        # Define read_only_fields for the update context.
+        # Fields like 'doi', 'ref_url', 'notes', 'bibtex' should NOT be read-only here.
+        read_only_fields = BaseSerializer.Meta.read_only_fields # Start with base system read-only fields
+        
+# Change inheritance from serializers.ModelSerializer to BaseSerializer
+class SpeciesSerializer(BaseSerializer):
     """Serializer for species."""
 
     molecular_mass = serializers.DecimalField(
         max_digits=None, decimal_places=None, read_only=True
     )
 
-    class Meta:
+    class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = Species
-        fields = [
-            "id",
+        # Update fields list: remove approved/rejected, base fields are inherited
+        fields = BaseSerializer.Meta.fields + [
             "name",
             "iupac_name",
             "name_formula",
@@ -90,63 +129,65 @@ class SpeciesSerializer(serializers.ModelSerializer):
             "standard_inchi_key",
             "selfies",
             "notes",
-            "uploaded_by",
-            "approved",
-            "created_at",
         ]
-        read_only_fields = [
-            "id",
+        # Update read_only_fields: base fields are inherited, add specifics
+        read_only_fields = BaseSerializer.Meta.read_only_fields + [
             "molecular_mass",
             "selfies",
-            "uploaded_by",
-            "created_at",
         ]
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["uploaded_by_name"] = instance.uploaded_by.name
-        return representation
-
-
+# Change inheritance to SpeciesSerializer
 class SpeciesChangeSerializer(SpeciesSerializer):
     """Serializer for put and patch species."""
-
+    # Add change reason directly
     _change_reason = serializers.CharField(
         max_length=255, write_only=True, required=True
     )
+    # Define mol_obj here if it's only relevant for updates
+    mol_obj = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
-    class Meta(SpeciesSerializer.Meta):
-        fields = SpeciesSerializer.Meta.fields + ["_change_reason", "mol_obj"]
-        read_only_fields = ["id"]
+    class Meta(SpeciesSerializer.Meta): # Inherit Meta from SpeciesSerializer
+        # Add _change_reason and potentially mol_obj to inherited fields
+        # Ensure mol_obj isn't duplicated if already added in SpeciesSerializer
+        _extra_fields = ["_change_reason"]
+        if "mol_obj" not in SpeciesSerializer.Meta.fields:
+             _extra_fields.append("mol_obj")
+        fields = SpeciesSerializer.Meta.fields + _extra_fields
 
+        # Define read_only_fields for the update context.
+        # Inherited fields like 'molecular_mass', 'selfies' remain read-only.
+        # Fields like 'name', 'smiles', 'notes', 'mol_obj' should NOT be read-only here.
+        read_only_fields = BaseSerializer.Meta.read_only_fields + [
+            "molecular_mass", # Calculated field
+            "selfies",        # Derived field
+        ]
 
-class SpeciesMetadataSerializer(serializers.ModelSerializer):
+# Change inheritance from serializers.ModelSerializer to BaseSerializer
+class SpeciesMetadataSerializer(BaseSerializer):
     """Serializer for species metadata."""
 
-    mu_a = serializers.DecimalField(
-        max_digits=None, decimal_places=None, required=False, allow_null=True
-    )
-    mu_b = serializers.DecimalField(
-        max_digits=None, decimal_places=None, required=False, allow_null=True
-    )
-    mu_c = serializers.DecimalField(
-        max_digits=None, decimal_places=None, required=False, allow_null=True
-    )
-    a_const = serializers.DecimalField(
-        max_digits=None, decimal_places=None, required=False, allow_null=True
-    )
-    b_const = serializers.DecimalField(
-        max_digits=None, decimal_places=None, required=False, allow_null=True
-    )
-    c_const = serializers.DecimalField(
-        max_digits=None, decimal_places=None, required=False, allow_null=True
-    )
+    # Keep DecimalField definitions
+    mu_a = serializers.DecimalField(max_digits=None, decimal_places=None, required=False, allow_null=True)
+    mu_b = serializers.DecimalField(max_digits=None, decimal_places=None, required=False, allow_null=True)
+    mu_c = serializers.DecimalField(max_digits=None, decimal_places=None, required=False, allow_null=True)
+    a_const = serializers.DecimalField(max_digits=None, decimal_places=None, required=False, allow_null=True)
+    b_const = serializers.DecimalField(max_digits=None, decimal_places=None, required=False, allow_null=True)
+    c_const = serializers.DecimalField(max_digits=None, decimal_places=None, required=False, allow_null=True)
 
-    class Meta:
+    # Add related object names for readability using source=
+    species_smiles = serializers.CharField(source='species.smiles', read_only=True)
+    species_formula = serializers.CharField(source='species.name_formula', read_only=True)
+    species_name = serializers.CharField(source='species.iupac_name', read_only=True)
+    linelist_name = serializers.CharField(source='linelist.linelist_name', read_only=True)
+
+    class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = SpeciesMetadata
-        fields = [
-            "id",
-            "species",
+        # Update fields list: remove approved/rejected, base fields are inherited, add source fields
+        fields = BaseSerializer.Meta.fields + [
+            "species", # ID for relation
+            "species_smiles", # Read-only representation field
+            "species_formula",# Read-only representation field
+            "species_name",   # Read-only representation field
             "molecule_tag",
             "hyperfine",
             "degree_of_freedom",
@@ -158,7 +199,8 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "a_const",
             "b_const",
             "c_const",
-            "linelist",
+            "linelist", # ID for relation
+            "linelist_name", # Read-only representation field
             "data_date",
             "data_contributor",
             "qpart_file",
@@ -171,107 +213,144 @@ class SpeciesMetadataSerializer(serializers.ModelSerializer):
             "contains_rovibrational",
             "qn_label_str",
             "notes",
-            "approved",
-            "uploaded_by",
-            "created_at",
             "cat_file_added",
-            "request_immediate_approval"
+            "request_immediate_approval",
         ]
-        read_only_fields = [
-            "id",
+        # Update read_only_fields: base fields inherited, add specifics and source fields
+        read_only_fields = BaseSerializer.Meta.read_only_fields + [
             "partition_function",
-            "uploaded_by",
-            "created_at",
             "cat_file",
             "vib_qn",
             "contains_rovibrational",
             "qn_label_str",
             "cat_file_added",
+            "species_smiles",
+            "species_formula",
+            "species_name",
+            "linelist_name",
         ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation["species_smiles"] = instance.species.smiles
-        representation["species_formula"] = instance.species.name_formula
-        representation["species_name"] = instance.species.iupac_name
-        representation["linelist_name"] = instance.linelist.linelist_name
-        representation["uploaded_by_name"] = instance.uploaded_by.name
+        # Dynamically add misc files list
         representation["misc_files"] = [
             {"url": file.misc_file.url.replace("/static/media", ""), "name": file.name}
-            for file in instance.misc_files.all()
+            for file in instance.misc_files.filter(status=BaseModel.STATUS_APPROVED) # Example filter
         ]
         return representation
 
-
+# Change inheritance to SpeciesMetadataSerializer
 class SpeciesMetadataChangeSerializer(SpeciesMetadataSerializer):
     """Serializer for put and patch species metadata."""
-
+    # Add change reason directly
     _change_reason = serializers.CharField(
         max_length=255, write_only=True, required=True
     )
+    # Override file fields to make them writable if they weren't in the base
+    qpart_file = serializers.FileField(required=False, allow_null=True)
+    int_file = serializers.FileField(required=False, allow_null=True)
+    var_file = serializers.FileField(required=False, allow_null=True)
+    fit_file = serializers.FileField(required=False, allow_null=True)
+    lin_file = serializers.FileField(required=False, allow_null=True)
 
-    class Meta(SpeciesMetadataSerializer.Meta):
+    # Decimal fields definitions are inherited if not overridden
+
+    class Meta(SpeciesMetadataSerializer.Meta): # Inherit Meta from SpeciesMetadataSerializer
+        # Add _change_reason to the fields inherited from SpeciesMetadataSerializer
         fields = SpeciesMetadataSerializer.Meta.fields + ["_change_reason"]
-        read_only_fields = ["id"]
 
+        # Define read_only_fields for the update context.
+        # Keep the generated/derived fields read-only.
+        # Fields like 'species', 'linelist', 'notes', 'mu_a', file fields etc. should NOT be read-only here.
+        # The source-based fields (species_name etc.) are inherently read-only from the parent.
+        read_only_fields = BaseSerializer.Meta.read_only_fields + [
+            # Fields from parent that remain read-only during update
+            "partition_function",
+            "cat_file",
+            "vib_qn",
+            "contains_rovibrational",
+            "qn_label_str",
+            "cat_file_added",
+            # Representation fields are inherently read-only via source=
+            "species_smiles",
+            "species_formula",
+            "species_name",
+            "linelist_name",
+        ]
 
-class SpeciesMetadataMiscFileUploadSerializer(serializers.ModelSerializer):
-    class Meta:
+# Change inheritance from serializers.ModelSerializer to BaseSerializer
+class SpeciesMetadataMiscFileUploadSerializer(BaseSerializer):
+    class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = SpeciesMetadataMiscFileUpload
-        fields = (
-            "id",
+        # Update fields list: remove approved/rejected, base fields are inherited
+        fields = BaseSerializer.Meta.fields + [
             "meta",
             "misc_file",
             "name",
             "notes",
-            "approved",
-            "uploaded_by",
-            "created_at",
-        )
-        read_only_fields = ["id", "uploaded_by", "created_at"]
+        ]
+        # read_only_fields inherited
 
-
-class MetaReferenceSerializer(serializers.ModelSerializer):
+# Change inheritance from serializers.ModelSerializer to BaseSerializer
+class MetaReferenceSerializer(BaseSerializer):
     """Serializer for metadata references."""
+    # Add related names using source=
+    species_formula = serializers.CharField(source='meta.species.name_formula', read_only=True)
+    species_name = serializers.CharField(source='meta.species.iupac_name', read_only=True)
+    molecule_tag = serializers.IntegerField(source='meta.molecule_tag', read_only=True)
+    linelist_name = serializers.CharField(source='meta.linelist.linelist_name', read_only=True)
+    doi = serializers.CharField(source='ref.doi', read_only=True)
+    ref_url = serializers.CharField(source='ref.ref_url', read_only=True)
 
-    class Meta:
+    class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = MetaReference
-        fields = [
-            "id",
-            "meta",
-            "ref",
+        # Update fields list: remove approved/rejected, base fields inherited, add source fields
+        fields = BaseSerializer.Meta.fields + [
+            "meta", # Relation ID
+            "ref",  # Relation ID
+            "species_formula", # Read-only representation
+            "species_name",    # Read-only representation
+            "molecule_tag",    # Read-only representation
+            "linelist_name",   # Read-only representation
+            "doi",             # Read-only representation
+            "ref_url",         # Read-only representation
             "dipole_moment",
             "spectrum",
             "notes",
-            "uploaded_by",
-            "approved",
-            "created_at",
         ]
-        read_only_fields = ["id", "uploaded_by", "created_at"]
+        # Update read_only_fields: base fields inherited, add source fields
+        read_only_fields = BaseSerializer.Meta.read_only_fields + [
+            "species_formula",
+            "species_name",
+            "molecule_tag",
+            "linelist_name",
+            "doi",
+            "ref_url",
+        ]
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["species_formula"] = instance.meta.species.name_formula
-        representation["species_name"] = instance.meta.species.iupac_name
-        representation["molecule_tag"] = instance.meta.molecule_tag
-        representation["linelist_name"] = instance.meta.linelist.linelist_name
-        representation["doi"] = instance.ref.doi
-        representation["ref_url"] = instance.ref.ref_url
-        representation["uploaded_by_name"] = instance.uploaded_by.name
-        return representation
-
-
+# Change inheritance to MetaReferenceSerializer
 class MetaReferenceChangeSerializer(MetaReferenceSerializer):
     """Serializer for put and patch metadata references."""
-
+    # Add change reason directly
     _change_reason = serializers.CharField(
         max_length=255, write_only=True, required=True
     )
 
-    class Meta(MetaReferenceSerializer.Meta):
+    class Meta(MetaReferenceSerializer.Meta): # Inherit Meta from MetaReferenceSerializer
+        # Add _change_reason to the fields inherited from MetaReferenceSerializer
         fields = MetaReferenceSerializer.Meta.fields + ["_change_reason"]
-
-
+        # Define read_only_fields for the update context.
+        # Representation fields (species_name etc.) are inherently read-only from parent.
+        # Fields like 'meta', 'ref', 'notes', 'dipole_moment', 'spectrum' should NOT be read-only here.
+        read_only_fields = BaseSerializer.Meta.read_only_fields + [
+             # Representation fields are inherently read-only via source=
+            "species_formula",
+            "species_name",
+            "molecule_tag",
+            "linelist_name",
+            "doi",
+            "ref_url",
+        ]
 class LineSerializer(serializers.ModelSerializer):
     qn_label_str = serializers.CharField()
     vib_qn = serializers.CharField(required=False, allow_blank=True)
@@ -306,6 +385,7 @@ class LineSerializerList(serializers.ModelSerializer):
 
     class Meta:
         model = Line
+        # Remove commented-out status fields
         fields = [
             "id",
             "meta",
@@ -328,27 +408,31 @@ class LineSerializerList(serializers.ModelSerializer):
             "pickett_upper_state_qn",
             "pickett_lower_state_qn",
             "notes",
-            # "uploaded_by",
-            # "approved",
-            # "created_at",
+            # REMOVED: "uploaded_by",
+            # REMOVED: "approved",
+            # REMOVED: "created_at",
         ]
-
+        # Remove commented-out status fields from read_only
         read_only_fields = [
             "id",
-            #  "uploaded_by", "created_at"
+            # REMOVED: "uploaded_by", "created_at"
         ]
 
 
+# Change inheritance to LineSerializerList
+# NOTE: Assumes LineSerializerList is the primary serializer for create/update operations for Lines
 class LineChangeSerializerList(LineSerializerList):
     """Serializer for put and patch lines."""
-
+    # Add change reason directly
     _change_reason = serializers.CharField(
         max_length=255, write_only=True, required=True
     )
 
-    class Meta(LineSerializerList.Meta):
+    class Meta(LineSerializerList.Meta): # Inherit Meta from LineSerializerList
+        # Add _change_reason to the fields inherited from LineSerializerList
         fields = LineSerializerList.Meta.fields + ["_change_reason"]
-
+        # Define read_only_fields for update context. Usually just 'id'.
+        read_only_fields = ["id"]
 
 class QuerySerializer(serializers.ModelSerializer):
     """Serilizer for querying lines falling
@@ -362,10 +446,23 @@ class QuerySerializer(serializers.ModelSerializer):
     a_ij = serializers.DecimalField(max_digits=None, decimal_places=None)
     lower_state_energy = serializers.DecimalField(max_digits=None, decimal_places=None)
     upper_state_energy = serializers.DecimalField(max_digits=None, decimal_places=None)
-
+    
+    
+    name_formula = serializers.CharField(source='meta.species.name_formula', read_only=True)
+    iupac_name = serializers.CharField(source='meta.species.iupac_name', read_only=True)
+    name = serializers.JSONField(source='meta.species.name', read_only=True)
+    molecule_tag = serializers.IntegerField(source='meta.molecule_tag', read_only=True)
+    hyperfine = serializers.BooleanField(source='meta.hyperfine', read_only=True)
+    linelist = serializers.CharField(source='meta.linelist.linelist_name', read_only=True)
+    meta_id = serializers.IntegerField(source='meta.id', read_only=True)
+    smiles = serializers.CharField(source='meta.species.smiles', read_only=True)
+    selfies = serializers.CharField(source='meta.species.selfies', read_only=True)
+    
     class Meta:
         model = Line
+        # Remove commented-out status fields
         fields = [
+            "id", # Add Line ID
             "frequency",
             "measured",
             "uncertainty",
@@ -378,20 +475,14 @@ class QuerySerializer(serializers.ModelSerializer):
             "s_ij_mu2",
             "a_ij",
             "rovibrational",
-            # "uploaded_by",
-            # "approved",
-            # "created_at",
+            "name_formula",
+            "iupac_name",
+            "name",
+            "molecule_tag",
+            "hyperfine",
+            "linelist",
+            "meta_id",
+            "smiles",
+            "selfies",
         ]
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation["name_formula"] = instance.meta.species.name_formula
-        representation["iupac_name"] = instance.meta.species.iupac_name
-        representation["name"] = instance.meta.species.name
-        representation["molecule_tag"] = instance.meta.molecule_tag
-        representation["hyperfine"] = instance.meta.hyperfine
-        representation["linelist"] = instance.meta.linelist.linelist_name
-        representation["meta_id"] = instance.meta.id
-        representation["smiles"] = instance.meta.species.smiles
-        representation["selfies"] = instance.meta.species.selfies
-        return representation
+        read_only_fields = fields # All fields are read-only

@@ -11,12 +11,12 @@ from .models import user_saved_with_approvers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-print("Signals are working")
+# print("Signals are working")
 # print(settings.DEBUG)
 
 # DISABLE_EMAILS = False
 DISABLE_EMAILS = True
-print(f"DISABLE_EMAILS: {DISABLE_EMAILS}")
+# print(f"DISABLE_EMAILS: {DISABLE_EMAILS}")
 
 
 def generate_verification_token():
@@ -143,7 +143,7 @@ def send_meta_ref_update_notification(sender, instance, created, **kwargs):
         return
         
     user = instance.uploaded_by
-    if created and not instance.approved and user.approver:
+    if created and instance.status != 'approved' and user.approver:
         subject = f"[SaagaDb] {user.name}: New reference metadata uploaded for approval"
         message = textwrap.dedent(
             f"""
@@ -157,7 +157,7 @@ def send_meta_ref_update_notification(sender, instance, created, **kwargs):
         send_mail(subject, message, from_email, recipient_list, fail_silently=True)
         print(f"Email sent successfully to {', '.join(recipient_list)}")
 
-    if not created and instance.approved:
+    if not created and instance.status == 'approved':
         subject = f"[SaagaDb] Reference metadata approved"
         message = f"Reference metadata ({instance.ref.ref_url}) approved."
         recipient_list = [user.email]
@@ -180,7 +180,7 @@ def send_meta_species_update_notification(sender, instance, created, **kwargs):
     # approval email will be sent to the approver(s) after uploading cat file
     # So check the LineViewSet class for that implementation
 
-    if not created and instance.approved:
+    if not created and instance.status == 'approved':
         subject = "[SaagaDb] Species metadata approved for " + species_name
         message = f"Species metadata for {species_name} approved."
         recipient_list = [user.email]
