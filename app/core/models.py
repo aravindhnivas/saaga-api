@@ -148,7 +148,7 @@ class EmailVerificationToken(models.Model):
 class BaseModel(models.Model):
     """Base model with common fields for approval, uploader, notes, and timestamps."""
     
-    approved = models.BooleanField(default=False, db_index=True)
+    # approved = models.BooleanField(default=False, db_index=True)
     
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -250,7 +250,7 @@ class Linelist(BaseModel):
 class Reference(BaseModel):
     """Reference object."""
 
-    approved = models.BooleanField(default=True, db_index=True)  # Override default
+    # approved = models.BooleanField(default=True, db_index=True)  # Override default
     doi = models.CharField(max_length=255, blank=True, db_index=True)
     ref_url = models.CharField(max_length=255, unique=True)
     bibtex = models.FileField(
@@ -265,7 +265,7 @@ class Reference(BaseModel):
 class Species(BaseModel):
     """Species object."""
 
-    approved = models.BooleanField(default=True, db_index=True)  # Override default
+    # approved = models.BooleanField(default=True, db_index=True)  # Override default
     name = models.JSONField()
     iupac_name = models.CharField(max_length=255, unique=True, db_index=True)
     name_formula = models.CharField(max_length=255, db_index=True)
@@ -349,7 +349,7 @@ class SpeciesMetadata(BaseModel):
 class SpeciesMetadataMiscFileUpload(BaseModel):
     """Species metadata misc files object."""
 
-    approved = models.BooleanField(default=True)  # Override default
+    # approved = models.BooleanField(default=True)  # Override default
     meta = models.ForeignKey(
         "SpeciesMetadata",
         on_delete=models.CASCADE,
