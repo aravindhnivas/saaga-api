@@ -6,7 +6,7 @@ User = apps.get_model(*settings.AUTH_USER_MODEL.split("."))
 
 # Get the default user for 'processed_by' (update ID if needed)
 try:
-    default_user = User.objects.get(pk=2)  # Change this ID as needed
+    default_user = User.objects.get(email='brettmc@mit.edu')  # Change this ID as needed
 except User.DoesNotExist:
     default_user = None
 
@@ -17,6 +17,11 @@ for model in apps.get_models():
         if hasattr(model, "STATUS_APPROVED") and hasattr(model, "STATUS_PENDING"):
             instances = model.objects.all()
             for instance in instances:
+                
+                if instance.approved and instance.status == model.STATUS_APPROVED:
+                        print(f"Skipping {instance} as it is already approved")
+                        continue
+                    
                 instance.status = (
                     model.STATUS_APPROVED if instance.approved else model.STATUS_PENDING
                 )
