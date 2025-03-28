@@ -3,6 +3,7 @@ Views for the user API.
 """
 
 import datetime
+import textwrap
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -93,21 +94,35 @@ class UserViewSet(viewsets.ModelViewSet):
         
         user_id = int(self.kwargs["pk"])
         
-        if not self.request.user.is_superuser:
-            if self.request.user.id != user_id:
+        # Allow superusers to update any field, but restrict regular users to only update their own details
+        if self.request.user.id != user_id:
+            if not self.request.user.is_superuser:
                 raise PermissionDenied("You are not authorized to perform this action.")
+        
+        # Call the original save method to save the updated user instance
+        serializer.save()
+        
+        # Message to the user about the update
+        message = textwrap.dedent(
+            f"""
+            Hello {serializer.instance.name},
+            Your account details have been updated successfully by {self.request.user}.
             
-        current_user_from_db = get_user_model().objects.get(id=user_id)
-        email = self.request.data.get("email")
-        # print(email)
+            If you do not recognize this change or believe it to be an error, please contact your administrator.
+            """
+        ).strip()
+            
+            
+        # Send notification email if the user is updated
+        send_mail(
+            subject="[SaagaDb] User Details Updated",
+            message=message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[serializer.instance.email],
+            fail_silently=True,
+        )
         
-        if not email:
-            raise PermissionDenied("Email is required.")
-        
-        if current_user_from_db.email != email:
-            serializer.save(is_verified=False)
-        else:
-            serializer.save()
+        print(f"Email sent successfully to {serializer.instance.email} about the update.")
 
 
 class ChangePassword(generics.GenericAPIView):
