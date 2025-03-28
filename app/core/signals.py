@@ -16,8 +16,10 @@ from django.utils import timezone
 
 # DISABLE_EMAILS = False
 DISABLE_EMAILS = True
-# print(f"DISABLE_EMAILS: {DISABLE_EMAILS}")
-
+if DISABLE_EMAILS:
+    print('\nEmail notifications are disabled. This is useful for development and testing purposes.\n')
+else:
+    print('\nEmail notifications are enabled. This will send emails to users when certain events occur.\n')
 
 def generate_verification_token():
     """Generates a unique, random token"""
@@ -170,6 +172,7 @@ def send_meta_species_update_notification(sender, instance, created, **kwargs):
     if DISABLE_EMAILS:
         print("Emails disabled. Skipping email notification.")
         return
+    
     user = instance.uploaded_by
 
     if not user or not user.approver:
