@@ -108,9 +108,9 @@ class LinelistViewSet(BaseApprovalViewSet):
     def perform_create(self, serializer):
         """Create a new linelist and autopopulate uploaded_by and approved field."""
         user = self.request.user
-        status = "pending" if not user.is_superuser else "approved"
-        processed_by = user if status == "approved" else None
-        serializer.save(uploaded_by=user, status=status, processed_by=processed_by)
+        review_status = "pending" if not user.is_superuser else "approved"
+        processed_by = user if review_status == "approved" else None
+        serializer.save(uploaded_by=user, status=review_status, processed_by=processed_by)
 
     def get_queryset(self):
         """Retrieve linelists."""
@@ -462,8 +462,8 @@ class SpeciesMetadataViewSet(BaseApprovalViewSet):
         # if var_file:
         #     a_const, b_const, c_const = read_varfile(var_file)
 
-        status = "pending" if not self.request.user.is_superuser else "approved"
-        processed_by = self.request.user if status == "approved" else None
+        review_status = "pending" if not self.request.user.is_superuser else "approved"
+        processed_by = self.request.user if review_status == "approved" else None
         data_to_save = {
             "mu_a": mu_a,
             "mu_b": mu_b,
@@ -473,7 +473,7 @@ class SpeciesMetadataViewSet(BaseApprovalViewSet):
             "c_const": c_const,
             "partition_function": partition_dict,
             "uploaded_by": self.request.user,
-            "status": status,
+            "status": review_status,
             "processed_by": processed_by,
         }
 
@@ -608,9 +608,9 @@ class MetaReferenceViewSet(BaseApprovalViewSet):
     def perform_create(self, serializer):
         """Create a new list and autopopulate uploaded_by and approved field."""
         
-        status = "pending" if not self.request.user.is_superuser else "approved"
-        processed_by = self.request.user if status == "approved" else None
-        serializer.save(uploaded_by=self.request.user, status=status, processed_by=processed_by)
+        review_status = "pending" if not self.request.user.is_superuser else "approved"
+        processed_by = self.request.user if review_status == "approved" else None
+        serializer.save(uploaded_by=self.request.user, status=review_status, processed_by=processed_by)
 
     def get_queryset(self):
         """Retrieve meta references."""
@@ -706,9 +706,9 @@ class DirectReferenceAPI(APIView):
         metareference_serializer = serializers.MetaReferenceSerializer(data=data)
         metareference_serializer.is_valid(raise_exception=True)
 
-        status = "pending" if not request.user.is_superuser else "approved"
-        processed_by = request.user if status == "approved" else None
-        metareference_serializer.save(uploaded_by=request.user, status=status, processed_by=processed_by)
+        review_status = "pending" if not request.user.is_superuser else "approved"
+        processed_by = request.user if review_status == "approved" else None
+        metareference_serializer.save(uploaded_by=request.user, status=review_status, processed_by=processed_by)
 
         meta_ref_obj = metareference_serializer.instance
 
@@ -771,7 +771,7 @@ class LineViewSet(viewsets.ModelViewSet):
         notes: str = serializer.data["notes"]
 
         qn_label_list = [x.strip() for x in qn_label_str.split(",")]
-        print(f"{serializer.data=}")
+        # print(f"{serializer.data=}")
 
         if contains_rovibrational:
             """Check if the .cat file contains rovibrational lines,
@@ -956,7 +956,7 @@ class LineViewSet(viewsets.ModelViewSet):
         serializer = serializers.LineSerializerList(data=input_dict_list, many=True)
         if serializer.is_valid():
             # saving the cat_file to species_metadata
-            print(f"{meta_obj.cat_file=}, {cat_file=}")
+            # print(f"{meta_obj.cat_file=}, {cat_file=}")
             meta_obj.cat_file = cat_file
             meta_obj.vib_qn = vib_qn
             meta_obj.qn_label_str = qn_label_str
@@ -977,7 +977,7 @@ class LineViewSet(viewsets.ModelViewSet):
             ).strip()
             recipient_list = self.request.user.approver.values_list("email", flat=True)
             send_mail(subject, message, from_email, recipient_list, fail_silently=True)
-
+            print(f"Email sent out to {', '.join(recipient_list)}.")
             return Response(
                 {"detail": "cat file parsed and added to the database"},
                 status=status.HTTP_200_OK,
