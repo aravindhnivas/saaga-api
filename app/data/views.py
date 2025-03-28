@@ -1091,11 +1091,9 @@ class UploadedDataLengthView(APIView):
 
         unapproved_counts = []
         
-        if not request.user.is_staff:
-             return Response({"detail": "Permission denied for regular users"}, status=status.HTTP_403_FORBIDDEN)
-         
-        if request.user.id != user_id and not request.user.is_superuser:
-             return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.id != user_id:
+            if not request.user.is_superuser:
+                return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
          
         dependent_users = user.dependent_users.all() # Get users this user approves
         # print(f"{dependent_users=}")
