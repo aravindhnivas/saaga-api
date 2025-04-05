@@ -15,7 +15,7 @@ from django.utils import timezone
 # print(settings.DEBUG)
 
 # DISABLE_EMAILS = False
-DISABLE_EMAILS = True
+DISABLE_EMAILS = False
 if DISABLE_EMAILS:
     print('\nEmail notifications are disabled. This is useful for development and testing purposes.\n')
 else:

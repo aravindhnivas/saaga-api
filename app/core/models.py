@@ -199,40 +199,40 @@ class BaseModel(models.Model):
         abstract = True  # Ensures this isn't created as a database table
     
     # Uncomment this after migrating the original database
-    # def save(self, *args, **kwargs):
-    #      is_new = self.pk is None
-    #      original_status = None
+    def save(self, *args, **kwargs):
+         is_new = self.pk is None
+         original_status = None
  
-    #      if not is_new:
-    #          try:
-    #              original = self.__class__.objects.get(pk=self.pk)
-    #              original_status = original.status
-    #          except self.__class__.DoesNotExist:
-    #              pass # Treat as new if original not found
+         if not is_new:
+             try:
+                 original = self.__class__.objects.get(pk=self.pk)
+                 original_status = original.status
+             except self.__class__.DoesNotExist:
+                 pass # Treat as new if original not found
  
-    #      now = timezone.now()
-    #      status_changed = original_status != self.status
+         now = timezone.now()
+         status_changed = original_status != self.status
  
-    #      # --- Handle Timestamp and User ---
-    #      # Set timestamp and user only if status changes TO approved or rejected
-    #      if status_changed and self.status in [self.STATUS_APPROVED, self.STATUS_REJECTED]:
-    #          self.processed_at = now
-    #          # Note: 'processed_by' should ideally be set *before* calling save()
-    #          # in the view/logic layer that performs the status change.
-    #          # If not set externally, it will remain unchanged here or be None.
-    #      # Clear timestamp and user if status changes AWAY FROM approved/rejected (e.g., back to pending)
-    #      elif status_changed and self.status == self.STATUS_PENDING:
-    #          self.processed_at = None
-    #          self.processed_by = None # Clear the user as well
+         # --- Handle Timestamp and User ---
+         # Set timestamp and user only if status changes TO approved or rejected
+         if status_changed and self.status in [self.STATUS_APPROVED, self.STATUS_REJECTED]:
+             self.processed_at = now
+             # Note: 'processed_by' should ideally be set *before* calling save()
+             # in the view/logic layer that performs the status change.
+             # If not set externally, it will remain unchanged here or be None.
+         # Clear timestamp and user if status changes AWAY FROM approved/rejected (e.g., back to pending)
+         elif status_changed and self.status == self.STATUS_PENDING:
+             self.processed_at = None
+             self.processed_by = None # Clear the user as well
  
-    #      # Handle initial creation with a non-pending status
-    #      if is_new and self.status in [self.STATUS_APPROVED, self.STATUS_REJECTED]:
-    #           if not self.processed_at: # Set timestamp if not already set
-    #               self.processed_at = now
-    #           # Again, 'processed_by' should be set externally if known at creation
+         # Handle initial creation with a non-pending status
+         if is_new and self.status in [self.STATUS_APPROVED, self.STATUS_REJECTED]:
+              if not self.processed_at: # Set timestamp if not already set
+                  self.processed_at = now
+              # Again, 'processed_by' should be set externally if known at creation
          
-    #      # Call the parent save method
-    #      super().save(*args, **kwargs)
+         # Call the parent save method
+         super().save(*args, **kwargs)
          
 class Linelist(BaseModel):
     """Linelist object."""
