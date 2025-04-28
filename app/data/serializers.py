@@ -14,7 +14,8 @@ from core.models import (
     Line,
     BaseModel
 )
-
+from rdkit import Chem
+from rdkit.Chem import AllChem
 # --- Base Serializers ---
 
 class BaseSerializer(serializers.ModelSerializer):
@@ -106,7 +107,21 @@ class ReferenceChangeSerializer(ReferenceSerializer):
         # Define read_only_fields for the update context.
         # Fields like 'doi', 'ref_url', 'notes', 'bibtex' should NOT be read-only here.
         read_only_fields = BaseSerializer.Meta.read_only_fields # Start with base system read-only fields
-        
+
+
+def smiles_to_pdb_string(smiles_string):
+    try:
+        mol = Chem.MolFromSmiles(smiles_string)
+        if mol is None:
+            return None, "Invalid SMILES string"
+        mol_with_h = Chem.AddHs(mol)
+        AllChem.EmbedMolecule(mol_with_h, AllChem.ETKDGv3())
+        AllChem.MMFFOptimizeMolecule(mol_with_h)
+        pdb_string = Chem.MolToPDBBlock(mol_with_h)
+        return pdb_string, None
+    except Exception as e:
+        return None, str(e)
+    
 # Change inheritance from serializers.ModelSerializer to BaseSerializer
 class SpeciesSerializer(BaseSerializer):
     """Serializer for species."""
@@ -114,6 +129,11 @@ class SpeciesSerializer(BaseSerializer):
     molecular_mass = serializers.DecimalField(
         max_digits=None, decimal_places=None, read_only=True
     )
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["pdb_data"] = smiles_to_pdb_string(instance.smiles)
+        return representation
 
     class Meta(BaseSerializer.Meta): # Inherit Meta from BaseSerializer
         model = Species
