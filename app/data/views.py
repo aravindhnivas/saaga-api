@@ -45,6 +45,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.parsers import MultiPartParser
+from data.pagination import Pagination
+from rest_framework.response import Response
 
 
 from_email = settings.EMAIL_HOST_USER
@@ -290,8 +292,40 @@ class SpeciesViewSet(BaseApprovalViewSet):
     serializer_class = serializers.SpeciesSerializer
     queryset = Species.objects.all()
     authentication_classes = [JWTAuthentication]
+    pagination_class = Pagination
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_fields = ("status", "uploaded_by", "selfies", "smiles")
+    
+    def list(self, request, *args, **kwargs):
+        """Custom list to support page ranges like 1-3."""
+        page_param = request.query_params.get("page", "1")
+        page_size = self.pagination_class.page_size or 20  # Default to 20
+
+        try:
+            if "-" in page_param:
+                start, end = map(int, page_param.split("-"))
+                if start > end or start < 1:
+                    raise ValueError("Invalid range")
+                start_index = (start - 1) * page_size
+                end_index = end * page_size
+            else:
+                page = int(page_param)
+                start_index = (page - 1) * page_size
+                end_index = page * page_size
+        except Exception:
+            return Response({"error": "Invalid page format. Use ?page=2 or ?page=1-3"}, status=400)
+ 
+        # Apply filters manually using DRF's get_queryset()
+        qs = self.filter_queryset(self.get_queryset())
+        total_count = qs.count()
+        sliced = qs[start_index:end_index]
+        serializer = self.get_serializer(sliced, many=True)
+
+        return Response({
+            "count": total_count,
+            "results": serializer.data,
+            "range": f"{start_index + 1}–{min(end_index, total_count)}"
+        })
 
     def get_permissions(self):
         """No authentication required for GET requests."""
